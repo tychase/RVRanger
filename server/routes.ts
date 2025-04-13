@@ -13,7 +13,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageUrl = req.query.url as string;
       
       if (!imageUrl) {
-        return res.status(400).send('Image URL is required');
+        return res.redirect('/images/default-rv.svg');
+      }
+      
+      // Check for specific domains we know have issues
+      if (imageUrl.includes('prevost-stuff.com')) {
+        return res.redirect('/images/default-rv.svg');
       }
       
       // Set proper headers for requesting external resources
@@ -24,7 +29,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const response = await axios.get(imageUrl, {
         responseType: 'arraybuffer',
-        headers
+        headers,
+        validateStatus: function (status) {
+          return status === 200; // Only accept 200 responses
+        },
+        timeout: 5000 // Set a timeout to avoid hanging requests
       });
       
       // Set appropriate content type
@@ -34,7 +43,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send the image data
       res.send(response.data);
     } catch (error) {
-      console.error('Error proxying image:', error);
+      console.log('Redirecting to default image due to error or invalid URL');
       // Redirect to default image on error
       res.redirect('/images/default-rv.svg');
     }
