@@ -96,27 +96,41 @@ def import_listings_to_database(listings):
                 # Get the ID of the newly created listing
                 listing_id = result.get('data', {}).get('id')
                 
-                # If we have additional images and the listing ID, add them to the RV images table
+                # If we have additional images, save them directly to the database using SQL
+                # This bypasses the API which has some routing issues
                 if listing_id and "additionalImagesArray" in cleaned_listing:
-                    print(f"  Adding {len(cleaned_listing['additionalImagesArray'])} additional images...")
-                    for img_url in cleaned_listing['additionalImagesArray']:
-                        try:
-                            # Create the RV image record
-                            img_response = requests.post(
-                                f"{API_URL}/{listing_id}/images",
-                                json={
-                                    "rvId": listing_id,
-                                    "imageUrl": img_url,
-                                    "isPrimary": False
-                                },
-                                headers={'Content-Type': 'application/json'}
-                            )
-                            if img_response.status_code == 201:
-                                print(f"    Added image: {img_url}")
-                            else:
-                                print(f"    Failed to add image: {img_url} - {img_response.text}")
-                        except requests.exceptions.RequestException as e:
-                            print(f"    Error adding image {img_url}: {e}")
+                    print(f"  Adding {len(cleaned_listing['additionalImagesArray'])} additional images directly to database...")
+                    try:
+                        import psycopg2
+                        
+                        # Get database connection string from environment
+                        database_url = os.environ.get('DATABASE_URL')
+                        if not database_url:
+                            print("    Error: DATABASE_URL environment variable not found")
+                            continue
+                            
+                        conn = psycopg2.connect(database_url)
+                        cur = conn.cursor()
+                        
+                        for img_url in cleaned_listing['additionalImagesArray']:
+                            try:
+                                # Insert directly into the rv_images table
+                                cur.execute(
+                                    "INSERT INTO rv_images (rv_id, image_url, is_primary) VALUES (%s, %s, %s) RETURNING id",
+                                    (listing_id, img_url, False)
+                                )
+                                image_id = cur.fetchone()[0]
+                                conn.commit()
+                                print(f"    Added image (ID: {image_id}): {img_url}")
+                            except Exception as img_err:
+                                conn.rollback()
+                                print(f"    Failed to add image {img_url}: {img_err}")
+                        
+                        # Close cursor and connection
+                        cur.close()
+                        conn.close()
+                    except Exception as db_err:
+                        print(f"    Database error: {db_err}")
                 
                 success_count += 1
             else:
