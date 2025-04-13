@@ -15,7 +15,8 @@ import {
 interface RVImage {
   id: number;
   imageUrl: string;
-  isPrimary?: boolean;
+  rvId: number;
+  isPrimary?: boolean | null;
 }
 
 interface RVDetailGalleryProps {

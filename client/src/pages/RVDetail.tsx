@@ -26,12 +26,12 @@ const RVDetail = () => {
   }, []);
   
   // Fetch RV details
-  const { data: rv, isLoading, error } = useQuery({
+  const { data: rv, isLoading, error } = useQuery<RvListing>({
     queryKey: [`/api/listings/${id}`],
   });
 
   // Fetch RV images
-  const { data: images } = useQuery({
+  const { data: images } = useQuery<RvImage[]>({
     queryKey: [`/api/listings/${id}/images`],
     enabled: !!rv,
   });
@@ -161,10 +161,12 @@ const RVDetail = () => {
   };
   
   const handleShare = () => {
+    if (!rv) return;
+    
     if (navigator.share) {
       navigator.share({
-        title: rv.title,
-        text: `Check out this ${rv.year} ${rv.title} on LuxuryRV Market!`,
+        title: rv.title || 'RV Listing',
+        text: `Check out this ${rv.year || ''} ${rv.title || 'RV'} on LuxuryRV Market!`,
         url: window.location.href,
       }).catch(err => console.error('Error sharing', err));
     } else {
@@ -228,9 +230,15 @@ const RVDetail = () => {
     );
   }
 
-  const galleryImages = images?.length > 0 
-    ? images 
-    : [{ id: 0, imageUrl: rv.featuredImage, isPrimary: true }];
+  // Create a fallback image if no images are available
+  const galleryImages: RvImage[] = (images && images.length > 0) 
+    ? (images as RvImage[])
+    : [{ 
+        id: 0, 
+        imageUrl: rv.featuredImage || '', 
+        rvId: parseInt(id), 
+        isPrimary: true 
+      } as RvImage];
 
   return (
     <div className="bg-neutral-100 min-h-screen py-8">
