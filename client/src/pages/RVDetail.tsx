@@ -230,15 +230,22 @@ const RVDetail = () => {
     );
   }
 
+  // Debug information
+  console.log("RV Data:", rv);
+  console.log("Featured Image:", rv.featuredImage);
+  console.log("Images:", images);
+  
   // Create a fallback image if no images are available
   const galleryImages: RvImage[] = (images && images.length > 0) 
     ? (images as RvImage[])
     : [{ 
         id: 0, 
-        imageUrl: rv.featuredImage || '', 
+        imageUrl: rv.featuredImage || 'https://prevost-stuff.com/images/default_coach.jpg', 
         rvId: parseInt(id), 
         isPrimary: true 
       } as RvImage];
+      
+  console.log("Gallery Images to display:", galleryImages);
 
   return (
     <div className="bg-neutral-100 min-h-screen py-8">
