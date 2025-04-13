@@ -1,0 +1,344 @@
+#!/usr/bin/env python3
+"""
+Improved Prevost RV Listings Scraper
+
+This script scrapes RV listings from prevost-stuff.com and downloads actual images
+of the RVs to provide accurate visual representation of each listing.
+"""
+
+import json
+import os
+import re
+import sys
+import time
+from urllib.parse import urljoin
+import uuid
+
+import requests
+from bs4 import BeautifulSoup
+
+# Base URL for the website
+BASE_URL = "https://www.prevost-stuff.com"
+# URL of the page with RV listings
+LISTINGS_URL = f"{BASE_URL}/used_coaches.htm"
+
+# Directory to save downloaded images
+IMAGE_DIR = "public/images/rv_listings"
+
+# Default manufacturer ID for Prevost
+PREVOST_MANUFACTURER_ID = 1
+# Default RV type ID for Class A Motorhomes
+CLASS_A_TYPE_ID = 1
+
+# Ensure the image directory exists
+os.makedirs(IMAGE_DIR, exist_ok=True)
+
+
+def extract_price(text):
+    """Extract price from text using regex."""
+    if not text:
+        return None
+    
+    # If it's a "Please Call For Pricing" message
+    if "call" in text.lower() and "pricing" in text.lower():
+        # Return a default price (we can adjust this)
+        return 999999  # Placeholder price for "Call for pricing"
+    
+    # Find patterns like $ 1,234,567 or $1.2M or $950K
+    # Note: The website uses "$ " with a space after the dollar sign
+    price_match = re.search(r'\$\s*([0-9,]+(?:\.[0-9]+)?(?:K|M)?)', text)
+    if not price_match:
+        return None
+    
+    price_text = price_match.group(1)
+    
+    # Handle K (thousands) and M (millions) notation
+    if price_text.endswith('K'):
+        price_value = float(price_text.replace('K', '').replace(',', '')) * 1000
+    elif price_text.endswith('M'):
+        price_value = float(price_text.replace('M', '').replace(',', '')) * 1000000
+    else:
+        price_value = float(price_text.replace(',', ''))
+    
+    return int(price_value)
+
+
+def extract_year(text):
+    """Extract year from text using regex."""
+    if not text:
+        return None
+    
+    # Find patterns like 2022 or '22
+    year_match = re.search(r'\b(20[0-2][0-9])\b|\b\'([0-2][0-9])\b', text)
+    if not year_match:
+        return None
+    
+    if year_match.group(1):  # Full year format (2022)
+        return int(year_match.group(1))
+    else:  # Short year format ('22)
+        short_year = int(year_match.group(2))
+        return 2000 + short_year
+
+
+def extract_model(url_or_text):
+    """Extract the Prevost model from a URL or text."""
+    if not url_or_text:
+        return None
+    
+    # Common Prevost models to look for
+    models = ['H3-45', 'X3-45', 'X3', 'H3', 'XLII', 'XL II', 'Le Mirage']
+    
+    for model in models:
+        if model.replace('-', '') in url_or_text.replace('-', ''):
+            return model
+    
+    return None
+
+
+def extract_converter(url_or_text):
+    """Extract the converter/manufacturer from a URL or text."""
+    if not url_or_text:
+        return None
+    
+    # Common converters/manufacturers
+    converters = [
+        'Marathon', 'Liberty', 'Featherlite', 'Millennium', 'Emerald', 
+        'Vogue', 'Newell', 'Prevost', 'Epic', 'Nashville', 'Country Coach'
+    ]
+    
+    for converter in converters:
+        if converter.lower() in url_or_text.lower():
+            return converter
+    
+    return None
+
+
+def download_image(image_url, prefix="rv"):
+    """
+    Download an image from a URL and save it to the image directory.
+    Returns the local path to the saved image.
+    """
+    try:
+        print(f"Downloading image from {image_url}")
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()  # Raise an exception for error status codes
+        
+        # Generate a filename based on the URL or use a random UUID
+        image_extension = os.path.splitext(image_url)[-1]
+        if not image_extension or len(image_extension) > 5:
+            image_extension = '.jpg'  # Default to jpg if no extension or unusual extension
+            
+        filename = f"{prefix}_{uuid.uuid4().hex}{image_extension}"
+        local_path = os.path.join(IMAGE_DIR, filename)
+        
+        # Save the image
+        with open(local_path, 'wb') as f:
+            f.write(response.content)
+            
+        # Return a web-accessible path
+        return f"/images/rv_listings/{filename}"
+    except Exception as e:
+        print(f"Error downloading image {image_url}: {e}")
+        return None
+
+
+def fetch_detailed_listing(listing_url):
+    """
+    Fetch the detailed page for a listing and extract additional information and images.
+    """
+    print(f"Fetching detailed listing from {listing_url}")
+    try:
+        response = requests.get(listing_url, timeout=10)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"Error fetching detailed listing: {e}")
+        return {}
+    
+    soup = BeautifulSoup(response.text, 'lxml')
+    
+    # Initialize data
+    listing_data = {}
+    images = []
+    
+    # Look for all images on the page
+    for img in soup.find_all('img'):
+        src = img.get('src')
+        # Skip tiny images, navigation elements, etc.
+        if src and not src.endswith(('.png', '.gif', 'logo', 'banner')):
+            full_url = urljoin(listing_url, src)
+            images.append(full_url)
+    
+    # Look for additional details
+    description = ""
+    
+    # Find the detailed description
+    for p in soup.find_all(['p', 'div'], class_=['blackname', 'Descrip21']):
+        text = p.get_text(strip=True)
+        if len(text) > 20:  # Only consider substantial paragraphs
+            description += text + " "
+    
+    # Find price information
+    price = None
+    for p in soup.find_all(['p', 'span'], class_=['redprice', 'redprice1']):
+        price_text = p.get_text(strip=True)
+        extracted_price = extract_price(price_text)
+        if extracted_price:
+            price = extracted_price
+            break
+    
+    # Find the year and model
+    year_model_match = re.search(r'([0-9]{4})\s+Prevost\s+([^\s]+)', response.text)
+    if year_model_match:
+        listing_data['year'] = int(year_model_match.group(1))
+        model = year_model_match.group(2)
+        if model:
+            listing_data['model'] = model
+    
+    # Update the listing data
+    if description:
+        listing_data['description'] = description
+    if price:
+        listing_data['price'] = price
+    
+    # Add the images
+    listing_data['images'] = images
+    
+    return listing_data
+
+
+def scrape_listings():
+    """
+    Scrape RV listings from prevost-stuff.com and return them as a list of dictionaries.
+    """
+    print(f"Fetching listings from {LISTINGS_URL}...")
+    
+    try:
+        response = requests.get(LISTINGS_URL)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching the listings page: {e}", file=sys.stderr)
+        return []
+    
+    soup = BeautifulSoup(response.text, 'lxml')
+    
+    listings = []
+    
+    # Find all listing links
+    listing_links = []
+    
+    # Look for links to detailed coach pages
+    pattern = re.compile(r'.*Prevost.*\.html$')
+    for link in soup.find_all('a', href=pattern):
+        href = link.get('href')
+        if href and 'Prevost' in href:
+            full_url = urljoin(BASE_URL, href)
+            if full_url not in listing_links:
+                listing_links.append(full_url)
+    
+    print(f"Found {len(listing_links)} potential listing links")
+    
+    # Process each listing link
+    for idx, link in enumerate(listing_links):
+        print(f"Processing listing {idx+1}/{len(listing_links)}: {link}")
+        
+        # Extract basic info from the URL
+        url_parts = os.path.basename(link).split('_')
+        
+        if len(url_parts) < 2:
+            print(f"Skipping URL with unexpected format: {link}")
+            continue
+        
+        # Extract what we can from the URL
+        title_part = url_parts[0]
+        year_match = re.search(r'^(\d{4})Prevost', title_part)
+        
+        if not year_match:
+            print(f"Could not extract year from {title_part}")
+            continue
+            
+        year = int(year_match.group(1))
+        converter = extract_converter(title_part)
+        model = extract_model(title_part)
+        
+        # Fetch detailed information from the listing page
+        detailed_data = fetch_detailed_listing(link)
+        
+        # Download the main image and additional images
+        main_image_path = None
+        additional_images = []
+        
+        # First, find the main image
+        if 'images' in detailed_data and detailed_data['images']:
+            for img_url in detailed_data['images']:
+                local_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_{len(additional_images)}")
+                if local_path:
+                    if not main_image_path:
+                        main_image_path = local_path
+                    else:
+                        additional_images.append({
+                            "imageUrl": local_path,
+                            "isPrimary": False
+                        })
+        
+        # If no images found, try to get the preview image from the coach listing
+        if not main_image_path:
+            # Find image associated with this link on the main page
+            link_element = soup.find('a', href=re.compile(os.path.basename(link)))
+            if link_element and link_element.find('img'):
+                img_url = urljoin(BASE_URL, link_element.find('img')['src'])
+                main_image_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_main")
+        
+        # If we still don't have a main image, try a fallback
+        if not main_image_path:
+            print(f"No images found for {link}")
+            # We'll rely on a fallback in the frontend
+        
+        # Merge all the information
+        listing = {
+            "title": f"{year} {converter or 'Prevost'} {model or ''}".strip(),
+            "description": detailed_data.get('description', f"Luxury {year} Prevost coach."),
+            "price": detailed_data.get('price'),
+            "year": year,
+            "manufacturerId": PREVOST_MANUFACTURER_ID,
+            "typeId": CLASS_A_TYPE_ID,
+            "location": "Unknown",
+            "featuredImage": main_image_path,
+            "fuelType": "Diesel",  # All Prevost RVs are diesel
+            "isFeatured": True,  # Make all detailed listings featured
+            "sellerId": 1,  # Default seller ID, to be replaced later if needed
+            "additionalImages": additional_images
+        }
+        
+        # Filter out None values
+        listing = {k: v for k, v in listing.items() if v is not None}
+        
+        # Add to our listings array
+        listings.append(listing)
+        
+        # Add a small delay to avoid overloading the server
+        time.sleep(1)
+    
+    print(f"Found {len(listings)} listings with details")
+    return listings
+
+
+def save_listings_to_json(listings, output_file='improved_prevost_listings.json'):
+    """Save the listings to a JSON file."""
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(listings, f, indent=2)
+    print(f"Saved {len(listings)} listings to {output_file}")
+
+
+def main():
+    """Main function."""
+    listings = scrape_listings()
+    
+    if listings:
+        save_listings_to_json(listings)
+        print("Scraping completed successfully!")
+    else:
+        print("No listings found!")
+
+
+if __name__ == "__main__":
+    main()
