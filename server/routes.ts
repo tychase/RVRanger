@@ -4,7 +4,41 @@ import { storage } from "./storage";
 import { insertUserSchema, insertRvListingSchema, insertInquirySchema, insertFavoriteSchema, insertRvImageSchema } from "@shared/schema";
 import { z } from "zod";
 
+import axios from 'axios';
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Image proxy route to fetch external images
+  app.get('/proxy-image', async (req, res) => {
+    try {
+      const imageUrl = req.query.url as string;
+      
+      if (!imageUrl) {
+        return res.status(400).send('Image URL is required');
+      }
+      
+      // Set proper headers for requesting external resources
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': new URL(imageUrl).origin
+      };
+      
+      const response = await axios.get(imageUrl, {
+        responseType: 'arraybuffer',
+        headers
+      });
+      
+      // Set appropriate content type
+      const contentType = response.headers['content-type'];
+      res.setHeader('Content-Type', contentType);
+      
+      // Send the image data
+      res.send(response.data);
+    } catch (error) {
+      console.error('Error proxying image:', error);
+      // Redirect to default image on error
+      res.redirect('/images/default-rv.svg');
+    }
+  });
   // prefix all routes with /api
   const apiRouter = app.use("/api", (req, res, next) => {
     next();

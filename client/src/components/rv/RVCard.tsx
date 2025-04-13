@@ -105,14 +105,14 @@ const RVCard = ({ rv }: RVCardProps) => {
       <div className="relative pb-[70%]">
         <img 
           src={
-            rv.featuredImage && !rv.featuredImage.includes("prevost-stuff.com") 
-              ? rv.featuredImage 
-              : "/images/default-rv.jpg"
+            rv.featuredImage 
+              ? `/proxy-image?url=${encodeURIComponent(rv.featuredImage)}` 
+              : "/images/default-rv.svg"
           } 
           alt={rv.title} 
           className="absolute inset-0 w-full h-full object-cover"
           onError={(e) => {
-            e.currentTarget.src = "/images/default-rv.jpg";
+            e.currentTarget.src = "/images/default-rv.svg";
           }}
         />
         {rv.isFeatured && (

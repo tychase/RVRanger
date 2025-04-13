@@ -51,8 +51,8 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
             style={{ paddingBottom: "66.67%" }}
           >
             <img 
-              src={images[selectedImageIndex].imageUrl && !images[selectedImageIndex].imageUrl.includes("prevost-stuff.com") 
-                  ? images[selectedImageIndex].imageUrl 
+              src={images[selectedImageIndex].imageUrl
+                  ? `/proxy-image?url=${encodeURIComponent(images[selectedImageIndex].imageUrl)}`
                   : "/images/default-rv.svg"}
               alt={`${title} - Image ${selectedImageIndex + 1}`}
               className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
@@ -72,8 +72,8 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
                 <CarouselItem key={image.id}>
                   <div className="flex items-center justify-center">
                     <img 
-                      src={image.imageUrl && !image.imageUrl.includes("prevost-stuff.com") 
-                          ? image.imageUrl 
+                      src={image.imageUrl 
+                          ? `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`
                           : "/images/default-rv.svg"}
                       alt={`${title} - Image ${index + 1}`}
                       className="max-w-full max-h-[80vh] object-contain"
@@ -103,8 +103,8 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
             style={{ paddingBottom: "66.67%" }}
           >
             <img 
-              src={image.imageUrl && !image.imageUrl.includes("prevost-stuff.com") 
-                  ? image.imageUrl 
+              src={image.imageUrl 
+                  ? `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`
                   : "/images/default-rv.svg"}
               alt={`${title} - Thumbnail ${index + 1}`}
               className="absolute inset-0 w-full h-full object-cover hover:brightness-90 transition-all"
