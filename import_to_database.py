@@ -94,7 +94,7 @@ def import_listings_to_database(listings):
                 print(f"  Success: {result.get('message', 'Created')}")
                 
                 # Get the ID of the newly created listing
-                listing_id = result.get('id')
+                listing_id = result.get('data', {}).get('id')
                 
                 # If we have additional images and the listing ID, add them to the RV images table
                 if listing_id and "additionalImagesArray" in cleaned_listing:

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertRvListingSchema, insertInquirySchema, insertFavoriteSchema } from "@shared/schema";
+import { insertUserSchema, insertRvListingSchema, insertInquirySchema, insertFavoriteSchema, insertRvImageSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -213,6 +213,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const images = await storage.getRvImages(id);
     res.json(images);
+  });
+  
+  app.post("/api/listings/:id/images", async (req, res) => {
+    try {
+      console.log('[POST /api/listings/:id/images] Adding new image:', JSON.stringify(req.body));
+      
+      const rvId = parseInt(req.params.id);
+      if (isNaN(rvId)) {
+        return res.status(400).json({ message: "Invalid listing ID" });
+      }
+      
+      // Check if the RV listing exists
+      const listing = await storage.getRvListing(rvId);
+      if (!listing) {
+        return res.status(404).json({ message: "RV listing not found" });
+      }
+      
+      // Create object with rvId from params
+      const imageData = {
+        ...req.body,
+        rvId // Set the rvId from the URL parameter
+      };
+      
+      // Validate the data
+      const validated = insertRvImageSchema.parse(imageData);
+      
+      // Add the image
+      const image = await storage.addRvImage(validated);
+      
+      console.log(`[POST /api/listings/:id/images] Successfully added image with ID ${image.id}`);
+      res.status(201).json({
+        message: "Image added successfully",
+        data: image
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.error('[POST /api/listings/:id/images] Validation error:', error.errors);
+        return res.status(400).json({ 
+          message: "Invalid image data", 
+          errors: error.errors 
+        });
+      }
+      
+      console.error('[POST /api/listings/:id/images] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to add image", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
 
   // User endpoints
