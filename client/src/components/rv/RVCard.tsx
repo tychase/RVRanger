@@ -104,9 +104,16 @@ const RVCard = ({ rv }: RVCardProps) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative pb-[70%]">
         <img 
-          src={rv.featuredImage || "https://images.unsplash.com/photo-1601024445121-e5b82f020549?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8bHV4dXJ5IFJWIGV4dGVyaW9yc3x8fHx8fDE3MDcxMDI3MjA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1080"} 
+          src={
+            rv.featuredImage && !rv.featuredImage.includes("prevost-stuff.com") 
+              ? rv.featuredImage 
+              : "/images/default-rv.jpg"
+          } 
           alt={rv.title} 
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.src = "/images/default-rv.jpg";
+          }}
         />
         {rv.isFeatured && (
           <span className="absolute top-2 left-2 bg-primary text-white text-xs font-semibold px-2 py-1 rounded">

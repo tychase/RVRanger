@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f0f0f0"/>
+  
+  <!-- RV Body -->
+  <rect x="100" y="200" width="600" height="180" rx="20" fill="#ffffff" stroke="#333333" stroke-width="4"/>
+  
+  <!-- RV Windshield -->
+  <path d="M100 300 L160 220 H250 V300 H100 Z" fill="#a8c7dc" stroke="#333333" stroke-width="2"/>
+  
+  <!-- RV Door -->
+  <rect x="300" y="280" width="60" height="100" rx="5" fill="#e6e6e6" stroke="#333333" stroke-width="2"/>
+  <circle cx="350" cy="330" r="5" fill="#333333"/>
+  
+  <!-- Windows -->
+  <rect x="400" y="240" width="80" height="50" rx="5" fill="#a8c7dc" stroke="#333333" stroke-width="2"/>
+  <rect x="520" y="240" width="80" height="50" rx="5" fill="#a8c7dc" stroke="#333333" stroke-width="2"/>
+  
+  <!-- Wheels -->
+  <circle cx="200" cy="380" r="40" fill="#333333"/>
+  <circle cx="200" cy="380" r="25" fill="#666666"/>
+  <circle cx="200" cy="380" r="15" fill="#999999"/>
+  
+  <circle cx="550" cy="380" r="40" fill="#333333"/>
+  <circle cx="550" cy="380" r="25" fill="#666666"/>
+  <circle cx="550" cy="380" r="15" fill="#999999"/>
+  
+  <!-- RV Accessories -->
+  <rect x="650" y="210" width="30" height="100" rx="2" fill="#cccccc" stroke="#333333" stroke-width="2"/>
+  
+  <!-- Text -->
+  <text x="400" y="440" font-family="Arial" font-size="24" text-anchor="middle" fill="#555555">Loading Image...</text>
+</svg>
