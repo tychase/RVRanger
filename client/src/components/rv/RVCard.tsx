@@ -106,7 +106,9 @@ const RVCard = ({ rv }: RVCardProps) => {
         <img 
           src={
             rv.featuredImage 
-              ? `/proxy-image?url=${encodeURIComponent(rv.featuredImage)}` 
+              ? (rv.featuredImage.startsWith('/images/') 
+                  ? rv.featuredImage // Local image, use directly
+                  : `/proxy-image?url=${encodeURIComponent(rv.featuredImage)}`) // External image, use proxy
               : "/images/default-rv.svg"
           } 
           alt={rv.title} 

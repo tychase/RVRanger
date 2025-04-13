@@ -73,7 +73,9 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
                   <div className="flex items-center justify-center">
                     <img 
                       src={image.imageUrl 
-                          ? `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`
+                          ? (image.imageUrl.startsWith('/images/') 
+                              ? image.imageUrl // Local image, use directly
+                              : `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`) // External image, use proxy
                           : "/images/default-rv.svg"}
                       alt={`${title} - Image ${index + 1}`}
                       className="max-w-full max-h-[80vh] object-contain"
@@ -104,7 +106,9 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
           >
             <img 
               src={image.imageUrl 
-                  ? `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`
+                  ? (image.imageUrl.startsWith('/images/') 
+                      ? image.imageUrl // Local image, use directly
+                      : `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`) // External image, use proxy
                   : "/images/default-rv.svg"}
               alt={`${title} - Thumbnail ${index + 1}`}
               className="absolute inset-0 w-full h-full object-cover hover:brightness-90 transition-all"
