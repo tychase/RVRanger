@@ -11,14 +11,14 @@ interface RVCardProps {
   rv: {
     id: number;
     title: string;
-    price: number;
-    location: string;
-    mileage: number;
-    length?: number;
-    fuelType?: string;
-    bedType?: string;
-    slides?: number;
-    featuredImage: string;
+    price?: number | null;
+    location?: string;
+    mileage?: number | null;
+    length?: number | null;
+    fuelType?: string | null;
+    bedType?: string | null;
+    slides?: number | null;
+    featuredImage?: string | null;
     isFeatured?: boolean;
   };
 }
@@ -126,9 +126,9 @@ const RVCard = ({ rv }: RVCardProps) => {
         <div className="p-4">
           <div className="flex justify-between items-start">
             <h3 className="text-lg font-bold text-neutral-800 mb-1">{rv.title}</h3>
-            <p className="text-accent-foreground font-bold">${rv.price.toLocaleString()}</p>
+            <p className="text-accent-foreground font-bold">${rv.price ? rv.price.toLocaleString() : '0'}</p>
           </div>
-          <p className="text-neutral-500 text-sm mb-3">{rv.location}</p>
+          <p className="text-neutral-500 text-sm mb-3">{rv.location || 'Location not specified'}</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {rv.length && (
               <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
@@ -152,7 +152,9 @@ const RVCard = ({ rv }: RVCardProps) => {
             )}
           </div>
           <div className="flex justify-between items-center">
-            <p className="text-sm text-neutral-500">{rv.mileage.toLocaleString()} miles</p>
+            <p className="text-sm text-neutral-500">
+              {rv.mileage ? `${rv.mileage.toLocaleString()} miles` : 'Mileage not specified'}
+            </p>
             <span className="text-primary font-medium text-sm hover:underline">
               View Details
             </span>
