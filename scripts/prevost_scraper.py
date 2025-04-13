@@ -30,8 +30,14 @@ def extract_price(text):
     if not text:
         return None
     
-    # Find patterns like $1,234,567 or $1.2M or $950K
-    price_match = re.search(r'\$([0-9,]+(?:\.[0-9]+)?(?:K|M)?)', text)
+    # If it's a "Please Call For Pricing" message
+    if "call" in text.lower() and "pricing" in text.lower():
+        # Return a default price (we can adjust this)
+        return 999999  # Placeholder price for "Call for pricing"
+    
+    # Find patterns like $ 1,234,567 or $1.2M or $950K
+    # Note: The website uses "$ " with a space after the dollar sign
+    price_match = re.search(r'\$\s*([0-9,]+(?:\.[0-9]+)?(?:K|M)?)', text)
     if not price_match:
         return None
     
@@ -164,12 +170,53 @@ def scrape_listings():
         # Find the parent container of the price element
         parent = price_element.parent
         
+        # Look wider - find the closest div or p that might contain the listing description
+        container = parent
+        while container and container.name not in ('div', 'body'):
+            container = container.parent
+            
         # Get all text in the parent container
         description_text = parent.get_text(strip=True)
+        print(f"  Raw description: {description_text}")
         
+        # Try to find a better description in surrounding elements
+        # Look at the previous sibling which often contains the description
+        better_desc = None
+        prev_sibling = price_element.find_previous_sibling(['p', 'div', 'span']) 
+        if prev_sibling:
+            better_desc = prev_sibling.get_text(strip=True)
+            print(f"  Found previous sibling: {better_desc}")
+            if better_desc and len(better_desc) > 20:  # It's probably a real description
+                description_text = better_desc
+                
+        # If we still don't have a good description, look at surrounding paragraphs
+        if not description_text or len(description_text) < 20:
+            print("  Looking for better description in surrounding elements...")
+            # Try to find a paragraph near the price element
+            surrounding_paragraphs = []
+            
+            # Look at previous elements (likely to contain the model, year, etc.)
+            for el in price_element.find_all_previous(['p']):
+                text = el.get_text(strip=True)
+                if text and len(text) > 20 and 'Prevost' in text:
+                    surrounding_paragraphs.append(text)
+                    print(f"  Found potential description: {text}")
+                    
+            # If we found potential descriptions, use the most detailed one
+            if surrounding_paragraphs:
+                # Sort by length and pick the longest one
+                surrounding_paragraphs.sort(key=len, reverse=True)
+                description_text = surrounding_paragraphs[0]
+        
+        # If we still don't have a description, use a generic one with the price
+        if not description_text or len(description_text) < 5:
+            description_text = f"Prevost Luxury Coach - Listed at ${price:,}. High-end luxury motorcoach built on the renowned Prevost chassis. Features premium amenities, spacious living areas, and top-of-the-line finishes. Ideal for luxury travel and full-time RV living."
+            
         # Remove the price from the description
         if price_text in description_text:
             description_text = description_text.replace(price_text, '').strip()
+            
+        print(f"  Final description: {description_text}")
         
         # Find an image near this listing if available
         image_url = None
