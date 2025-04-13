@@ -240,7 +240,9 @@ const RVDetail = () => {
     ? (images as RvImage[])
     : [{ 
         id: 0, 
-        imageUrl: rv.featuredImage || 'https://prevost-stuff.com/images/default_coach.jpg', 
+        imageUrl: rv.featuredImage && !rv.featuredImage.includes("prevost-stuff.com")
+            ? rv.featuredImage
+            : "/images/default-rv.svg", 
         rvId: parseInt(id), 
         isPrimary: true 
       } as RvImage];
