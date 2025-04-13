@@ -183,11 +183,24 @@ def parse_listing(section):
     if description_text:
         listing["description"] = description_text
     
-    # Find images
-    img_tag = section.find('img')
-    if img_tag and 'src' in img_tag.attrs:
-        image_url = urljoin(BASE_URL, img_tag['src'])
-        listing["featuredImage"] = image_url
+    # Find images - both the primary image and any additional images
+    images = []
+    img_tags = section.find_all('img')
+    
+    for img_tag in img_tags:
+        if 'src' in img_tag.attrs:
+            image_url = urljoin(BASE_URL, img_tag['src'])
+            # Avoid tiny images like icons, buttons, etc.
+            if not ('icon' in image_url.lower() or 'button' in image_url.lower()):
+                images.append(image_url)
+    
+    # Set the featured image to the first image if available
+    if images:
+        listing["featuredImage"] = images[0]
+        
+        # Store additional images in a separate field
+        if len(images) > 1:
+            listing["additionalImages"] = images[1:]
     
     # Extract various details from the description
     if "description" in listing:

@@ -8,6 +8,9 @@
     "price": 359000,
     "description": "Coach Of The Month 2005 Prevost Featherlite H3-45 Double Slide $ 359,000",
     "featuredImage": "https://prevost-stuff.com/fc_april2025_legacy_cotm.gif",
+    "additionalImages": [
+      "http://prevost-stuff.com/legacy_logo_large_cotm_918.png"
+    ],
     "year": 2005,
     "model": "H3-45",
     "location": "Unknown",

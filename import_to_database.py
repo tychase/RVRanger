@@ -50,6 +50,13 @@ def clean_listing_for_db(listing):
             else:
                 print(f"Warning: Required field '{field}' missing from listing: {listing.get('title', 'Unknown')}")
     
+    # Handle additional images if present
+    if "additionalImages" in listing:
+        # Save the additional images for later processing
+        listing["additionalImagesArray"] = listing["additionalImages"]
+        # Remove from main listing since the API doesn't accept this field
+        del listing["additionalImages"]
+    
     # Ensure status field is present
     if "status" not in listing:
         listing["status"] = "available"
@@ -83,7 +90,34 @@ def import_listings_to_database(listings):
             )
             
             if response.status_code == 201:
-                print(f"  Success: {response.json().get('message', 'Created')}")
+                result = response.json()
+                print(f"  Success: {result.get('message', 'Created')}")
+                
+                # Get the ID of the newly created listing
+                listing_id = result.get('id')
+                
+                # If we have additional images and the listing ID, add them to the RV images table
+                if listing_id and "additionalImagesArray" in cleaned_listing:
+                    print(f"  Adding {len(cleaned_listing['additionalImagesArray'])} additional images...")
+                    for img_url in cleaned_listing['additionalImagesArray']:
+                        try:
+                            # Create the RV image record
+                            img_response = requests.post(
+                                f"{API_URL}/{listing_id}/images",
+                                json={
+                                    "rvId": listing_id,
+                                    "imageUrl": img_url,
+                                    "isPrimary": False
+                                },
+                                headers={'Content-Type': 'application/json'}
+                            )
+                            if img_response.status_code == 201:
+                                print(f"    Added image: {img_url}")
+                            else:
+                                print(f"    Failed to add image: {img_url} - {img_response.text}")
+                        except requests.exceptions.RequestException as e:
+                            print(f"    Error adding image {img_url}: {e}")
+                
                 success_count += 1
             else:
                 print(f"  Error ({response.status_code}): {response.text}")
