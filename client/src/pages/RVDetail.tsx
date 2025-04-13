@@ -12,6 +12,7 @@ import { AuthContext } from "../main";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { RvListing, RvImage } from "@shared/schema";
 
 const RVDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -275,7 +276,7 @@ const RVDetail = () => {
               
               <div className="flex items-center mb-6">
                 <h2 className="text-2xl text-accent-foreground font-bold">
-                  ${rv.price.toLocaleString()}
+                  ${rv.price ? rv.price.toLocaleString() : 'Price on request'}
                 </h2>
                 <Badge variant="outline" className="ml-3">{rv.year}</Badge>
                 {rv.isFeatured && (
@@ -288,10 +289,12 @@ const RVDetail = () => {
                   <p className="text-sm text-neutral-500">Location</p>
                   <p className="font-medium">{rv.location}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-neutral-500">Mileage</p>
-                  <p className="font-medium">{rv.mileage.toLocaleString()} miles</p>
-                </div>
+                {rv.mileage !== undefined && rv.mileage !== null && (
+                  <div>
+                    <p className="text-sm text-neutral-500">Mileage</p>
+                    <p className="font-medium">{rv.mileage.toLocaleString()} miles</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-neutral-500">Type</p>
                   <p className="font-medium">{rvType?.name || "Loading..."}</p>
@@ -375,7 +378,7 @@ const RVDetail = () => {
                       </li>
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Mileage:</span>
-                        <span className="font-medium">{rv.mileage.toLocaleString()} miles</span>
+                        <span className="font-medium">{rv.mileage ? rv.mileage.toLocaleString() : 'N/A'} {rv.mileage ? 'miles' : ''}</span>
                       </li>
                     </ul>
                   </div>
