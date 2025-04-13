@@ -65,154 +65,93 @@ export interface IStorage {
   markInquiryAsRead(id: number): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private manufacturers: Map<number, Manufacturer>;
-  private rvTypes: Map<number, RvType>;
-  private rvListings: Map<number, RvListing>;
-  private rvImages: Map<number, RvImage>;
-  private favorites: Map<number, Favorite>;
-  private inquiries: Map<number, Inquiry>;
+import { db } from "./db";
+import { eq, and, gte, lte, sql, asc, desc } from "drizzle-orm";
 
-  private userId: number;
-  private manufacturerId: number;
-  private rvTypeId: number;
-  private rvListingId: number;
-  private rvImageId: number;
-  private favoriteId: number;
-  private inquiryId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.manufacturers = new Map();
-    this.rvTypes = new Map();
-    this.rvListings = new Map();
-    this.rvImages = new Map();
-    this.favorites = new Map();
-    this.inquiries = new Map();
-
-    this.userId = 1;
-    this.manufacturerId = 1;
-    this.rvTypeId = 1;
-    this.rvListingId = 1;
-    this.rvImageId = 1;
-    this.favoriteId = 1;
-    this.inquiryId = 1;
-
-    // Initialize with seed data
-    this.seedData();
-  }
-
-  private seedData() {
-    // Seed manufacturers
-    const manufacturerNames = ["Prevost", "Newmar", "Entegra", "Tiffin", "Foretravel", "Marathon"];
-    manufacturerNames.forEach(name => {
-      this.createManufacturer({
-        name,
-        logoUrl: "",
-        description: `${name} is a leading manufacturer of luxury RVs.`
-      });
-    });
-
-    // Seed RV Types
-    const typeData = [
-      { name: "Class A Motorhomes", description: "Premium luxury diesel pushers", imageUrl: "" },
-      { name: "Luxury Fifth Wheels", description: "High-end towable RVs", imageUrl: "" },
-      { name: "Class B Campervans", description: "Compact luxury for adventures", imageUrl: "" },
-      { name: "Super C Motorhomes", description: "Power and luxury combined", imageUrl: "" }
-    ];
-    
-    typeData.forEach(type => {
-      this.createRvType(type);
-    });
-  }
-
+export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userId++;
-    const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      isAdmin: false,
-      createdAt: now
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   // Manufacturer operations
   async getAllManufacturers(): Promise<Manufacturer[]> {
-    return Array.from(this.manufacturers.values());
+    return await db.select().from(manufacturers);
   }
 
   async getManufacturer(id: number): Promise<Manufacturer | undefined> {
-    return this.manufacturers.get(id);
+    const [manufacturer] = await db.select().from(manufacturers).where(eq(manufacturers.id, id));
+    return manufacturer;
   }
 
   async createManufacturer(manufacturer: InsertManufacturer): Promise<Manufacturer> {
-    const id = this.manufacturerId++;
-    const newManufacturer: Manufacturer = { ...manufacturer, id };
-    this.manufacturers.set(id, newManufacturer);
+    const [newManufacturer] = await db.insert(manufacturers).values(manufacturer).returning();
     return newManufacturer;
   }
 
   async updateManufacturer(id: number, manufacturer: Partial<InsertManufacturer>): Promise<Manufacturer | undefined> {
-    const existingManufacturer = this.manufacturers.get(id);
-    if (!existingManufacturer) return undefined;
-    
-    const updatedManufacturer = { ...existingManufacturer, ...manufacturer };
-    this.manufacturers.set(id, updatedManufacturer);
+    const [updatedManufacturer] = await db
+      .update(manufacturers)
+      .set(manufacturer)
+      .where(eq(manufacturers.id, id))
+      .returning();
     return updatedManufacturer;
   }
 
   async deleteManufacturer(id: number): Promise<boolean> {
-    return this.manufacturers.delete(id);
+    const result = await db
+      .delete(manufacturers)
+      .where(eq(manufacturers.id, id))
+      .returning({ id: manufacturers.id });
+    return result.length > 0;
   }
 
   // RV Type operations
   async getAllRvTypes(): Promise<RvType[]> {
-    return Array.from(this.rvTypes.values());
+    return await db.select().from(rvTypes);
   }
 
   async getRvType(id: number): Promise<RvType | undefined> {
-    return this.rvTypes.get(id);
+    const [rvType] = await db.select().from(rvTypes).where(eq(rvTypes.id, id));
+    return rvType;
   }
 
   async createRvType(rvType: InsertRvType): Promise<RvType> {
-    const id = this.rvTypeId++;
-    const newRvType: RvType = { ...rvType, id };
-    this.rvTypes.set(id, newRvType);
+    const [newRvType] = await db.insert(rvTypes).values(rvType).returning();
     return newRvType;
   }
 
   async updateRvType(id: number, rvType: Partial<InsertRvType>): Promise<RvType | undefined> {
-    const existingRvType = this.rvTypes.get(id);
-    if (!existingRvType) return undefined;
-    
-    const updatedRvType = { ...existingRvType, ...rvType };
-    this.rvTypes.set(id, updatedRvType);
+    const [updatedRvType] = await db
+      .update(rvTypes)
+      .set(rvType)
+      .where(eq(rvTypes.id, id))
+      .returning();
     return updatedRvType;
   }
 
   async deleteRvType(id: number): Promise<boolean> {
-    return this.rvTypes.delete(id);
+    const result = await db
+      .delete(rvTypes)
+      .where(eq(rvTypes.id, id))
+      .returning({ id: rvTypes.id });
+    return result.length > 0;
   }
 
   // RV Listing operations
@@ -226,180 +165,230 @@ export class MemStorage implements IStorage {
     maxPrice?: number;
     featured?: boolean;
   }): Promise<RvListing[]> {
-    let listings = Array.from(this.rvListings.values());
+    let query = db.select().from(rvListings);
     
     if (options) {
+      let conditions = [];
+      
       if (options.manufacturerId) {
-        listings = listings.filter(rv => rv.manufacturerId === options.manufacturerId);
+        conditions.push(eq(rvListings.manufacturerId, options.manufacturerId));
       }
       
       if (options.typeId) {
-        listings = listings.filter(rv => rv.typeId === options.typeId);
+        conditions.push(eq(rvListings.typeId, options.typeId));
       }
       
       if (options.year) {
-        listings = listings.filter(rv => rv.year === options.year);
+        conditions.push(eq(rvListings.year, options.year));
       }
       
       if (options.minPrice) {
-        listings = listings.filter(rv => rv.price >= options.minPrice!);
+        conditions.push(gte(rvListings.price, options.minPrice));
       }
       
       if (options.maxPrice) {
-        listings = listings.filter(rv => rv.price <= options.maxPrice!);
+        conditions.push(lte(rvListings.price, options.maxPrice));
       }
       
       if (options.featured !== undefined) {
-        listings = listings.filter(rv => rv.isFeatured === options.featured);
+        conditions.push(eq(rvListings.isFeatured, options.featured));
       }
+      
+      if (conditions.length > 0) {
+        // Apply all conditions with AND
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply order by (newest first)
+      query = query.orderBy(desc(rvListings.id));
       
       // Apply pagination
-      if (options.offset) {
-        listings = listings.slice(options.offset);
+      if (options.limit !== undefined) {
+        query = query.limit(options.limit);
       }
       
-      if (options.limit) {
-        listings = listings.slice(0, options.limit);
+      if (options.offset !== undefined) {
+        query = query.offset(options.offset);
       }
     }
     
-    return listings;
+    const result = await query;
+    return result;
   }
 
   async getRvListing(id: number): Promise<RvListing | undefined> {
-    return this.rvListings.get(id);
+    const [listing] = await db.select().from(rvListings).where(eq(rvListings.id, id));
+    return listing;
   }
 
   async getRvListingsByUser(userId: number): Promise<RvListing[]> {
-    return Array.from(this.rvListings.values()).filter(
-      rv => rv.sellerId === userId
-    );
+    return await db
+      .select()
+      .from(rvListings)
+      .where(eq(rvListings.sellerId, userId));
   }
 
   async createRvListing(rvListing: InsertRvListing): Promise<RvListing> {
-    const id = this.rvListingId++;
-    const now = new Date();
-    const newRvListing: RvListing = { 
-      ...rvListing, 
-      id, 
-      createdAt: now,
-      updatedAt: now
-    };
-    this.rvListings.set(id, newRvListing);
-    return newRvListing;
+    const [newListing] = await db.insert(rvListings).values(rvListing).returning();
+    return newListing;
   }
 
   async updateRvListing(id: number, rvListing: Partial<InsertRvListing>): Promise<RvListing | undefined> {
-    const existingRvListing = this.rvListings.get(id);
-    if (!existingRvListing) return undefined;
-    
-    const now = new Date();
-    const updatedRvListing = { 
-      ...existingRvListing, 
-      ...rvListing,
-      updatedAt: now
-    };
-    this.rvListings.set(id, updatedRvListing);
-    return updatedRvListing;
+    const [updatedListing] = await db
+      .update(rvListings)
+      .set({
+        ...rvListing,
+        updatedAt: new Date()
+      })
+      .where(eq(rvListings.id, id))
+      .returning();
+    return updatedListing;
   }
 
   async deleteRvListing(id: number): Promise<boolean> {
-    return this.rvListings.delete(id);
+    const result = await db
+      .delete(rvListings)
+      .where(eq(rvListings.id, id))
+      .returning({ id: rvListings.id });
+    return result.length > 0;
   }
 
   // RV Images operations
   async getRvImages(rvId: number): Promise<RvImage[]> {
-    return Array.from(this.rvImages.values()).filter(
-      img => img.rvId === rvId
-    );
+    return await db
+      .select()
+      .from(rvImages)
+      .where(eq(rvImages.rvId, rvId));
   }
 
   async addRvImage(rvImage: InsertRvImage): Promise<RvImage> {
-    const id = this.rvImageId++;
-    const newRvImage: RvImage = { ...rvImage, id };
-    this.rvImages.set(id, newRvImage);
-    return newRvImage;
+    const [newImage] = await db.insert(rvImages).values(rvImage).returning();
+    return newImage;
   }
 
   async deleteRvImage(id: number): Promise<boolean> {
-    return this.rvImages.delete(id);
+    const result = await db
+      .delete(rvImages)
+      .where(eq(rvImages.id, id))
+      .returning({ id: rvImages.id });
+    return result.length > 0;
   }
 
   // Favorites operations
   async getUserFavorites(userId: number): Promise<RvListing[]> {
-    const userFavorites = Array.from(this.favorites.values()).filter(
-      fav => fav.userId === userId
-    );
+    const userFavorites = await db
+      .select({
+        rvId: favorites.rvId
+      })
+      .from(favorites)
+      .where(eq(favorites.userId, userId));
     
     const favoriteRvIds = userFavorites.map(fav => fav.rvId);
     
-    return Array.from(this.rvListings.values()).filter(
-      rv => favoriteRvIds.includes(rv.id)
-    );
+    if (favoriteRvIds.length === 0) {
+      return [];
+    }
+    
+    return await db
+      .select()
+      .from(rvListings)
+      .where(
+        sql`${rvListings.id} IN (${favoriteRvIds.join(',')})`
+      );
   }
 
   async addFavorite(favorite: InsertFavorite): Promise<Favorite> {
-    const id = this.favoriteId++;
-    const now = new Date();
-    const newFavorite: Favorite = { 
-      ...favorite, 
-      id, 
-      createdAt: now
-    };
-    this.favorites.set(id, newFavorite);
+    const [newFavorite] = await db.insert(favorites).values(favorite).returning();
     return newFavorite;
   }
 
   async removeFavorite(userId: number, rvId: number): Promise<boolean> {
-    const favoriteToRemove = Array.from(this.favorites.values()).find(
-      fav => fav.userId === userId && fav.rvId === rvId
-    );
-    
-    if (!favoriteToRemove) return false;
-    
-    return this.favorites.delete(favoriteToRemove.id);
+    const result = await db
+      .delete(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.rvId, rvId)
+        )
+      )
+      .returning({ id: favorites.id });
+    return result.length > 0;
   }
 
   async isFavorited(userId: number, rvId: number): Promise<boolean> {
-    return Array.from(this.favorites.values()).some(
-      fav => fav.userId === userId && fav.rvId === rvId
-    );
+    const [favorite] = await db
+      .select()
+      .from(favorites)
+      .where(
+        and(
+          eq(favorites.userId, userId),
+          eq(favorites.rvId, rvId)
+        )
+      );
+    return !!favorite;
   }
 
   // Inquiry operations
   async getRvInquiries(rvId: number): Promise<Inquiry[]> {
-    return Array.from(this.inquiries.values()).filter(
-      inquiry => inquiry.rvId === rvId
-    );
+    return await db
+      .select()
+      .from(inquiries)
+      .where(eq(inquiries.rvId, rvId));
   }
 
   async getUserInquiries(userId: number): Promise<Inquiry[]> {
-    return Array.from(this.inquiries.values()).filter(
-      inquiry => inquiry.userId === userId
-    );
+    return await db
+      .select()
+      .from(inquiries)
+      .where(eq(inquiries.userId, userId));
   }
 
   async createInquiry(inquiry: InsertInquiry): Promise<Inquiry> {
-    const id = this.inquiryId++;
-    const now = new Date();
-    const newInquiry: Inquiry = { 
-      ...inquiry, 
-      id, 
-      createdAt: now,
-      isRead: false
-    };
-    this.inquiries.set(id, newInquiry);
+    const [newInquiry] = await db.insert(inquiries).values(inquiry).returning();
     return newInquiry;
   }
 
   async markInquiryAsRead(id: number): Promise<boolean> {
-    const inquiry = this.inquiries.get(id);
-    if (!inquiry) return false;
-    
-    const updatedInquiry = { ...inquiry, isRead: true };
-    this.inquiries.set(id, updatedInquiry);
-    return true;
+    const [updatedInquiry] = await db
+      .update(inquiries)
+      .set({ isRead: true })
+      .where(eq(inquiries.id, id))
+      .returning();
+    return !!updatedInquiry;
+  }
+
+  // Seed initial data if database is empty
+  async seedInitialData(): Promise<void> {
+    // Check if manufacturers exist
+    const existingManufacturers = await this.getAllManufacturers();
+    if (existingManufacturers.length === 0) {
+      // Seed manufacturers
+      const manufacturerNames = ["Prevost", "Newmar", "Entegra", "Tiffin", "Foretravel", "Marathon"];
+      for (const name of manufacturerNames) {
+        await this.createManufacturer({
+          name,
+          logoUrl: "",
+          description: `${name} is a leading manufacturer of luxury RVs.`
+        });
+      }
+    }
+
+    // Check if RV types exist
+    const existingTypes = await this.getAllRvTypes();
+    if (existingTypes.length === 0) {
+      // Seed RV Types
+      const typeData = [
+        { name: "Class A Motorhomes", description: "Premium luxury diesel pushers", imageUrl: "" },
+        { name: "Luxury Fifth Wheels", description: "High-end towable RVs", imageUrl: "" },
+        { name: "Class B Campervans", description: "Compact luxury for adventures", imageUrl: "" },
+        { name: "Super C Motorhomes", description: "Power and luxury combined", imageUrl: "" }
+      ];
+      
+      for (const type of typeData) {
+        await this.createRvType(type);
+      }
+    }
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

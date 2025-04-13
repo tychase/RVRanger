@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -15,6 +16,12 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const usersRelations = relations(users, ({ many }) => ({
+  listings: many(rvListings, { relationName: "user_listings" }),
+  favorites: many(favorites),
+  inquiries: many(inquiries, { relationName: "user_inquiries" }),
+}));
+
 // RV Manufacturers
 export const manufacturers = pgTable("manufacturers", {
   id: serial("id").primaryKey(),
@@ -23,6 +30,10 @@ export const manufacturers = pgTable("manufacturers", {
   description: text("description"),
 });
 
+export const manufacturersRelations = relations(manufacturers, ({ many }) => ({
+  rvListings: many(rvListings),
+}));
+
 // RV Types/Categories
 export const rvTypes = pgTable("rv_types", {
   id: serial("id").primaryKey(),
@@ -30,6 +41,10 @@ export const rvTypes = pgTable("rv_types", {
   description: text("description"),
   imageUrl: text("image_url"),
 });
+
+export const rvTypesRelations = relations(rvTypes, ({ many }) => ({
+  rvListings: many(rvListings),
+}));
 
 // RV Listings
 export const rvListings = pgTable("rv_listings", {
@@ -53,6 +68,25 @@ export const rvListings = pgTable("rv_listings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const rvListingsRelations = relations(rvListings, ({ one, many }) => ({
+  manufacturer: one(manufacturers, {
+    fields: [rvListings.manufacturerId],
+    references: [manufacturers.id],
+  }),
+  type: one(rvTypes, {
+    fields: [rvListings.typeId],
+    references: [rvTypes.id],
+  }),
+  seller: one(users, {
+    fields: [rvListings.sellerId],
+    references: [users.id],
+    relationName: "user_listings"
+  }),
+  images: many(rvImages),
+  favorites: many(favorites),
+  inquiries: many(inquiries),
+}));
+
 // RV Images
 export const rvImages = pgTable("rv_images", {
   id: serial("id").primaryKey(),
@@ -61,6 +95,13 @@ export const rvImages = pgTable("rv_images", {
   isPrimary: boolean("is_primary").default(false),
 });
 
+export const rvImagesRelations = relations(rvImages, ({ one }) => ({
+  rv: one(rvListings, {
+    fields: [rvImages.rvId],
+    references: [rvListings.id],
+  }),
+}));
+
 // Favorites/Saved RVs
 export const favorites = pgTable("favorites", {
   id: serial("id").primaryKey(),
@@ -68,6 +109,17 @@ export const favorites = pgTable("favorites", {
   rvId: integer("rv_id").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+  user: one(users, {
+    fields: [favorites.userId],
+    references: [users.id],
+  }),
+  rv: one(rvListings, {
+    fields: [favorites.rvId],
+    references: [rvListings.id],
+  }),
+}));
 
 // Inquiries
 export const inquiries = pgTable("inquiries", {
@@ -81,6 +133,18 @@ export const inquiries = pgTable("inquiries", {
   createdAt: timestamp("created_at").defaultNow(),
   isRead: boolean("is_read").default(false),
 });
+
+export const inquiriesRelations = relations(inquiries, ({ one }) => ({
+  rv: one(rvListings, {
+    fields: [inquiries.rvId],
+    references: [rvListings.id],
+  }),
+  user: one(users, {
+    fields: [inquiries.userId],
+    references: [users.id],
+    relationName: "user_inquiries"
+  }),
+}));
 
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
