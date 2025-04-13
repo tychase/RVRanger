@@ -15,9 +15,9 @@ import requests
 from bs4 import BeautifulSoup
 
 # Base URL for the website
-BASE_URL = "https://www.prevost-stuff.com"
+BASE_URL = "https://prevost-stuff.com"
 # URL of the page with RV listings
-LISTINGS_URL = f"{BASE_URL}/prevost_sale.htm"
+LISTINGS_URL = f"{BASE_URL}/used_coaches.htm"
 
 # Default manufacturer ID for Prevost
 PREVOST_MANUFACTURER_ID = 1
@@ -142,53 +142,54 @@ def scrape_listings():
     
     soup = BeautifulSoup(response.text, 'lxml')
     
-    # The main table contains the listings
-    listings_table = soup.find('table', {'width': '700'})
-    if not listings_table:
-        print("Could not find the listings table on the page", file=sys.stderr)
-        return []
-    
+    # Look for listing containers - typically a table or divs with listing content
     listings = []
     
-    # Each listing is typically in a row with multiple cells
-    rows = listings_table.find_all('tr')
+    # Look specifically for price elements with the redprice class
+    price_elements = soup.find_all(['span', 'p'], class_=['redprice', 'redprice1'])
+    print(f"Found {len(price_elements)} price elements")
     
-    for i, row in enumerate(rows):
-        # Skip header rows
-        if i < 2:
-            continue
+    for price_element in price_elements:
+        # Get the price text
+        price_text = price_element.get_text(strip=True)
+        print(f"Price text: {price_text}")
+        price = extract_price(price_text)
         
-        cells = row.find_all('td')
-        if len(cells) < 3:
+        if not price:
+            print(f"  Failed to extract price from: {price_text}")
             continue
-        
-        # Extract the image if available
-        image_cell = cells[0]
-        image_tag = image_cell.find('img')
-        if image_tag and 'src' in image_tag.attrs:
-            image_url = urljoin(BASE_URL, image_tag['src'])
         else:
-            image_url = None
+            print(f"  Extracted price: ${price:,}")
         
-        # The description is usually in the second cell
-        description_cell = cells[1]
-        description_text = description_cell.get_text(strip=True)
+        # Find the parent container of the price element
+        parent = price_element.parent
         
-        # The price is usually in the third cell
-        price_cell = cells[2]
-        price_text = price_cell.get_text(strip=True)
+        # Get all text in the parent container
+        description_text = parent.get_text(strip=True)
         
-        # Check if there's valid content
-        if not description_text and not price_text:
-            continue
+        # Remove the price from the description
+        if price_text in description_text:
+            description_text = description_text.replace(price_text, '').strip()
         
-        # Get additional details from the description text
+        # Find an image near this listing if available
+        image_url = None
+        img_tag = parent.find('img')
+        if img_tag and 'src' in img_tag.attrs:
+            image_url = urljoin(BASE_URL, img_tag['src'])
+        else:
+            # Try to find an image in a sibling or parent
+            for sibling in parent.find_all_previous(['p', 'div']):
+                img_tag = sibling.find('img')
+                if img_tag and 'src' in img_tag.attrs:
+                    image_url = urljoin(BASE_URL, img_tag['src'])
+                    break
+        
+        # Extract details from description
         year = extract_year(description_text)
         mileage = extract_mileage(description_text)
         length = extract_length(description_text)
         slides = extract_slides(description_text)
         model = extract_model(description_text)
-        price = extract_price(price_text) or extract_price(description_text)
         
         # Create a title from the description
         title_parts = []
@@ -207,7 +208,7 @@ def scrape_listings():
         location = location_match.group(2).strip() if location_match else "Unknown"
         
         # Check if it's a featured listing (arbitrary criteria)
-        is_featured = bool(image_url) and price and price > 500000
+        is_featured = bool(image_url) and price > 500000
         
         # Create the listing dictionary
         listing = {
@@ -237,6 +238,190 @@ def scrape_listings():
     
     print(f"Found {len(listings)} listings")
     return listings
+
+
+def extract_listing_from_cells(cells):
+    """Extract listing data from table cells."""
+    # Initialize variables
+    image_url = None
+    description_text = ""
+    price_text = ""
+    
+    # First, look for the image
+    for cell in cells:
+        img_tag = cell.find('img')
+        if img_tag and 'src' in img_tag.attrs:
+            image_url = urljoin(BASE_URL, img_tag['src'])
+            break
+    
+    # Next, look for text content in each cell
+    for cell in cells:
+        text = cell.get_text(strip=True)
+        
+        # Skip empty cells
+        if not text:
+            continue
+            
+        # Check if this cell contains a price
+        if '$' in text and not price_text:
+            price_text = text
+        # Otherwise, add it to the description
+        elif not description_text:
+            description_text = text
+        elif len(description_text) < len(text):
+            # If we already have a description but this one is longer, use this one
+            description_text = text
+    
+    # If we don't have a description or any text, return None
+    if not description_text:
+        return None
+    
+    # Get additional details from the description text
+    year = extract_year(description_text)
+    mileage = extract_mileage(description_text)
+    length = extract_length(description_text)
+    slides = extract_slides(description_text)
+    model = extract_model(description_text)
+    price = extract_price(price_text) or extract_price(description_text)
+    
+    # Create a title from the description
+    title_parts = []
+    if year:
+        title_parts.append(str(year))
+    if model:
+        title_parts.append(model)
+    title_parts.append("Prevost")
+    if not title_parts:
+        title = "Prevost RV"
+    else:
+        title = " ".join(title_parts)
+    
+    # Extract location if available
+    location_match = re.search(r'(located|location)[:\s]*(.*?)[\.\(\)]', description_text, re.IGNORECASE)
+    location = location_match.group(2).strip() if location_match else "Unknown"
+    
+    # Check if it's a featured listing (arbitrary criteria)
+    is_featured = bool(image_url) and price and price > 500000
+    
+    # Create the listing dictionary
+    listing = {
+        "title": title,
+        "description": description_text,
+        "price": price,
+        "year": year,
+        "make": "Prevost",
+        "model": model,
+        "length": length,
+        "mileage": mileage,
+        "manufacturerId": PREVOST_MANUFACTURER_ID,
+        "typeId": CLASS_A_TYPE_ID,
+        "location": location,
+        "featuredImage": image_url,
+        "slides": slides,
+        "fuelType": "Diesel",  # All Prevost RVs are diesel
+        "isFeatured": is_featured,
+        # Field required for database insertion but not available from scraping
+        "sellerId": 1  # Default seller ID, to be replaced later if needed
+    }
+    
+    # Filter out None values
+    listing = {k: v for k, v in listing.items() if v is not None}
+    
+    return listing
+
+
+def extract_listing_from_div(div):
+    """Extract listing data from a div element."""
+    # Initialize variables
+    image_url = None
+    description_text = ""
+    price_text = ""
+    
+    # Look for image
+    img_tag = div.find('img')
+    if img_tag and 'src' in img_tag.attrs:
+        image_url = urljoin(BASE_URL, img_tag['src'])
+    
+    # Look for price
+    price_elem = div.find(['span', 'div', 'p'], class_=['price', 'cost', 'value'])
+    if price_elem:
+        price_text = price_elem.get_text(strip=True)
+    else:
+        # Try to find a price pattern in any text
+        for elem in div.find_all(['span', 'div', 'p']):
+            text = elem.get_text(strip=True)
+            if '$' in text:
+                price_text = text
+                break
+    
+    # Look for description
+    desc_elem = div.find(['span', 'div', 'p'], class_=['description', 'details', 'info'])
+    if desc_elem:
+        description_text = desc_elem.get_text(strip=True)
+    else:
+        # If no specific description element, use the whole div text
+        description_text = div.get_text(strip=True)
+        
+        # If we have a price, make sure it's not just the price text
+        if price_text and price_text in description_text:
+            description_text = description_text.replace(price_text, '').strip()
+    
+    # If we don't have a description, return None
+    if not description_text:
+        return None
+    
+    # Get additional details from the description text
+    year = extract_year(description_text)
+    mileage = extract_mileage(description_text)
+    length = extract_length(description_text)
+    slides = extract_slides(description_text)
+    model = extract_model(description_text)
+    price = extract_price(price_text) or extract_price(description_text)
+    
+    # Create a title from the description
+    title_parts = []
+    if year:
+        title_parts.append(str(year))
+    if model:
+        title_parts.append(model)
+    title_parts.append("Prevost")
+    if not title_parts:
+        title = "Prevost RV"
+    else:
+        title = " ".join(title_parts)
+    
+    # Extract location if available
+    location_match = re.search(r'(located|location)[:\s]*(.*?)[\.\(\)]', description_text, re.IGNORECASE)
+    location = location_match.group(2).strip() if location_match else "Unknown"
+    
+    # Check if it's a featured listing (arbitrary criteria)
+    is_featured = bool(image_url) and price and price > 500000
+    
+    # Create the listing dictionary
+    listing = {
+        "title": title,
+        "description": description_text,
+        "price": price,
+        "year": year,
+        "make": "Prevost",
+        "model": model,
+        "length": length,
+        "mileage": mileage,
+        "manufacturerId": PREVOST_MANUFACTURER_ID,
+        "typeId": CLASS_A_TYPE_ID,
+        "location": location,
+        "featuredImage": image_url,
+        "slides": slides,
+        "fuelType": "Diesel",  # All Prevost RVs are diesel
+        "isFeatured": is_featured,
+        # Field required for database insertion but not available from scraping
+        "sellerId": 1  # Default seller ID, to be replaced later if needed
+    }
+    
+    # Filter out None values
+    listing = {k: v for k, v in listing.items() if v is not None}
+    
+    return listing
 
 
 def save_listings_to_json(listings, output_file='prevost_listings.json'):
