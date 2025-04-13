@@ -52,52 +52,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // RV Listings endpoints
   app.get("/api/listings", async (req, res) => {
-    const { limit, offset, manufacturerId, typeId, year, minPrice, maxPrice, featured } = req.query;
-    
-    const options: any = {};
-    
-    if (limit) options.limit = parseInt(limit as string);
-    if (offset) options.offset = parseInt(offset as string);
-    if (manufacturerId) options.manufacturerId = parseInt(manufacturerId as string);
-    if (typeId) options.typeId = parseInt(typeId as string);
-    if (year) options.year = parseInt(year as string);
-    if (minPrice) options.minPrice = parseFloat(minPrice as string);
-    if (maxPrice) options.maxPrice = parseFloat(maxPrice as string);
-    if (featured === 'true') options.featured = true;
-    
-    const listings = await storage.getAllRvListings(options);
-    res.json(listings);
+    try {
+      const { limit, offset, manufacturerId, typeId, year, minPrice, maxPrice, featured } = req.query;
+      
+      const options: any = {};
+      
+      if (limit) options.limit = parseInt(limit as string);
+      if (offset) options.offset = parseInt(offset as string);
+      if (manufacturerId) options.manufacturerId = parseInt(manufacturerId as string);
+      if (typeId) options.typeId = parseInt(typeId as string);
+      if (year) options.year = parseInt(year as string);
+      if (minPrice) options.minPrice = parseFloat(minPrice as string);
+      if (maxPrice) options.maxPrice = parseFloat(maxPrice as string);
+      if (featured === 'true') options.featured = true;
+      
+      console.log(`[GET /api/listings] Fetching listings with options:`, options);
+      const listings = await storage.getAllRvListings(options);
+      
+      console.log(`[GET /api/listings] Found ${listings.length} listings`);
+      res.json(listings);
+    } catch (error) {
+      console.error('[GET /api/listings] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to retrieve listings", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
 
   app.get("/api/listings/featured", async (req, res) => {
-    const listings = await storage.getAllRvListings({ featured: true, limit: 8 });
-    res.json(listings);
+    try {
+      console.log('[GET /api/listings/featured] Fetching featured listings');
+      const listings = await storage.getAllRvListings({ featured: true, limit: 8 });
+      
+      console.log(`[GET /api/listings/featured] Found ${listings.length} featured listings`);
+      res.json(listings);
+    } catch (error) {
+      console.error('[GET /api/listings/featured] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to retrieve featured listings", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
 
   app.get("/api/listings/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "Invalid listing ID" });
-    }
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid listing ID" });
+      }
 
-    const listing = await storage.getRvListing(id);
-    if (!listing) {
-      return res.status(404).json({ message: "RV listing not found" });
-    }
+      console.log(`[GET /api/listings/${id}] Fetching listing details`);
+      const listing = await storage.getRvListing(id);
+      
+      if (!listing) {
+        console.log(`[GET /api/listings/${id}] Listing not found`);
+        return res.status(404).json({ message: "RV listing not found" });
+      }
 
-    res.json(listing);
+      console.log(`[GET /api/listings/${id}] Successfully retrieved listing`);
+      res.json(listing);
+    } catch (error) {
+      console.error(`[GET /api/listings/:id] Error:`, error);
+      res.status(500).json({ 
+        message: "Failed to retrieve listing", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
 
   app.post("/api/listings", async (req, res) => {
     try {
+      console.log('[POST /api/listings] Creating new listing with data:', JSON.stringify(req.body));
+      
       const validated = insertRvListingSchema.parse(req.body);
+      
+      // Ensure manufacturer and type exist
+      if (validated.manufacturerId) {
+        const manufacturer = await storage.getManufacturer(validated.manufacturerId);
+        if (!manufacturer) {
+          return res.status(400).json({ message: `Manufacturer with ID ${validated.manufacturerId} not found` });
+        }
+      }
+      
+      if (validated.typeId) {
+        const type = await storage.getRvType(validated.typeId);
+        if (!type) {
+          return res.status(400).json({ message: `RV type with ID ${validated.typeId} not found` });
+        }
+      }
+      
       const listing = await storage.createRvListing(validated);
-      res.status(201).json(listing);
+      console.log(`[POST /api/listings] Successfully created listing with ID ${listing.id}`);
+      
+      res.status(201).json({
+        message: "RV listing created successfully",
+        data: listing 
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid listing data", errors: error.errors });
+        console.error('[POST /api/listings] Validation error:', error.errors);
+        return res.status(400).json({ 
+          message: "Invalid listing data", 
+          errors: error.errors 
+        });
       }
-      res.status(500).json({ message: "Failed to create listing" });
+      
+      console.error('[POST /api/listings] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to create listing", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
