@@ -1,0 +1,73 @@
+Found 19 featured images in rv_listings table
+Found 49 images in rv_images table
+Found 54 image files in public/images/rv_listings
+
+Missing featured images:
+RV ID 7: https://prevost-stuff.com/images/test_2015PrevostMarathonX3_Johnson-03.jpg
+RV ID 1: https://prevost-stuff.com/fc_april2025_legacy_cotm.gif
+RV ID 2: https://prevost-stuff.com/images/default_coach.jpg
+RV ID 3: https://prevost-stuff.com/images/default_coach.jpg
+RV ID 4: https://prevost-stuff.com/images/default_coach.jpg
+RV ID 5: https://prevost-stuff.com/images/default_coach.jpg
+RV ID 6: https://prevost-stuff.com/images/default_coach.jpg
+RV ID 8: https://prevost-stuff.com/images/default_coach.jpg
+RV ID 9: https://prevost-stuff.com/images/default_coach.jpg
+
+Missing rv_images:
+Image ID 1 (RV ID 1): http://prevost-stuff.com/legacy_logo_large_cotm_918.png
+Image ID 6 (RV ID 14): https://prevost-stuff.com/images/test_2020PrevostMarathonH_TMS-01.jpg
+Image ID 7 (RV ID 14): https://prevost-stuff.com/images/test_2020PrevostMarathonH_TMS-02.jpg
+Image ID 8 (RV ID 13) (PRIMARY): https://prevost-stuff.com/images/test_2020PrevostMarathonH_TMS-03.jpg
+Image ID 9 (RV ID 13): https://prevost-stuff.com/images/test_2025PrevostNashvilleH_Nash-01.jpg
+Image ID 10 (RV ID 13): https://prevost-stuff.com/images/test_2025PrevostNashvilleH_Nash-02.jpg
+Image ID 11 (RV ID 11) (PRIMARY): https://prevost-stuff.com/images/test_2025PrevostNashvilleH_Nash-03.jpg
+Image ID 12 (RV ID 11): https://prevost-stuff.com/images/test_2022PrevostEmeraldH_Olympia-01.jpg
+Image ID 13 (RV ID 11): https://prevost-stuff.com/images/test_2022PrevostEmeraldH_Olympia-02.jpg
+Image ID 14 (RV ID 10) (PRIMARY): https://prevost-stuff.com/images/test_2022PrevostEmeraldH_Olympia-03.jpg
+Image ID 15 (RV ID 10): https://prevost-stuff.com/images/test_2015PrevostMarathonX3_Johnson-01.jpg
+Image ID 16 (RV ID 10): https://prevost-stuff.com/images/test_2015PrevostMarathonX3_Johnson-02.jpg
+Image ID 17 (RV ID 7) (PRIMARY): https://prevost-stuff.com/images/test_2015PrevostMarathonX3_Johnson-03.jpg
+Image ID 18 (RV ID 7): https://prevost-stuff.com/images/test_2025PrevostEpicX3_Epic-01.jpg
+Image ID 19 (RV ID 7): https://prevost-stuff.com/images/test_2025PrevostEpicX3_Epic-02.jpg
+
+Unused files in the filesystem:
+/images/rv_listings/rv_2005_Featherlite_29_16fe7f103ef749df923c0163e01aa5bd.jpg
+/images/rv_listings/rv_2005_Featherlite_30_6b38b87f930f4d6c8bce1cc8c46c05f2.jpg
+/images/rv_listings/rv_2005_Featherlite_31_5241befecedd481491097942ecc9decf.jpg
+/images/rv_listings/rv_2005_Featherlite_32_031483774b7949c3ac2e1232bf5f1aae.jpg
+/images/rv_listings/rv_2005_Featherlite_33_20fab769de254641ab03726abb57d9e8.jpg
+/images/rv_listings/rv_2005_Featherlite_34_cabfde91ca3846dd8f9f7c25df1dbfc7.jpg
+/images/rv_listings/rv_2005_Featherlite_35_df29ecd190cf4d549c0e1f054380dbd3.jpg
+/images/rv_listings/rv_2005_Featherlite_36_5885086af1ae47fcaf39098080146f2b.jpg
+/images/rv_listings/rv_2005_Featherlite_37_a4b28efbdc9e4f4a9e28cef9d6ab159a.jpg
+/images/rv_listings/rv_2005_Featherlite_38_4bde0eb9d4b943f29e7f1089026c8cde.jpg
+/images/rv_listings/rv_2005_Featherlite_39_71a23ff93210482d841e9bac509a81f5.jpg
+/images/rv_listings/rv_2005_Featherlite_40_bb3caeaa6bd14b4cb2ebd19cec444b40.jpg
+/images/rv_listings/rv_2005_Featherlite_41_af97bb23e4604b3db44f8f71a73df835.jpg
+/images/rv_listings/rv_2005_Featherlite_42_0e362787eff1406399ee3b359e4c04b2.jpg
+/images/rv_listings/rv_2005_Featherlite_43_ca6adb999f0f4b5f9cd4a80c5cd0393a.jpg
+/images/rv_listings/rv_2005_Featherlite_44_7111ce48734a41f5986c16bac2f3875e.jpg
+/images/rv_listings/rv_2005_Featherlite_45_7af9216328d64ee58feca4cb6e8e66b9.jpg
+/images/rv_listings/rv_2005_Featherlite_46_3c195847f7db48a39cd9312804246fed.jpg
+/images/rv_listings/test_download_703c51b1ed4941a4b6f1f5ba88129c17.jpg
+/images/rv_listings/test_download_f7314bcfa7114ee0b660a3b21a6065c7.jpg
+
+WARNING: Found 24 missing image files!
+NOTE: Found 20 unused image files in the filesystem.
+
+Inconsistencies between featuredImage and primary image in rv_images:
+RV ID 15:
+  - Featured image: /images/rv_listings/rv_2005_Featherlite_11_c217bb36153f4237b48cc2b314c6e1a0.jpg
+  - Primary image (ID 2): /images/rv_listings/rv_15_main_6e6996802995482d9b495d4e83d7a5f1.jpg
+RV ID 14:
+  - Featured image: /images/rv_listings/rv_2005_Featherlite_14_772e804dca2143738e7a1585138261b5.jpg
+  - Primary image (ID 5): /images/rv_listings/rv_14_main_2ac9bc86c10e4a86993fdb444eed2fb0.jpg
+RV ID 13:
+  - Featured image: /images/rv_listings/rv_2005_Featherlite_17_64bd62783ebc498b857c9bc05088cd1f.jpg
+  - Primary image (ID 8): https://prevost-stuff.com/images/test_2020PrevostMarathonH_TMS-03.jpg
+RV ID 11:
+  - Featured image: /images/rv_listings/rv_2005_Featherlite_23_dde0ec9dedc44f8ca7b00bfde1fe1983.jpg
+  - Primary image (ID 11): https://prevost-stuff.com/images/test_2025PrevostNashvilleH_Nash-03.jpg
+RV ID 10:
+  - Featured image: /images/rv_listings/rv_2005_Featherlite_26_05160f37d3574699b741ea6d637283a1.jpg
+  - Primary image (ID 14): https://prevost-stuff.com/images/test_2022PrevostEmeraldH_Olympia-03.jpg

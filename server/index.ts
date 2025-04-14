@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
@@ -7,6 +8,9 @@ import { pool } from "./db";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Explicitly serve static files from the public directory
+app.use('/images', express.static(path.join(import.meta.dirname, '..', 'public', 'images')));
 
 app.use((req, res, next) => {
   const start = Date.now();

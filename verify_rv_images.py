@@ -7,6 +7,7 @@ filesystem. It identifies any missing or mismatched files.
 """
 
 import os
+import sys
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
@@ -16,6 +17,9 @@ load_dotenv()
 
 # Database connection string
 DB_URL = os.getenv("DATABASE_URL")
+if not DB_URL:
+    print("ERROR: DATABASE_URL environment variable not set!")
+    sys.exit(1)
 
 # Directory where images should be stored
 IMAGE_DIR = "public/images/rv_listings"
@@ -59,12 +63,16 @@ def get_image_paths_from_db():
                 featured_images[row['id']] = row['featured_image']
             
             # Get all images from rv_images
-            cur.execute("SELECT id, rv_id, image_url FROM rv_images")
+            cur.execute("""
+                SELECT id, rv_id, image_url, is_primary 
+                FROM rv_images
+            """)
             for row in cur.fetchall():
                 rv_images.append({
                     'id': row['id'],
                     'rvId': row['rv_id'],
-                    'imageUrl': row['image_url']
+                    'imageUrl': row['image_url'],
+                    'isPrimary': row['is_primary']
                 })
     except Exception as e:
         print(f"Error querying database: {e}")
@@ -140,13 +148,14 @@ def verify_images():
     if missing_rv_images:
         print("\nMissing rv_images:")
         for image in missing_rv_images:
-            print(f"Image ID {image['id']} (RV ID {image['rvId']}): {image['imageUrl']}")
+            primary_str = " (PRIMARY)" if image['isPrimary'] else ""
+            print(f"Image ID {image['id']} (RV ID {image['rvId']}){primary_str}: {image['imageUrl']}")
     else:
         print("\nAll rv_images exist in the filesystem.")
     
     if unused_files:
         print("\nUnused files in the filesystem:")
-        for path in unused_files:
+        for path in sorted(unused_files):
             print(path)
     else:
         print("\nAll files in the filesystem are referenced in the database.")
@@ -160,6 +169,49 @@ def verify_images():
     
     if unused_files:
         print(f"NOTE: Found {len(unused_files)} unused image files in the filesystem.")
+    
+    # Check for duplicate entries
+    duplicate_check = {}
+    duplicate_images = []
+    
+    # Find duplicates in rv_images (same image URL)
+    for image in rv_images:
+        url = image['imageUrl']
+        if url in duplicate_check:
+            duplicate_check[url].append(image)
+        else:
+            duplicate_check[url] = [image]
+    
+    # Filter for actual duplicates (more than one entry with same URL)
+    for url, images in duplicate_check.items():
+        if len(images) > 1:
+            duplicate_images.append((url, images))
+    
+    if duplicate_images:
+        print("\nDuplicate image entries in rv_images table:")
+        for url, images in duplicate_images:
+            print(f"URL: {url} is used {len(images)} times:")
+            for img in images:
+                primary_str = " (PRIMARY)" if img['isPrimary'] else ""
+                print(f"  - Image ID {img['id']} (RV ID {img['rvId']}){primary_str}")
+    
+    # Check for inconsistencies between featured images and primary images in rv_images
+    inconsistent_primary = []
+    for rv_id, featured_path in featured_images.items():
+        # Find primary images for this RV
+        primary_images = [img for img in rv_images if img['rvId'] == rv_id and img['isPrimary']]
+        
+        # Check if any primary image URL doesn't match the featured image
+        for img in primary_images:
+            if img['imageUrl'] != featured_path:
+                inconsistent_primary.append((rv_id, featured_path, img['id'], img['imageUrl']))
+    
+    if inconsistent_primary:
+        print("\nInconsistencies between featuredImage and primary image in rv_images:")
+        for rv_id, featured, img_id, img_url in inconsistent_primary:
+            print(f"RV ID {rv_id}:")
+            print(f"  - Featured image: {featured}")
+            print(f"  - Primary image (ID {img_id}): {img_url}")
 
 
 if __name__ == "__main__":
