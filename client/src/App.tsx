@@ -11,6 +11,8 @@ import Sell from "@/pages/Sell";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import FixImagePage from "@/pages/admin/FixImagePage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AuthContext } from "./main";
@@ -55,6 +57,7 @@ function App() {
               <Route path="/contact" component={Contact} />
               <Route path="/login" component={Login} />
               <Route path="/register" component={Register} />
+              <Route path="/admin" component={AdminDashboard} />
               <Route component={NotFound} />
             </Switch>
           </main>
