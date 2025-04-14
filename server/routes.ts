@@ -5,6 +5,7 @@ import { insertUserSchema, insertRvListingSchema, insertInquirySchema, insertFav
 import { z } from "zod";
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 
 import axios from 'axios';
 
@@ -461,6 +462,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     res.status(204).end();
+  });
+
+  // Debug route to verify listings and their featuredImage paths
+  app.get("/debug/listings", async (req, res) => {
+    try {
+      console.log('[GET /debug/listings] Fetching first 5 listings for debugging');
+      
+      // Use the storage API to get the first 5 listings
+      const listings = await storage.getAllRvListings({ limit: 5 });
+      
+      // Check if each featuredImage exists in the filesystem
+      
+      // Format the result to show only the essential info
+      const debugInfo = listings.map(listing => {
+        let exists = false;
+        let isExternal = false;
+        
+        // Check if it's an external URL or a local path
+        if (listing.featuredImage && listing.featuredImage.startsWith('http')) {
+          isExternal = true;
+        }
+        // Check if the file exists locally
+        else if (listing.featuredImage) {
+          const localPath = path.join(process.cwd(), 'public', listing.featuredImage);
+          exists = fs.existsSync(localPath);
+        }
+        
+        return {
+          id: listing.id,
+          title: listing.title,
+          featuredImage: listing.featuredImage,
+          isExternalUrl: isExternal,
+          fileExists: exists
+        };
+      });
+      
+      // Log the results
+      console.log(`[GET /debug/listings] Found ${debugInfo.length} listings`);
+      
+      // Get a list of example images from the filesystem
+      const imageDir = path.join(process.cwd(), 'public/images/rv_listings');
+      let sampleImages = [];
+      
+      if (fs.existsSync(imageDir)) {
+        try {
+          // Get first 5 images in the directory
+          const allFiles = fs.readdirSync(imageDir);
+          sampleImages = allFiles.slice(0, 5).map(file => `/images/rv_listings/${file}`);
+        } catch (err) {
+          console.error('Error reading image directory:', err);
+        }
+      }
+      
+      res.json({
+        message: "First 5 listings with featured image paths",
+        listings: debugInfo,
+        sampleImagePaths: sampleImages
+      });
+    } catch (error) {
+      console.error('[GET /debug/listings] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to retrieve debug listings", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
 
   const httpServer = createServer(app);
