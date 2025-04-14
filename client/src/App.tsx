@@ -26,15 +26,29 @@ function App() {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
+      
+      // For demonstration purposes, let's make all users admin
+      // In a real app, this would be determined by the backend
+      if (!parsedUser.role) {
+        parsedUser.role = "admin";
+      }
+      
       setUser(parsedUser);
       setIsAuthenticated(true);
+      
+      // Update localStorage with role if it was added
+      localStorage.setItem("user", JSON.stringify(parsedUser));
     }
   }, []);
 
   const login = (userData: any) => {
-    setUser(userData);
+    // For demonstration purposes, let's give admin role to all users
+    // In a real app, this would be determined by the backend
+    const userWithRole = { ...userData, role: "admin" };
+    
+    setUser(userWithRole);
     setIsAuthenticated(true);
-    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userWithRole));
   };
 
   const logout = () => {
@@ -58,6 +72,7 @@ function App() {
               <Route path="/login" component={Login} />
               <Route path="/register" component={Register} />
               <Route path="/admin" component={AdminDashboard} />
+              <Route path="/admin/fix-images/:id" component={FixImagePage} />
               <Route component={NotFound} />
             </Switch>
           </main>

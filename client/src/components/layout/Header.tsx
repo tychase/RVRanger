@@ -6,13 +6,22 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, Settings, UserCircle } from "lucide-react";
 import { AuthContext } from "../../main";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
-  const { isAuthenticated, logout } = useContext(AuthContext);
+  const { isAuthenticated, user, logout } = useContext(AuthContext);
+  
+  // Check if user is admin
+  const isAdmin = isAuthenticated && user?.role === "admin";
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -50,13 +59,27 @@ const Header = () => {
             ))}
             <div className="ml-2">
               {isAuthenticated ? (
-                <Button 
-                  variant="outline" 
-                  onClick={() => logout()}
-                  className="ml-2"
-                >
-                  Sign Out
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="ml-2">
+                      <UserCircle className="mr-2 h-4 w-4" />
+                      Account
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="w-full flex items-center">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => logout()}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <Link href="/login">
                   <Button>Sign In</Button>
@@ -89,17 +112,29 @@ const Header = () => {
                       {link.name}
                     </Link>
                   ))}
-                  <div className="mt-4">
+                  <div className="mt-4 space-y-3">
                     {isAuthenticated ? (
-                      <Button 
-                        onClick={() => {
-                          logout();
-                          setIsOpen(false);
-                        }}
-                        className="w-full"
-                      >
-                        Sign Out
-                      </Button>
+                      <>
+                        {isAdmin && (
+                          <Link 
+                            href="/admin" 
+                            className="flex items-center py-2 text-primary font-medium"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Admin Dashboard
+                          </Link>
+                        )}
+                        <Button 
+                          onClick={() => {
+                            logout();
+                            setIsOpen(false);
+                          }}
+                          className="w-full"
+                        >
+                          Sign Out
+                        </Button>
+                      </>
                     ) : (
                       <Link href="/login" className="w-full">
                         <Button 
