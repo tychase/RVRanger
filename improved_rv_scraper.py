@@ -113,33 +113,93 @@ def extract_converter(url_or_text):
     return None
 
 
-def download_image(image_url, prefix="rv"):
+def download_image(image_url, prefix="rv", max_retries=3):
     """
     Download an image from a URL and save it to the image directory.
     Returns the local path to the saved image.
+    
+    Args:
+        image_url: The URL of the image to download
+        prefix: Prefix for the saved filename
+        max_retries: Maximum number of retry attempts
+        
+    Returns:
+        String with web-accessible path if successful, None otherwise
     """
-    try:
-        print(f"Downloading image from {image_url}")
-        response = requests.get(image_url, timeout=10)
-        response.raise_for_status()  # Raise an exception for error status codes
-        
-        # Generate a filename based on the URL or use a random UUID
-        image_extension = os.path.splitext(image_url)[-1]
-        if not image_extension or len(image_extension) > 5:
-            image_extension = '.jpg'  # Default to jpg if no extension or unusual extension
+    # Clean URL first (remove query parameters)
+    clean_url = image_url.split('?')[0]
+    
+    # Setup headers to mimic a browser request
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': BASE_URL,
+    }
+    
+    # Retry logic
+    for attempt in range(max_retries):
+        try:
+            print(f"Downloading image from {clean_url} (attempt {attempt+1}/{max_retries})")
+            response = requests.get(clean_url, headers=headers, timeout=15, stream=True)
+            response.raise_for_status()
             
-        filename = f"{prefix}_{uuid.uuid4().hex}{image_extension}"
-        local_path = os.path.join(IMAGE_DIR, filename)
-        
-        # Save the image
-        with open(local_path, 'wb') as f:
-            f.write(response.content)
+            # Check if the content type is an image
+            content_type = response.headers.get('Content-Type', '')
+            if not content_type.startswith('image/'):
+                print(f"Warning: URL does not point to an image. Content-Type: {content_type}")
+                # Still proceed, as some servers may not set the correct content type
             
-        # Return a web-accessible path
-        return f"/images/rv_listings/{filename}"
-    except Exception as e:
-        print(f"Error downloading image {image_url}: {e}")
-        return None
+            # Determine file extension based on content type or URL
+            if 'image/jpeg' in content_type or 'image/jpg' in content_type:
+                image_extension = '.jpg'
+            elif 'image/png' in content_type:
+                image_extension = '.png'
+            elif 'image/webp' in content_type:
+                image_extension = '.webp'
+            elif 'image/gif' in content_type:
+                image_extension = '.gif'
+            else:
+                # Extract from URL as fallback
+                image_extension = os.path.splitext(clean_url)[-1].lower()
+                # Validate extension to prevent unusual ones
+                if not image_extension or len(image_extension) > 5 or image_extension not in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                    image_extension = '.jpg'  # Default to jpg for invalid extensions
+            
+            # Generate a safe, web-accessible filename
+            filename = f"{prefix}_{uuid.uuid4().hex}{image_extension}"
+            local_path = os.path.join(IMAGE_DIR, filename)
+            
+            # Save the image with streaming to handle large files better
+            with open(local_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            # Verify the file exists and is not empty
+            if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+                print(f"Successfully downloaded image to {local_path}")
+                # Return a web-accessible path
+                return f"/images/rv_listings/{filename}"
+            else:
+                print(f"Downloaded file is empty or missing: {local_path}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying download...")
+                    continue
+                return None
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Network error downloading image {clean_url}: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying download after error...")
+                time.sleep(2)  # Add a delay before retrying
+            else:
+                print(f"Max retries reached. Failed to download image.")
+                return None
+        except Exception as e:
+            print(f"Unexpected error downloading image {clean_url}: {e}")
+            return None
+    
+    return None
 
 
 def fetch_detailed_listing(listing_url):
@@ -147,11 +207,23 @@ def fetch_detailed_listing(listing_url):
     Fetch the detailed page for a listing and extract additional information and images.
     """
     print(f"Fetching detailed listing from {listing_url}")
+    
+    # Setup headers to mimic a browser request
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': BASE_URL,
+    }
+    
     try:
-        response = requests.get(listing_url, timeout=10)
+        response = requests.get(listing_url, headers=headers, timeout=15)
         response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"RequestException fetching detailed listing: {e}")
+        return {}
     except Exception as e:
-        print(f"Error fetching detailed listing: {e}")
+        print(f"Unexpected error fetching detailed listing: {e}")
         return {}
     
     soup = BeautifulSoup(response.text, 'lxml')
@@ -212,8 +284,15 @@ def scrape_listings():
     """
     print(f"Fetching listings from {LISTINGS_URL}...")
     
+    # Setup headers to mimic a browser request
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+    }
+    
     try:
-        response = requests.get(LISTINGS_URL)
+        response = requests.get(LISTINGS_URL, headers=headers, timeout=15)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"Error fetching the listings page: {e}", file=sys.stderr)
@@ -284,9 +363,11 @@ def scrape_listings():
         if not main_image_path:
             # Find image associated with this link on the main page
             link_element = soup.find('a', href=re.compile(os.path.basename(link)))
-            if link_element and link_element.find('img'):
-                img_url = urljoin(BASE_URL, link_element.find('img')['src'])
-                main_image_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_main")
+            if link_element:
+                img_element = link_element.find('img')
+                if img_element and img_element.has_attr('src'):
+                    img_url = urljoin(BASE_URL, img_element['src'])
+                    main_image_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_main")
         
         # If we still don't have a main image, try a fallback
         if not main_image_path:
