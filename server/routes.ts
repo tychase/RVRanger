@@ -3,10 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertRvListingSchema, insertInquirySchema, insertFavoriteSchema, insertRvImageSchema } from "@shared/schema";
 import { z } from "zod";
+import express from 'express';
+import path from 'path';
 
 import axios from 'axios';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Explicitly serve static files from the public directory
+  app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
   // Image proxy route to fetch external images
   app.get('/proxy-image', async (req, res) => {
     try {
