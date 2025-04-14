@@ -190,9 +190,12 @@ def fix_image_references():
         print("No local images found. Cannot fix references.")
         return
     
-    # Choose a default image to use for missing images
-    default_image = next((img for img in local_images if 'main' in img), local_images[0])
-    print(f"Using {default_image} as fallback for missing images")
+    # Choose default images to use for missing images
+    default_images = [img for img in local_images if 'main' in img]
+    if not default_images:
+        default_images = local_images
+    
+    print(f"Found {len(default_images)} potential default images to use")
     
     # Get external references
     featured_external, rv_images_external = get_external_image_references()
@@ -202,7 +205,9 @@ def fix_image_references():
     
     # Update featured images
     success_count = 0
-    for rv_id, url in featured_external:
+    for i, (rv_id, url) in enumerate(featured_external):
+        # Use different images for each listing to provide visual variety
+        default_image = default_images[i % len(default_images)]
         print(f"Updating featured image for RV ID {rv_id}: {url} -> {default_image}")
         if update_featured_image(rv_id, default_image):
             success_count += 1
@@ -211,7 +216,9 @@ def fix_image_references():
     
     # Update rv_images
     success_count = 0
-    for image_id, url in rv_images_external:
+    for i, (image_id, url) in enumerate(rv_images_external):
+        # Use different images for each entry
+        default_image = default_images[i % len(default_images)]
         print(f"Updating image URL for image ID {image_id}: {url} -> {default_image}")
         if update_rv_image(image_id, default_image):
             success_count += 1
