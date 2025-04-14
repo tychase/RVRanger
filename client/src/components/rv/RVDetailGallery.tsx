@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { RVImage } from "@/components/ui/RVImage";
 
 interface RVImage {
   id: number;
@@ -46,19 +47,14 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
     <div>
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
         <DialogTrigger asChild>
-          <div 
-            className="relative overflow-hidden rounded-lg cursor-pointer mb-4"
-            style={{ paddingBottom: "66.67%" }}
-          >
-            <img 
-              src={images[selectedImageIndex].imageUrl
-                  ? `/proxy-image?url=${encodeURIComponent(images[selectedImageIndex].imageUrl)}`
-                  : "/images/default-rv.svg"}
+          <div className="relative cursor-pointer mb-4">
+            <RVImage
+              src={images[selectedImageIndex].imageUrl}
               alt={`${title} - Image ${selectedImageIndex + 1}`}
-              className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              onError={(e) => {
-                e.currentTarget.src = "/images/default-rv.svg";
-              }}
+              aspectRatio="video"
+              objectFit="cover"
+              className="rounded-lg hover:scale-105 transition-transform duration-300"
+              fallbackSrc="/images/default-rv.svg"
             />
             <div className="absolute bottom-4 right-4 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded">
               Click to expand
@@ -71,17 +67,13 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
               {images.map((image, index) => (
                 <CarouselItem key={image.id}>
                   <div className="flex items-center justify-center">
-                    <img 
-                      src={image.imageUrl 
-                          ? (image.imageUrl.startsWith('/images/') 
-                              ? image.imageUrl // Local image, use directly
-                              : `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`) // External image, use proxy
-                          : "/images/default-rv.svg"}
+                    <RVImage
+                      src={image.imageUrl}
                       alt={`${title} - Image ${index + 1}`}
-                      className="max-w-full max-h-[80vh] object-contain"
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/default-rv.svg";
-                      }}
+                      aspectRatio="auto"
+                      objectFit="contain"
+                      className="max-w-full max-h-[80vh]"
+                      fallbackSrc="/images/default-rv.svg"
                     />
                   </div>
                 </CarouselItem>
@@ -94,27 +86,22 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
       </Dialog>
       
       {/* Thumbnail gallery */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2 relative">
         {images.slice(0, 4).map((image, index) => (
           <div 
             key={image.id}
-            className={`relative cursor-pointer overflow-hidden rounded-md ${
+            className={`cursor-pointer ${
               index === selectedImageIndex ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => handleThumbnailClick(index)}
-            style={{ paddingBottom: "66.67%" }}
           >
-            <img 
-              src={image.imageUrl 
-                  ? (image.imageUrl.startsWith('/images/') 
-                      ? image.imageUrl // Local image, use directly
-                      : `/proxy-image?url=${encodeURIComponent(image.imageUrl)}`) // External image, use proxy
-                  : "/images/default-rv.svg"}
+            <RVImage 
+              src={image.imageUrl}
               alt={`${title} - Thumbnail ${index + 1}`}
-              className="absolute inset-0 w-full h-full object-cover hover:brightness-90 transition-all"
-              onError={(e) => {
-                e.currentTarget.src = "/images/default-rv.svg";
-              }}
+              aspectRatio="video"
+              objectFit="cover"
+              className="rounded-md hover:brightness-90 transition-all"
+              fallbackSrc="/images/default-rv.svg"
             />
           </div>
         ))}
@@ -122,7 +109,7 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
         {/* Additional images count badge */}
         {images.length > 4 && (
           <div
-            className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded"
+            className="absolute bottom-2 right-2 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded cursor-pointer z-10"
             onClick={() => setIsFullscreen(true)}
           >
             +{images.length - 4} more

@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { AuthContext } from "../../main";
 import { useToast } from "@/hooks/use-toast";
+import { RVImage } from "@/components/ui/RVImage";
 
 interface RVCardProps {
   rv: {
@@ -102,20 +103,14 @@ const RVCard = ({ rv }: RVCardProps) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative pb-[70%]">
-        <img 
-          src={
-            rv.featuredImage 
-              ? (rv.featuredImage.startsWith('/images/') 
-                  ? rv.featuredImage // Local image, use directly
-                  : `/proxy-image?url=${encodeURIComponent(rv.featuredImage)}`) // External image, use proxy
-              : "/images/default-rv.svg"
-          } 
+      <div className="relative">
+        <RVImage 
+          src={rv.featuredImage} 
           alt={rv.title} 
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src = "/images/default-rv.svg";
-          }}
+          aspectRatio="video"
+          objectFit="cover"
+          className="w-full"
+          fallbackSrc="/images/default-rv.svg"
         />
         {rv.isFeatured && (
           <span className="absolute top-2 left-2 bg-primary text-white text-xs font-semibold px-2 py-1 rounded">
