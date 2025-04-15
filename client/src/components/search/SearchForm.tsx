@@ -429,7 +429,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
             <Label>Chassis</Label>
             <Select value={chassis || "any"} onValueChange={setChassis}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue defaultValue="Any Chassis">Any Chassis</SelectValue>
+                <SelectValue placeholder="Select Chassis">Any Chassis</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Chassis</SelectItem>
@@ -445,7 +445,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
             <Label>Year</Label>
             <Select value={year || "any"} onValueChange={setYear}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue defaultValue="Any Year">Any Year</SelectValue>
+                <SelectValue placeholder="Select Year">Any Year</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Year</SelectItem>
@@ -508,7 +508,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
             <Label htmlFor="slides-full-select">Number of Slides</Label>
             <Select value={slides || "any"} onValueChange={setSlides}>
               <SelectTrigger id="slides-full-select">
-                <SelectValue defaultValue="Any Number of Slides">Any Number of Slides</SelectValue>
+                <SelectValue placeholder="Select Number of Slides">Any Number of Slides</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Number of Slides</SelectItem>
