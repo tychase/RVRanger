@@ -16,12 +16,23 @@ const AdminDashboard = () => {
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login?redirect=/admin");
-    } else if (!isAdmin) {
-      navigate("/");
-    }
-  }, [isAuthenticated, isAdmin, navigate]);
+    // Add a small delay to ensure user data is loaded from localStorage
+    const checkAuthTimeout = setTimeout(() => {
+      console.log("AdminDashboard useEffect: Checking auth:", { isAuthenticated, isAdmin, user });
+      
+      if (!isAuthenticated) {
+        console.log("AdminDashboard: Not authenticated, redirecting to login");
+        navigate("/login?redirect=/admin");
+      } else if (!isAdmin) {
+        console.log("AdminDashboard: Not admin, redirecting to home");
+        navigate("/");
+      } else {
+        console.log("AdminDashboard: User is authenticated and admin");
+      }
+    }, 100);
+    
+    return () => clearTimeout(checkAuthTimeout);
+  }, [isAuthenticated, isAdmin, navigate, user]);
 
   // If not authenticated or not admin, don't render the dashboard
   if (!isAuthenticated || !isAdmin) {

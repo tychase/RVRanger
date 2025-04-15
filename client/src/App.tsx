@@ -25,30 +25,42 @@ function App() {
     // Check if user exists in localStorage on initial load
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      
-      // For demonstration purposes, let's make all users admin
-      // In a real app, this would be determined by the backend
-      if (!parsedUser.role) {
-        parsedUser.role = "admin";
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Make sure user has either a role or isAdmin property
+        if (!parsedUser.role && parsedUser.isAdmin) {
+          parsedUser.role = "admin";
+        }
+
+        console.log("App: Loaded user from localStorage:", parsedUser);
+        
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+        
+        // Update localStorage with role if it was added
+        localStorage.setItem("user", JSON.stringify(parsedUser));
+      } catch (error) {
+        console.error("Failed to parse user from localStorage:", error);
+        localStorage.removeItem("user");
       }
-      
-      setUser(parsedUser);
-      setIsAuthenticated(true);
-      
-      // Update localStorage with role if it was added
-      localStorage.setItem("user", JSON.stringify(parsedUser));
     }
   }, []);
 
   const login = (userData: any) => {
-    // For demonstration purposes, let's give admin role to all users
-    // In a real app, this would be determined by the backend
-    const userWithRole = { ...userData, role: "admin" };
+    // Keep the role property if it's already set from the backend
+    // Or use isAdmin flag to determine role
+    let userToStore = { ...userData };
     
-    setUser(userWithRole);
+    if (!userToStore.role && userToStore.isAdmin) {
+      userToStore.role = "admin";
+    }
+    
+    console.log("App: Logging in user:", userToStore);
+    
+    setUser(userToStore);
     setIsAuthenticated(true);
-    localStorage.setItem("user", JSON.stringify(userWithRole));
+    localStorage.setItem("user", JSON.stringify(userToStore));
   };
 
   const logout = () => {
