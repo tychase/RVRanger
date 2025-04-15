@@ -54,15 +54,32 @@ def ensure_manufacturer_exists(name, conn):
         if result:
             return result["id"]
         
+        # Check table structure first to see available columns
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'manufacturers'")
+        columns = [col['column_name'] for col in cursor.fetchall()]
+        
         # Create manufacturer if it doesn't exist
-        cursor.execute(
-            """
-            INSERT INTO manufacturers (name, description, logo_url, created_at, updated_at)
-            VALUES (%s, %s, %s, NOW(), NOW())
-            RETURNING id
-            """,
-            (name, f"{name} is a luxury RV manufacturer.", "")
-        )
+        if 'created_at' in columns and 'updated_at' in columns:
+            # Table has timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO manufacturers (name, description, logo_url, created_at, updated_at)
+                VALUES (%s, %s, %s, NOW(), NOW())
+                RETURNING id
+                """,
+                (name, f"{name} is a luxury RV manufacturer.", "")
+            )
+        else:
+            # Table doesn't have timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO manufacturers (name, description, logo_url)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                (name, f"{name} is a luxury RV manufacturer.", "")
+            )
+            
         conn.commit()
         result = cursor.fetchone()
         print(f"Created manufacturer: {name} (ID: {result['id']})")
@@ -84,15 +101,32 @@ def ensure_converter_exists(name, conn):
         if result:
             return result["id"]
         
+        # Check table structure first to see available columns
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'converters'")
+        columns = [col['column_name'] for col in cursor.fetchall()]
+        
         # Create converter if it doesn't exist
-        cursor.execute(
-            """
-            INSERT INTO converters (name, description, logo_url, created_at, updated_at)
-            VALUES (%s, %s, %s, NOW(), NOW())
-            RETURNING id
-            """,
-            (name, f"{name} is a luxury RV converter/customizer.", "")
-        )
+        if 'created_at' in columns and 'updated_at' in columns:
+            # Table has timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO converters (name, description, logo_url, created_at, updated_at)
+                VALUES (%s, %s, %s, NOW(), NOW())
+                RETURNING id
+                """,
+                (name, f"{name} is a luxury RV converter/customizer.", "")
+            )
+        else:
+            # Table doesn't have timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO converters (name, description, logo_url)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                (name, f"{name} is a luxury RV converter/customizer.", "")
+            )
+            
         conn.commit()
         result = cursor.fetchone()
         print(f"Created converter: {name} (ID: {result['id']})")
@@ -118,15 +152,32 @@ def ensure_chassis_type_exists(model, conn):
         if result:
             return result["id"]
         
+        # Check table structure first to see available columns
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'chassis_types'")
+        columns = [col['column_name'] for col in cursor.fetchall()]
+        
         # Create chassis type if it doesn't exist
-        cursor.execute(
-            """
-            INSERT INTO chassis_types (name, description, created_at, updated_at)
-            VALUES (%s, %s, NOW(), NOW())
-            RETURNING id
-            """,
-            (model, f"{model} chassis model.")
-        )
+        if 'created_at' in columns and 'updated_at' in columns:
+            # Table has timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO chassis_types (name, description, created_at, updated_at)
+                VALUES (%s, %s, NOW(), NOW())
+                RETURNING id
+                """,
+                (model, f"{model} chassis model.")
+            )
+        else:
+            # Table doesn't have timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO chassis_types (name, description)
+                VALUES (%s, %s)
+                RETURNING id
+                """,
+                (model, f"{model} chassis model.")
+            )
+            
         conn.commit()
         result = cursor.fetchone()
         print(f"Created chassis type: {model} (ID: {result['id']})")
@@ -146,14 +197,31 @@ def ensure_rv_type_exists(conn):
             return result["id"]
         
         # Create the RV type if it doesn't exist
-        cursor.execute(
-            """
-            INSERT INTO rv_types (name, description, image_url, created_at, updated_at)
-            VALUES (%s, %s, %s, NOW(), NOW())
-            RETURNING id
-            """,
-            ("Luxury Coach", "Premium luxury diesel pusher coaches.", "")
-        )
+        # Check table structure first to see available columns
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'rv_types'")
+        columns = [col['column_name'] for col in cursor.fetchall()]
+        
+        if 'created_at' in columns and 'updated_at' in columns:
+            # Table has timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO rv_types (name, description, image_url, created_at, updated_at)
+                VALUES (%s, %s, %s, NOW(), NOW())
+                RETURNING id
+                """,
+                ("Luxury Coach", "Premium luxury diesel pusher coaches.", "")
+            )
+        else:
+            # Table doesn't have timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO rv_types (name, description, image_url)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                ("Luxury Coach", "Premium luxury diesel pusher coaches.", "")
+            )
+            
         conn.commit()
         result = cursor.fetchone()
         print(f"Created RV type: Luxury Coach (ID: {result['id']})")
@@ -222,56 +290,113 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
     chassis_type_id = ensure_chassis_type_exists(chassis_model, conn)
     
     with conn.cursor() as cursor:
-        # Create the RV listing
-        cursor.execute(
-            """
-            INSERT INTO rv_listings (
-                title, description, year, price, manufacturer_id, type_id, 
-                converter_id, chassis_type_id, slides, featured_image, 
-                location, is_featured, seller_id, created_at, updated_at
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
-            ) RETURNING id
-            """,
-            (
-                listing.get("title"),
-                listing.get("description"),
-                listing.get("year"),
-                listing.get("price"),
-                manufacturer_id,
-                type_id,
-                converter_id,
-                chassis_type_id,
-                listing.get("slides") or 0,
-                listing.get("featured_image"),
-                listing.get("location"),
-                True,  # is_featured
-                seller_id
+        # Check rv_listings table structure
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'rv_listings'")
+        rv_columns = [col['column_name'] for col in cursor.fetchall()]
+        
+        # Create the RV listing using the appropriate columns
+        if 'created_at' in rv_columns and 'updated_at' in rv_columns:
+            # Table has timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO rv_listings (
+                    title, description, year, price, manufacturer_id, type_id, 
+                    converter_id, chassis_type_id, slides, featured_image, 
+                    location, is_featured, seller_id, created_at, updated_at
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                ) RETURNING id
+                """,
+                (
+                    listing.get("title"),
+                    listing.get("description"),
+                    listing.get("year"),
+                    listing.get("price"),
+                    manufacturer_id,
+                    type_id,
+                    converter_id,
+                    chassis_type_id,
+                    listing.get("slides") or 0,
+                    listing.get("featured_image"),
+                    listing.get("location"),
+                    True,  # is_featured
+                    seller_id
+                )
             )
-        )
+        else:
+            # Table doesn't have timestamp columns
+            cursor.execute(
+                """
+                INSERT INTO rv_listings (
+                    title, description, year, price, manufacturer_id, type_id, 
+                    converter_id, chassis_type_id, slides, featured_image, 
+                    location, is_featured, seller_id
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                ) RETURNING id
+                """,
+                (
+                    listing.get("title"),
+                    listing.get("description"),
+                    listing.get("year"),
+                    listing.get("price"),
+                    manufacturer_id,
+                    type_id,
+                    converter_id,
+                    chassis_type_id,
+                    listing.get("slides") or 0,
+                    listing.get("featured_image"),
+                    listing.get("location"),
+                    True,  # is_featured
+                    seller_id
+                )
+            )
+            
         conn.commit()
         result = cursor.fetchone()
         rv_id = result["id"]
         
-        # Add images
+        # Check rv_images table structure
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'rv_images'")
+        image_columns = [col['column_name'] for col in cursor.fetchall()]
+        
+        # Add images using the appropriate columns
         if listing.get("featured_image"):
-            cursor.execute(
-                """
-                INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
-                VALUES (%s, %s, %s, NOW(), NOW())
-                """,
-                (rv_id, listing.get("featured_image"), True)
-            )
-            
+            if 'created_at' in image_columns and 'updated_at' in image_columns:
+                cursor.execute(
+                    """
+                    INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
+                    VALUES (%s, %s, %s, NOW(), NOW())
+                    """,
+                    (rv_id, listing.get("featured_image"), True)
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO rv_images (rv_id, image_url, is_primary)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (rv_id, listing.get("featured_image"), True)
+                )
+                
         # Add additional images
         for img_url in listing.get("additional_images", []):
-            cursor.execute(
-                """
-                INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
-                VALUES (%s, %s, %s, NOW(), NOW())
-                """,
-                (rv_id, img_url, False)
-            )
+            if 'created_at' in image_columns and 'updated_at' in image_columns:
+                cursor.execute(
+                    """
+                    INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
+                    VALUES (%s, %s, %s, NOW(), NOW())
+                    """,
+                    (rv_id, img_url, False)
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO rv_images (rv_id, image_url, is_primary)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (rv_id, img_url, False)
+                )
             
         conn.commit()
         print(f"Imported listing: {listing.get('title')} (ID: {rv_id})")
