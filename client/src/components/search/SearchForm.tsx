@@ -32,9 +32,14 @@ const featureOptions = [
 interface SearchFormProps {
   onSearch?: (searchParams: any) => void;
   simplified?: boolean;
+  theme?: 'light' | 'dark';
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false }) => {
+const SearchForm: React.FC<SearchFormProps> = ({ 
+  onSearch, 
+  simplified = false,
+  theme = 'light' 
+}) => {
   const [manufacturer, setManufacturer] = React.useState("all");
   const [chassis, setChassis] = React.useState("all");
   const [slides, setSlides] = React.useState("all");
@@ -79,13 +84,16 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
     }
   };
 
+  // Determine text color class based on theme
+  const textColorClass = theme === 'dark' ? 'text-white' : 'text-foreground';
+  
   return (
-    <form className="space-y-6 p-6" onSubmit={handleSubmit}>
+    <form className={`space-y-6 p-6 ${theme === 'dark' ? 'text-white' : ''}`} onSubmit={handleSubmit}>
       {/* Converter Dropdown */}
       <div>
-        <Label htmlFor="converter">Converter</Label>
+        <Label htmlFor="converter" className={textColorClass}>Converter</Label>
         <Select value={manufacturer} onValueChange={setManufacturer}>
-          <SelectTrigger id="converter" className="relative">
+          <SelectTrigger id="converter" className={`relative ${textColorClass}`}>
             <span>{getManufacturerName(manufacturer)}</span>
           </SelectTrigger>
           <SelectContent>
@@ -99,9 +107,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
       {/* Chassis Dropdown */}
       <div>
-        <Label htmlFor="chassis">Chassis</Label>
+        <Label htmlFor="chassis" className={textColorClass}>Chassis</Label>
         <Select value={chassis} onValueChange={setChassis}>
-          <SelectTrigger id="chassis" className="relative">
+          <SelectTrigger id="chassis" className={`relative ${textColorClass}`}>
             <span>{getChassisDisplay(chassis)}</span>
           </SelectTrigger>
           <SelectContent>
@@ -115,9 +123,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
       {/* Slides Dropdown */}
       <div>
-        <Label htmlFor="slides">Slides</Label>
+        <Label htmlFor="slides" className={textColorClass}>Slides</Label>
         <Select value={slides} onValueChange={setSlides}>
-          <SelectTrigger id="slides" className="relative">
+          <SelectTrigger id="slides" className={`relative ${textColorClass}`}>
             <span>{getSlidesDisplay(slides)}</span>
           </SelectTrigger>
           <SelectContent>
@@ -131,13 +139,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
       {/* Features Section */}
       <div>
-        <Label className="mb-2 block">Features</Label>
+        <Label className={`mb-2 block ${textColorClass}`}>Features</Label>
         {features.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {features.map((feature, index) => (
               <Badge 
                 key={index} 
-                variant="outline"
+                variant={theme === 'dark' ? 'secondary' : 'outline'}
                 className="flex items-center gap-1 pl-2 pr-1 py-1"
               >
                 {feature}
@@ -160,7 +168,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
                 checked={features.includes(feature)}
                 onCheckedChange={() => toggleFeature(feature)}
               />
-              <Label htmlFor={`feature-${index}`} className="text-sm">
+              <Label htmlFor={`feature-${index}`} className={`text-sm ${textColorClass}`}>
                 {feature}
               </Label>
             </div>
