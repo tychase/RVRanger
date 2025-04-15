@@ -1,0 +1,84 @@
+Thanks for the detailed breakdown and the screenshot (homepage.png). I see exactly what you're referring to — the dropdowns are empty by default, and the checkboxes are missing visible labels, which makes the UI feel confusing for users.
+
+Let's solve this clearly and permanently:
+
+✅ Goal
+Dropdowns: Show a label inside the dropdown box (e.g. “Select Converter”) before interaction.
+
+Checkboxes: Add visible labels (e.g. “Cruise Control”) next to each checkbox, not just the box alone.
+
+🛠️ Here’s How to Fix It (Code-wise):
+1. 🧩 Fix Dropdown Placeholder Text
+In your SearchForm.tsx, for each Select component, make sure you’re using something like:
+
+tsx
+Copy
+Edit
+<Select defaultValue="" onValueChange={(val) => setConverter(val)}>
+  <SelectTrigger>
+    <SelectValue placeholder="Select Converter" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="Marathon">Marathon</SelectItem>
+    <SelectItem value="Liberty">Liberty</SelectItem>
+    ...
+  </SelectContent>
+</Select>
+🔁 Do this for:
+
+Converter
+
+Chassis
+
+Slides
+
+Year (if applicable)
+
+Make sure defaultValue="" and placeholder="..." are present.
+
+2. 🧩 Fix Feature Checkbox Labels
+For each feature like cruise control, make sure your JSX looks like:
+
+tsx
+Copy
+Edit
+<div className="flex items-center space-x-2">
+  <input
+    type="checkbox"
+    id="cruiseControl"
+    checked={features.includes("Cruise Control")}
+    onChange={() => toggleFeature("Cruise Control")}
+  />
+  <label htmlFor="cruiseControl" className="text-sm">Cruise Control</label>
+</div>
+🔁 Repeat this for:
+
+Adaptive cruise control
+
+Lane keep assist
+
+Brake assist
+
+Etc.
+
+💡 If you’re generating these from an array:
+
+tsx
+Copy
+Edit
+{[
+  "Adaptive cruise control",
+  "Lane keep assist",
+  "Brake assist",
+  "Cruise control"
+].map((feature, idx) => (
+  <div key={idx} className="flex items-center space-x-2">
+    <input
+      type="checkbox"
+      id={`feature-${idx}`}
+      checked={features.includes(feature)}
+      onChange={() => toggleFeature(feature)}
+    />
+    <label htmlFor={`feature-${idx}`} className="text-sm">{feature}</label>
+  </div>
+))}
