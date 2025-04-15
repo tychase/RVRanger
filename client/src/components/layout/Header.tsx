@@ -20,8 +20,12 @@ const Header = () => {
   const [location] = useLocation();
   const { isAuthenticated, user, logout } = useContext(AuthContext);
   
+  // Debug log to see what user data we have
+  console.log("Header: Auth state:", { isAuthenticated, user });
+  
   // Check if user is admin
-  const isAdmin = isAuthenticated && user?.role === "admin";
+  const isAdmin = isAuthenticated && (user?.role === "admin" || user?.isAdmin === true);
+  console.log("Header: isAdmin =", isAdmin);
 
   const navLinks = [
     { name: "Home", path: "/" },
