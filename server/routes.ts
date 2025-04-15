@@ -356,7 +356,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // In a real app, we would set up a session here
     const { password: _, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    
+    // Add role property for backward compatibility with client code
+    const userWithRole = {
+      ...userWithoutPassword,
+      role: userWithoutPassword.isAdmin ? "admin" : "user"
+    };
+    
+    res.json(userWithRole);
   });
 
   // User's RV listings

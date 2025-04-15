@@ -149,7 +149,6 @@ export const inquiriesRelations = relations(inquiries, ({ one }) => ({
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
-  isAdmin: true,
   createdAt: true,
 });
 
