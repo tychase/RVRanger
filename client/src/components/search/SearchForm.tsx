@@ -123,6 +123,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
+              <Label className="mb-1 block">Converter</Label>
               <Select value={manufacturer} onValueChange={setManufacturer}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="All Converters" />
@@ -138,6 +139,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               </Select>
             </div>
             <div className="flex-1">
+              <Label className="mb-1 block">Chassis</Label>
               <Select value={chassis} onValueChange={setChassis}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Any Chassis" />
@@ -153,6 +155,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               </Select>
             </div>
             <div className="flex-1">
+              <Label className="mb-1 block">Year</Label>
               <Select value={year} onValueChange={setYear}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Any Year" />
