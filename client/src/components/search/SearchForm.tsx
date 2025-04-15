@@ -1,8 +1,14 @@
-// Patched SearchForm.tsx with visible dropdown placeholders and labeled checkboxes
+// Patched SearchForm.tsx with fixed dropdown placeholder rendering
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
@@ -34,7 +40,10 @@ interface SearchFormProps {
   simplified?: boolean;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false }) => {
+const SearchForm: React.FC<SearchFormProps> = ({
+  onSearch,
+  simplified = false,
+}) => {
   const [manufacturer, setManufacturer] = React.useState("");
   const [chassis, setChassis] = React.useState("");
   const [slides, setSlides] = React.useState("");
@@ -44,7 +53,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
     setFeatures((prev) =>
       prev.includes(feature)
         ? prev.filter((f) => f !== feature)
-        : [...prev, feature]
+        : [...prev, feature],
     );
   };
 
@@ -62,7 +71,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         manufacturer,
         chassis,
         slides,
-        features
+        features,
       });
     }
   };
@@ -75,13 +84,15 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         <Select value={manufacturer} onValueChange={setManufacturer}>
           <SelectTrigger id="converter" className="relative">
             <SelectValue placeholder="All Converters">
-              {manufacturer ? getConverterName(manufacturer) : "All Converters"}
+              {manufacturer && getConverterName(manufacturer)}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Converters</SelectItem>
             {converters.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -93,12 +104,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         <Select value={chassis} onValueChange={setChassis}>
           <SelectTrigger id="chassis" className="relative">
             <SelectValue placeholder="Select Chassis">
-              {chassis ? chassis : "Select Chassis"}
+              {chassis && chassis}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {chassisOptions.map((option) => (
-              <SelectItem key={option} value={option}>{option}</SelectItem>
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -110,12 +123,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         <Select value={slides} onValueChange={setSlides}>
           <SelectTrigger id="slides" className="relative">
             <SelectValue placeholder="Number of Slides">
-              {slides ? `${slides} Slides` : "Number of Slides"}
+              {slides && `${slides} Slides`}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {slidesOptions.map((option) => (
-              <SelectItem key={option} value={option}>{option}</SelectItem>
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -127,14 +142,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         {features.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {features.map((feature, index) => (
-              <Badge 
-                key={index} 
+              <Badge
+                key={index}
                 variant="outline"
                 className="flex items-center gap-1 pl-2 pr-1 py-1"
               >
                 {feature}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => toggleFeature(feature)}
                   className="rounded-full hover:bg-muted p-1"
                 >
@@ -159,7 +174,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
           ))}
         </div>
       </div>
-      
+
       {/* Submit Button */}
       {onSearch && (
         <div className="pt-2">
