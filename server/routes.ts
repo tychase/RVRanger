@@ -485,14 +485,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[POST /api/search] Fetching all listings');
       const listings = await storage.getAllRvListings();
       
+      // Get manufacturers to help with matching
+      const manufacturers = await storage.getAllManufacturers();
+      
       // Calculate match scores for each listing
       const results = listings.map(listing => {
         let score = 0;
         
         // Manufacturer (converter) matching
-        if (filters.manufacturer && filters.manufacturer !== "all" && 
-            listing.manufacturerId.toString() === filters.manufacturer) {
-          score += 1;
+        if (filters.manufacturer && filters.manufacturer !== "all") {
+          // Convert the input to a number if possible
+          const manufacturerId = parseInt(filters.manufacturer);
+          
+          if (!isNaN(manufacturerId) && listing.manufacturerId === manufacturerId) {
+            // Direct ID match
+            score += 1;
+          } else {
+            // Check if the filter might be a manufacturer name
+            const listingManufacturer = manufacturers.find(m => m.id === listing.manufacturerId);
+            if (listingManufacturer && 
+               (filters.manufacturer.toLowerCase() === listingManufacturer.name.toLowerCase() ||
+                filters.manufacturer === listingManufacturer.id.toString())) {
+              score += 1;
+            }
+          }
         }
         
         // Chassis matching - listing.chassis doesn't exist in our schema,

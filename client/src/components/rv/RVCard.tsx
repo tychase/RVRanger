@@ -21,6 +21,7 @@ interface RVCardProps {
     slides?: number | null;
     featuredImage?: string | null;
     isFeatured?: boolean;
+    matchScore?: number;
   };
 }
 
@@ -115,6 +116,11 @@ const RVCard = ({ rv }: RVCardProps) => {
         {rv.isFeatured && (
           <span className="absolute top-2 left-2 bg-primary text-white text-xs font-semibold px-2 py-1 rounded">
             Featured
+          </span>
+        )}
+        {rv.matchScore !== undefined && rv.matchScore > 0 && (
+          <span className="absolute bottom-2 left-2 bg-gradient-to-r from-green-500 to-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+            Match Score: {rv.matchScore}
           </span>
         )}
         <button 
