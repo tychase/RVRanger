@@ -41,24 +41,55 @@ const Browse = () => {
   queryParams.limit = itemsPerPage;
   queryParams.offset = (currentPage - 1) * itemsPerPage;
 
-  // Fetch RV listings
+  // Fetch RV listings - with relevance-based ranking when using search
   const { data, isLoading, error } = useQuery({
-    queryKey: ["/api/listings", queryParams],
+    queryKey: ["/api/search", queryParams],
     queryFn: async () => {
-      // Convert queryParams to URL search params
-      const params = new URLSearchParams();
-      for (const key in queryParams) {
-        params.append(key, queryParams[key]);
+      // If we have search params, use the ranked search endpoint
+      if (Object.keys(searchParams).some(key => 
+          searchParams[key] !== undefined && 
+          searchParams[key] !== null && 
+          searchParams[key] !== "" && 
+          searchParams[key] !== "all" && 
+          searchParams[key] !== "any")) {
+        
+        // Use POST for ranked search (scores all results)
+        return fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(searchParams)
+        }).then(res => res.json());
+      } else {
+        // Use regular GET endpoint for no filters
+        const params = new URLSearchParams();
+        for (const key in queryParams) {
+          params.append(key, queryParams[key]);
+        }
+        return fetch(`/api/listings?${params.toString()}`).then(res => res.json());
       }
-      return fetch(`/api/listings?${params.toString()}`).then(res => res.json());
     }
   });
 
   const listings = data || [];
   
+  // Set default sort option to relevance if we have search filters
+  useEffect(() => {
+    if (Object.keys(searchParams).some(key => 
+      searchParams[key] !== undefined && 
+      searchParams[key] !== null && 
+      searchParams[key] !== "" && 
+      searchParams[key] !== "all" && 
+      searchParams[key] !== "any")) {
+      setSortOption("relevance");
+    }
+  }, [searchParams]);
+
   // Sort listings based on selected option
   const sortedListings = [...listings].sort((a, b) => {
     switch (sortOption) {
+      case "relevance":
+        // Sort by match score if available
+        return (b.matchScore || 0) - (a.matchScore || 0);
       case "price-low":
         return a.price - b.price;
       case "price-high":
@@ -161,6 +192,7 @@ const Browse = () => {
                   <SelectValue placeholder="Newest" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="relevance">Relevance</SelectItem>
                   <SelectItem value="newest">Newest</SelectItem>
                   <SelectItem value="price-low">Price (Low to High)</SelectItem>
                   <SelectItem value="price-high">Price (High to Low)</SelectItem>

@@ -475,6 +475,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).end();
   });
 
+  // Ranked Search endpoint
+  app.post("/api/search", async (req, res) => {
+    try {
+      console.log('[POST /api/search] Received filters:', JSON.stringify(req.body));
+      const filters = req.body;
+      
+      // Get all listings - we won't filter out any results
+      console.log('[POST /api/search] Fetching all listings');
+      const listings = await storage.getAllRvListings();
+      
+      // Calculate match scores for each listing
+      const results = listings.map(listing => {
+        let score = 0;
+        
+        // Manufacturer (converter) matching
+        if (filters.manufacturer && filters.manufacturer !== "all" && 
+            listing.manufacturerId.toString() === filters.manufacturer) {
+          score += 1;
+        }
+        
+        // Chassis matching - listing.chassis doesn't exist in our schema,
+        // We could extend this in the future
+        
+        // Slides matching
+        if (filters.slides && filters.slides !== "all" && 
+            listing.slides === parseInt(filters.slides)) {
+          score += 1;
+        }
+        
+        // Features matching - features are not currently in our schema
+        // We could extend this in the future to support features
+        
+        return { ...listing, matchScore: score };
+      });
+      
+      // Sort by match score (highest first)
+      const sorted = results.sort((a, b) => b.matchScore - a.matchScore);
+      
+      console.log(`[POST /api/search] Returning ${sorted.length} ranked listings`);
+      res.json(sorted);
+    } catch (error) {
+      console.error('[POST /api/search] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to perform ranked search", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Inquiry endpoints
   app.post("/api/inquiries", async (req, res) => {
     try {
