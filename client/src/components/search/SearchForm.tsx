@@ -124,9 +124,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <Label className="mb-1 block">Converter</Label>
-              <Select value={manufacturer} onValueChange={setManufacturer}>
+              <Select value={manufacturer || "all"} onValueChange={setManufacturer}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Converters" />
+                  <SelectValue defaultValue="All Converters">All Converters</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Converters</SelectItem>
@@ -140,9 +140,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
             </div>
             <div className="flex-1">
               <Label className="mb-1 block">Chassis</Label>
-              <Select value={chassis} onValueChange={setChassis}>
+              <Select value={chassis || "any"} onValueChange={setChassis}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Any Chassis" />
+                  <SelectValue defaultValue="Any Chassis">Any Chassis</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any Chassis</SelectItem>
@@ -156,9 +156,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
             </div>
             <div className="flex-1">
               <Label className="mb-1 block">Year</Label>
-              <Select value={year} onValueChange={setYear}>
+              <Select value={year || "any"} onValueChange={setYear}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Any Year" />
+                  <SelectValue defaultValue="Any Year">Any Year</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any Year</SelectItem>
@@ -264,9 +264,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="bedType">Bed Type</Label>
-                      <Select value={bedType} onValueChange={setBedType}>
+                      <Select value={bedType || "any"} onValueChange={setBedType}>
                         <SelectTrigger id="bedType">
-                          <SelectValue placeholder="Any Bed Type" />
+                          <SelectValue defaultValue="Any Bed Type">Any Bed Type</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="any">Any Bed Type</SelectItem>
@@ -279,9 +279,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="fuelType">Fuel Type</Label>
-                      <Select value={fuelType} onValueChange={setFuelType}>
+                      <Select value={fuelType || "any"} onValueChange={setFuelType}>
                         <SelectTrigger id="fuelType">
-                          <SelectValue placeholder="Any Fuel Type" />
+                          <SelectValue defaultValue="Any Fuel Type">Any Fuel Type</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="any">Any Fuel Type</SelectItem>
@@ -296,9 +296,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="slides">Number of Slides</Label>
-                    <Select value={slides} onValueChange={setSlides}>
+                    <Select value={slides || "any"} onValueChange={setSlides}>
                       <SelectTrigger id="slides">
-                        <SelectValue placeholder="Any Number of Slides" />
+                        <SelectValue defaultValue="Any Number of Slides">Any Number of Slides</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any Number of Slides</SelectItem>
@@ -411,9 +411,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <Label>Converter</Label>
-            <Select value={manufacturer} onValueChange={setManufacturer}>
+            <Select value={manufacturer || "all"} onValueChange={setManufacturer}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="All Converters" />
+                <SelectValue defaultValue="All Converters">All Converters</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Converters</SelectItem>
@@ -427,9 +427,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
           </div>
           <div>
             <Label>Chassis</Label>
-            <Select value={chassis} onValueChange={setChassis}>
+            <Select value={chassis || "any"} onValueChange={setChassis}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="Any Chassis" />
+                <SelectValue defaultValue="Any Chassis">Any Chassis</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Chassis</SelectItem>
@@ -443,9 +443,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
           </div>
           <div>
             <Label>Year</Label>
-            <Select value={year} onValueChange={setYear}>
+            <Select value={year || "any"} onValueChange={setYear}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="Any Year" />
+                <SelectValue defaultValue="Any Year">Any Year</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Year</SelectItem>
@@ -506,9 +506,9 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
           
           <div className="space-y-2">
             <Label htmlFor="slides-full-select">Number of Slides</Label>
-            <Select value={slides} onValueChange={setSlides}>
+            <Select value={slides || "any"} onValueChange={setSlides}>
               <SelectTrigger id="slides-full-select">
-                <SelectValue placeholder="Any Number of Slides" />
+                <SelectValue defaultValue="Any Number of Slides">Any Number of Slides</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Number of Slides</SelectItem>
