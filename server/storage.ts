@@ -397,8 +397,9 @@ export class DatabaseStorage implements IStorage {
         username: "admin",
         email: "admin@example.com",
         password: "admin123",
-        name: "Admin User",
-        role: "admin"
+        firstName: "Admin",
+        lastName: "User",
+        isAdmin: true
       });
       console.log("Created demo admin user - username: admin, password: admin123");
     }

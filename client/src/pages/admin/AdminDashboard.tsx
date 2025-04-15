@@ -10,7 +10,7 @@ const AdminDashboard = () => {
   const [, navigate] = useLocation();
 
   // Check if user is admin
-  const isAdmin = isAuthenticated && user?.role === "admin";
+  const isAdmin = isAuthenticated && (user?.isAdmin || user?.role === "admin");
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
