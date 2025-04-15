@@ -73,8 +73,11 @@ export const rvListings = pgTable("rv_listings", {
   year: integer("year").notNull(),
   price: doublePrecision("price").notNull(),
   manufacturerId: integer("manufacturer_id").notNull(), // Prevost, etc. (chassis manufacturer)
-  converterId: integer("converter_id"), // Marathon, Liberty, etc. (RV converter)
-  chassisTypeId: integer("chassis_type_id"), // H345, X345, etc.
+  // NOTE: These fields are commented out because they don't exist in the database yet
+  // They will be added in a future migration
+  // converterId: integer("converter_id"), // Marathon, Liberty, etc. (RV converter)
+  // chassisTypeId: integer("chassis_type_id"), // H345, X345, etc.
+  // features: text("features").array(), // Array of features
   typeId: integer("type_id").notNull(),
   length: doublePrecision("length"),
   mileage: integer("mileage"),
@@ -82,7 +85,6 @@ export const rvListings = pgTable("rv_listings", {
   fuelType: text("fuel_type"),
   bedType: text("bed_type"),
   slides: integer("slides"),
-  features: text("features").array(), // Array of features
   featuredImage: text("featured_image").notNull(),
   isFeatured: boolean("is_featured").default(false),
   sellerId: integer("seller_id").notNull(),
@@ -95,14 +97,15 @@ export const rvListingsRelations = relations(rvListings, ({ one, many }) => ({
     fields: [rvListings.manufacturerId],
     references: [manufacturers.id],
   }),
-  converter: one(converters, {
-    fields: [rvListings.converterId],
-    references: [converters.id],
-  }),
-  chassisType: one(chassisTypes, {
-    fields: [rvListings.chassisTypeId],
-    references: [chassisTypes.id],
-  }),
+  // These relations will be enabled when the columns are added
+  // converter: one(converters, {
+  //   fields: [rvListings.converterId],
+  //   references: [converters.id],
+  // }),
+  // chassisType: one(chassisTypes, {
+  //   fields: [rvListings.chassisTypeId],
+  //   references: [chassisTypes.id],
+  // }),
   type: one(rvTypes, {
     fields: [rvListings.typeId],
     references: [rvTypes.id],

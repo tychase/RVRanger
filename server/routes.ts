@@ -575,16 +575,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Features matching
         if (filters.features && Array.isArray(filters.features) && filters.features.length > 0) {
-          // Now that we've updated our schema to include a features array:
-          const listingFeatures = listing.features || [];
-          const matchCount = filters.features.filter(f => 
-            listingFeatures.includes(f)
-          ).length;
-          
-          if (matchCount > 0) {
-            score += matchCount;
-            console.log(`[Match] Listing ${listing.id} matched ${matchCount} features`);
+          // We don't have features in the database yet, so we'll check the description
+          // This is a temporary solution until we add the features column
+          if (listing.description) {
+            const matchCount = filters.features.filter((feature: string) => 
+              listing.description.toLowerCase().includes(feature.toLowerCase())
+            ).length;
+            
+            if (matchCount > 0) {
+              score += matchCount;
+              console.log(`[Match] Listing ${listing.id} matched ${matchCount} features in description`);
+            }
           }
+          
+          // Future implementation when features column is added:
+          // const listingFeatures = listing.features || [];
+          // const matchCount = filters.features.filter(feature => 
+          //   listingFeatures.includes(feature)
+          // ).length;
+          // 
+          // if (matchCount > 0) {
+          //   score += matchCount;
+          //   console.log(`[Match] Listing ${listing.id} matched ${matchCount} features`);
+          // }
         }
       });
       

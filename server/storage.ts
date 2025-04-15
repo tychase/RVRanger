@@ -173,7 +173,28 @@ export class DatabaseStorage implements IStorage {
     featured?: boolean;
     searchTerm?: string;
   }): Promise<RvListing[]> {
-    let query = db.select().from(rvListings);
+    // Explicitly specify columns that exist in the database
+    // This avoids issues with schema changes that haven't been migrated yet
+    let query = db.select({
+      id: rvListings.id,
+      title: rvListings.title,
+      description: rvListings.description,
+      year: rvListings.year,
+      price: rvListings.price,
+      manufacturerId: rvListings.manufacturerId,
+      typeId: rvListings.typeId,
+      length: rvListings.length,
+      mileage: rvListings.mileage,
+      location: rvListings.location,
+      fuelType: rvListings.fuelType,
+      bedType: rvListings.bedType,
+      slides: rvListings.slides,
+      featuredImage: rvListings.featuredImage,
+      isFeatured: rvListings.isFeatured,
+      sellerId: rvListings.sellerId,
+      createdAt: rvListings.createdAt,
+      updatedAt: rvListings.updatedAt
+    }).from(rvListings);
     
     if (options) {
       let conditions = [];
