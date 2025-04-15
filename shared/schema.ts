@@ -73,11 +73,9 @@ export const rvListings = pgTable("rv_listings", {
   year: integer("year").notNull(),
   price: doublePrecision("price").notNull(),
   manufacturerId: integer("manufacturer_id").notNull(), // Prevost, etc. (chassis manufacturer)
-  // NOTE: These fields are commented out because they don't exist in the database yet
-  // They will be added in a future migration
-  // converterId: integer("converter_id"), // Marathon, Liberty, etc. (RV converter)
-  // chassisTypeId: integer("chassis_type_id"), // H345, X345, etc.
-  // features: text("features").array(), // Array of features
+  converterId: integer("converter_id"), // Marathon, Liberty, etc. (RV converter)
+  chassisTypeId: integer("chassis_type_id"), // H345, X345, etc.
+  // features: text("features").array(), // Array of features - we'll add this later
   typeId: integer("type_id").notNull(),
   length: doublePrecision("length"),
   mileage: integer("mileage"),
@@ -97,15 +95,14 @@ export const rvListingsRelations = relations(rvListings, ({ one, many }) => ({
     fields: [rvListings.manufacturerId],
     references: [manufacturers.id],
   }),
-  // These relations will be enabled when the columns are added
-  // converter: one(converters, {
-  //   fields: [rvListings.converterId],
-  //   references: [converters.id],
-  // }),
-  // chassisType: one(chassisTypes, {
-  //   fields: [rvListings.chassisTypeId],
-  //   references: [chassisTypes.id],
-  // }),
+  converter: one(converters, {
+    fields: [rvListings.converterId],
+    references: [converters.id],
+  }),
+  chassisType: one(chassisTypes, {
+    fields: [rvListings.chassisTypeId],
+    references: [chassisTypes.id],
+  }),
   type: one(rvTypes, {
     fields: [rvListings.typeId],
     references: [rvTypes.id],

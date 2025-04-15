@@ -1,0 +1,67 @@
+# Python Scraper for https://www.prevost-stuff.com/forsale/public_list_ads.php
+# ✅ Pulls only listings with an actual price (ignores "Price: Call")
+# ✅ Extracts title, price, image URL, and listing detail URL
+
+import requests
+from bs4 import BeautifulSoup
+import re
+import hashlib
+import os
+
+BASE_URL = "https://www.prevost-stuff.com/forsale/public_list_ads.php"
+IMAGE_DIR = "public/images/rv_listings/"
+os.makedirs(IMAGE_DIR, exist_ok=True)
+
+def hash_image(content):
+    return hashlib.md5(content).hexdigest()
+
+def scrape_prevost_list():
+    response = requests.get(BASE_URL)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    listings = []
+    for row in soup.select("div.row"):
+        title_tag = row.select_one("h5")
+        price_tag = row.find(text=re.compile("Price: "))
+        img_tag = row.select_one("img")
+        link_tag = row.select_one("a")
+
+        if not title_tag or not price_tag or not img_tag:
+            continue
+
+        price_text = price_tag.strip()
+        if not re.search(r"\$\d", price_text):
+            continue  # skip listings without numeric price
+
+        title = title_tag.get_text(strip=True)
+        price = re.search(r"\$[\d,]+", price_text).group()
+        image_url = img_tag["src"] if img_tag else None
+        detail_url = link_tag["href"] if link_tag else None
+
+        # Download and hash image
+        try:
+            img_response = requests.get(image_url)
+            if img_response.status_code == 200:
+                img_hash = hash_image(img_response.content)
+                file_name = f"rv_{img_hash[:8]}.jpg"
+                file_path = os.path.join(IMAGE_DIR, file_name)
+                with open(file_path, "wb") as f:
+                    f.write(img_response.content)
+        except Exception as e:
+            print(f"Image download failed: {e}")
+            continue
+
+        listings.append({
+            "title": title,
+            "price": price,
+            "image": f"/images/rv_listings/{file_name}",
+            "url": detail_url,
+            "hash": img_hash
+        })
+
+    return listings
+
+if __name__ == "__main__":
+    results = scrape_prevost_list()
+    for rv in results:
+        print(rv)
