@@ -1,0 +1,113 @@
+// Patched SearchForm.tsx with visible dropdown placeholders and labeled checkboxes
+import React from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const converters = [
+  { id: "marathon", name: "Marathon" },
+  { id: "liberty", name: "Liberty" },
+  { id: "millennium", name: "Millennium" },
+  { id: "emerald", name: "Emerald" },
+  { id: "featherlite", name: "Featherlite" },
+  { id: "loki", name: "Loki" },
+  { id: "country_coach", name: "Country Coach" },
+];
+
+const chassisOptions = ["H345", "X345"];
+const slidesOptions = ["1", "2", "3", "4"];
+const featureOptions = [
+  "Adaptive cruise control",
+  "Lane keep assist",
+  "Brake assist",
+  "Cruise control",
+  "Outdoor TV",
+  "Underbay storage",
+];
+
+const SearchForm = () => {
+  const [manufacturer, setManufacturer] = React.useState("");
+  const [chassis, setChassis] = React.useState("");
+  const [slides, setSlides] = React.useState("");
+  const [features, setFeatures] = React.useState<string[]>([]);
+
+  const toggleFeature = (feature: string) => {
+    setFeatures((prev) =>
+      prev.includes(feature)
+        ? prev.filter((f) => f !== feature)
+        : [...prev, feature]
+    );
+  };
+
+  return (
+    <form className="space-y-6 p-6">
+      {/* Converter Dropdown */}
+      <div>
+        <Label htmlFor="converter">Converter</Label>
+        <Select value={manufacturer} onValueChange={setManufacturer}>
+          <SelectTrigger id="converter">
+            <SelectValue placeholder="All Converters" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Converters</SelectItem>
+            {converters.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Chassis Dropdown */}
+      <div>
+        <Label htmlFor="chassis">Chassis</Label>
+        <Select value={chassis} onValueChange={setChassis}>
+          <SelectTrigger id="chassis">
+            <SelectValue placeholder="Select Chassis" />
+          </SelectTrigger>
+          <SelectContent>
+            {chassisOptions.map((option) => (
+              <SelectItem key={option} value={option}>{option}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Slides Dropdown */}
+      <div>
+        <Label htmlFor="slides">Slides</Label>
+        <Select value={slides} onValueChange={setSlides}>
+          <SelectTrigger id="slides">
+            <SelectValue placeholder="Number of Slides" />
+          </SelectTrigger>
+          <SelectContent>
+            {slidesOptions.map((option) => (
+              <SelectItem key={option} value={option}>{option}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Features Section */}
+      <div>
+        <Label className="mb-2 block">Features</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {featureOptions.map((feature, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <Checkbox
+                id={`feature-${index}`}
+                checked={features.includes(feature)}
+                onCheckedChange={() => toggleFeature(feature)}
+              />
+              <Label htmlFor={`feature-${index}`} className="text-sm">
+                {feature}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+    </form>
+  );
+};
+
+export default SearchForm;
