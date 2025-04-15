@@ -1,12 +1,14 @@
 import {
-  users, manufacturers, rvTypes, rvListings, rvImages, favorites, inquiries,
+  users, manufacturers, rvTypes, rvListings, rvImages, favorites, inquiries, converters, chassisTypes,
   type User, type InsertUser,
   type Manufacturer, type InsertManufacturer,
   type RvType, type InsertRvType,
   type RvListing, type InsertRvListing,
   type RvImage, type InsertRvImage,
   type Favorite, type InsertFavorite,
-  type Inquiry, type InsertInquiry
+  type Inquiry, type InsertInquiry,
+  type Converter, type InsertConverter,
+  type ChassisType, type InsertChassisType
 } from "@shared/schema";
 
 export interface IStorage {
@@ -22,6 +24,20 @@ export interface IStorage {
   createManufacturer(manufacturer: InsertManufacturer): Promise<Manufacturer>;
   updateManufacturer(id: number, manufacturer: Partial<InsertManufacturer>): Promise<Manufacturer | undefined>;
   deleteManufacturer(id: number): Promise<boolean>;
+  
+  // Converter operations
+  getAllConverters(): Promise<Converter[]>;
+  getConverter(id: number): Promise<Converter | undefined>;
+  createConverter(converter: InsertConverter): Promise<Converter>;
+  updateConverter(id: number, converter: Partial<InsertConverter>): Promise<Converter | undefined>;
+  deleteConverter(id: number): Promise<boolean>;
+  
+  // Chassis Type operations
+  getAllChassisTypes(): Promise<ChassisType[]>;
+  getChassisType(id: number): Promise<ChassisType | undefined>;
+  createChassisType(chassisType: InsertChassisType): Promise<ChassisType>;
+  updateChassisType(id: number, chassisType: Partial<InsertChassisType>): Promise<ChassisType | undefined>;
+  deleteChassisType(id: number): Promise<boolean>;
 
   // RV Type operations
   getAllRvTypes(): Promise<RvType[]>;
@@ -119,6 +135,70 @@ export class DatabaseStorage implements IStorage {
       .delete(manufacturers)
       .where(eq(manufacturers.id, id))
       .returning({ id: manufacturers.id });
+    return result.length > 0;
+  }
+  
+  // Converter operations
+  async getAllConverters(): Promise<Converter[]> {
+    return await db.select().from(converters);
+  }
+
+  async getConverter(id: number): Promise<Converter | undefined> {
+    const [converter] = await db.select().from(converters).where(eq(converters.id, id));
+    return converter;
+  }
+
+  async createConverter(converter: InsertConverter): Promise<Converter> {
+    const [newConverter] = await db.insert(converters).values(converter).returning();
+    return newConverter;
+  }
+
+  async updateConverter(id: number, converter: Partial<InsertConverter>): Promise<Converter | undefined> {
+    const [updatedConverter] = await db
+      .update(converters)
+      .set(converter)
+      .where(eq(converters.id, id))
+      .returning();
+    return updatedConverter;
+  }
+
+  async deleteConverter(id: number): Promise<boolean> {
+    const result = await db
+      .delete(converters)
+      .where(eq(converters.id, id))
+      .returning({ id: converters.id });
+    return result.length > 0;
+  }
+  
+  // Chassis Type operations
+  async getAllChassisTypes(): Promise<ChassisType[]> {
+    return await db.select().from(chassisTypes);
+  }
+
+  async getChassisType(id: number): Promise<ChassisType | undefined> {
+    const [chassisType] = await db.select().from(chassisTypes).where(eq(chassisTypes.id, id));
+    return chassisType;
+  }
+
+  async createChassisType(chassisType: InsertChassisType): Promise<ChassisType> {
+    const [newChassisType] = await db.insert(chassisTypes).values(chassisType).returning();
+    return newChassisType;
+  }
+
+  async updateChassisType(id: number, chassisType: Partial<InsertChassisType>): Promise<ChassisType | undefined> {
+    const [updatedChassisType] = await db
+      .update(chassisTypes)
+      .set(chassisType)
+      .where(eq(chassisTypes.id, id))
+      .returning();
+    return updatedChassisType;
+  }
+
+  async deleteChassisType(id: number): Promise<boolean> {
+    const result = await db
+      .delete(chassisTypes)
+      .where(eq(chassisTypes.id, id))
+      .returning({ id: chassisTypes.id });
     return result.length > 0;
   }
 
