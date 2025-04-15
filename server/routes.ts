@@ -494,20 +494,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Manufacturer (converter) matching
         if (filters.manufacturer && filters.manufacturer !== "all") {
-          // Convert the input to a number if possible
-          const manufacturerId = parseInt(filters.manufacturer);
+          // Find manufacturer by name or id from the filter value
+          const targetManufacturer = manufacturers.find(m => 
+            m.name.toLowerCase() === filters.manufacturer.toLowerCase() || 
+            m.id.toString() === filters.manufacturer
+          );
           
-          if (!isNaN(manufacturerId) && listing.manufacturerId === manufacturerId) {
-            // Direct ID match
+          if (targetManufacturer && targetManufacturer.id === listing.manufacturerId) {
             score += 1;
-          } else {
-            // Check if the filter might be a manufacturer name
-            const listingManufacturer = manufacturers.find(m => m.id === listing.manufacturerId);
-            if (listingManufacturer && 
-               (filters.manufacturer.toLowerCase() === listingManufacturer.name.toLowerCase() ||
-                filters.manufacturer === listingManufacturer.id.toString())) {
-              score += 1;
-            }
+            console.log(`[Match] Listing ${listing.id} matched manufacturer ${targetManufacturer.name}`);
           }
         }
         
