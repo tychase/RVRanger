@@ -33,7 +33,12 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
   const [priceRange, setPriceRange] = useState([0, 2000000]);
   const [minMileage, setMinMileage] = useState("");
   const [maxMileage, setMaxMileage] = useState("");
-  const [length, setLength] = useState("");
+  const [minLength, setMinLength] = useState("");
+  const [maxLength, setMaxLength] = useState("");
+  const [bedType, setBedType] = useState("any");
+  const [fuelType, setFuelType] = useState("any");
+  const [slides, setSlides] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [features, setFeatures] = useState<string[]>([]);
 
   // Fetch manufacturers

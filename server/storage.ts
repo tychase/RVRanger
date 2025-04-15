@@ -66,7 +66,7 @@ export interface IStorage {
 }
 
 import { db } from "./db";
-import { eq, and, gte, lte, sql, asc, desc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, asc, desc, or, ilike } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
   // User operations
@@ -163,7 +163,15 @@ export class DatabaseStorage implements IStorage {
     year?: number;
     minPrice?: number;
     maxPrice?: number;
+    minMileage?: number;
+    maxMileage?: number;
+    minLength?: number;
+    maxLength?: number;
+    bedType?: string;
+    fuelType?: string;
+    slides?: number;
     featured?: boolean;
+    searchTerm?: string;
   }): Promise<RvListing[]> {
     let query = db.select().from(rvListings);
     
@@ -190,8 +198,44 @@ export class DatabaseStorage implements IStorage {
         conditions.push(lte(rvListings.price, options.maxPrice));
       }
       
+      if (options.minMileage !== undefined) {
+        conditions.push(gte(rvListings.mileage, options.minMileage));
+      }
+      
+      if (options.maxMileage !== undefined) {
+        conditions.push(lte(rvListings.mileage, options.maxMileage));
+      }
+      
+      if (options.minLength !== undefined) {
+        conditions.push(gte(rvListings.length, options.minLength));
+      }
+      
+      if (options.maxLength !== undefined) {
+        conditions.push(lte(rvListings.length, options.maxLength));
+      }
+      
+      if (options.bedType) {
+        conditions.push(eq(rvListings.bedType, options.bedType));
+      }
+      
+      if (options.fuelType) {
+        conditions.push(eq(rvListings.fuelType, options.fuelType));
+      }
+      
+      if (options.slides !== undefined) {
+        conditions.push(eq(rvListings.slides, options.slides));
+      }
+      
       if (options.featured !== undefined) {
         conditions.push(eq(rvListings.isFeatured, options.featured));
+      }
+      
+      // Text search on title and description
+      if (options.searchTerm) {
+        conditions.push(or(
+          ilike(rvListings.title, `%${options.searchTerm}%`),
+          ilike(rvListings.description, `%${options.searchTerm}%`)
+        ));
       }
       
       if (conditions.length > 0) {

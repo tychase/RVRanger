@@ -101,18 +101,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // RV Listings endpoints
   app.get("/api/listings", async (req, res) => {
     try {
-      const { limit, offset, manufacturerId, typeId, year, minPrice, maxPrice, featured } = req.query;
+      const { 
+        limit, offset, manufacturerId, typeId, year, 
+        minPrice, maxPrice, minMileage, maxMileage, 
+        minLength, maxLength, bedType, fuelType, slides, 
+        featured, searchTerm 
+      } = req.query;
       
       const options: any = {};
       
+      // Pagination params
       if (limit) options.limit = parseInt(limit as string);
       if (offset) options.offset = parseInt(offset as string);
+      
+      // Basic filter params
       if (manufacturerId) options.manufacturerId = parseInt(manufacturerId as string);
       if (typeId) options.typeId = parseInt(typeId as string);
       if (year) options.year = parseInt(year as string);
+      
+      // Price range
       if (minPrice) options.minPrice = parseFloat(minPrice as string);
       if (maxPrice) options.maxPrice = parseFloat(maxPrice as string);
+      
+      // Mileage range
+      if (minMileage) options.minMileage = parseInt(minMileage as string);
+      if (maxMileage) options.maxMileage = parseInt(maxMileage as string);
+      
+      // Length range
+      if (minLength) options.minLength = parseFloat(minLength as string);
+      if (maxLength) options.maxLength = parseFloat(maxLength as string);
+      
+      // Feature filters
+      if (bedType) options.bedType = bedType as string;
+      if (fuelType) options.fuelType = fuelType as string;
+      if (slides) options.slides = parseInt(slides as string);
+      
+      // Boolean flags
       if (featured === 'true') options.featured = true;
+      
+      // Search text
+      if (searchTerm) options.searchTerm = searchTerm as string;
       
       console.log(`[GET /api/listings] Fetching listings with options:`, options);
       const listings = await storage.getAllRvListings(options);
