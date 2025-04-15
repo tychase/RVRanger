@@ -262,6 +262,8 @@ export class DatabaseStorage implements IStorage {
       year: rvListings.year,
       price: rvListings.price,
       manufacturerId: rvListings.manufacturerId,
+      converterId: rvListings.converterId,
+      chassisTypeId: rvListings.chassisTypeId,
       typeId: rvListings.typeId,
       length: rvListings.length,
       mileage: rvListings.mileage,
@@ -369,6 +371,8 @@ export class DatabaseStorage implements IStorage {
       year: rvListings.year,
       price: rvListings.price,
       manufacturerId: rvListings.manufacturerId,
+      converterId: rvListings.converterId,
+      chassisTypeId: rvListings.chassisTypeId,
       typeId: rvListings.typeId,
       length: rvListings.length,
       mileage: rvListings.mileage,
@@ -394,6 +398,8 @@ export class DatabaseStorage implements IStorage {
         year: rvListings.year,
         price: rvListings.price,
         manufacturerId: rvListings.manufacturerId,
+        converterId: rvListings.converterId,
+        chassisTypeId: rvListings.chassisTypeId,
         typeId: rvListings.typeId,
         length: rvListings.length,
         mileage: rvListings.mileage,
@@ -473,7 +479,28 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await db
-      .select()
+      .select({
+        id: rvListings.id,
+        title: rvListings.title,
+        description: rvListings.description,
+        year: rvListings.year,
+        price: rvListings.price,
+        manufacturerId: rvListings.manufacturerId,
+        converterId: rvListings.converterId,
+        chassisTypeId: rvListings.chassisTypeId,
+        typeId: rvListings.typeId,
+        length: rvListings.length,
+        mileage: rvListings.mileage,
+        location: rvListings.location,
+        fuelType: rvListings.fuelType,
+        bedType: rvListings.bedType,
+        slides: rvListings.slides,
+        featuredImage: rvListings.featuredImage,
+        isFeatured: rvListings.isFeatured,
+        sellerId: rvListings.sellerId,
+        createdAt: rvListings.createdAt,
+        updatedAt: rvListings.updatedAt
+      })
       .from(rvListings)
       .where(
         sql`${rvListings.id} IN (${favoriteRvIds.join(',')})`

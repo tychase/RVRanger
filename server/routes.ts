@@ -488,10 +488,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get manufacturers to help with matching
       const manufacturers = await storage.getAllManufacturers();
       
-      // We'll add converters and chassis types support when those tables are populated
-      // For now, we'll infer these values from the listing titles
-      // const converters = await storage.getAllConverters();
-      // const chassisTypes = await storage.getAllChassisTypes();
+      // Get converters and chassis types for more accurate matching
+      const converters = await storage.getAllConverters();
+      const chassisTypes = await storage.getAllChassisTypes();
       
       // Calculate match scores for each listing
       const results = listings.map((listing) => {
@@ -520,50 +519,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Converter matching (like Marathon, Liberty)
         if (filters.converter && filters.converter !== "all") {
-          // Until we have the converter table populated, check the title
-          if (listing.title && typeof filters.converter === 'string') {
+          // First try to match by converter ID in the database
+          if (listing.converterId) {
+            const targetConverter = converters.find(c => 
+              c.name.toLowerCase() === filters.converter.toLowerCase() || 
+              c.id.toString() === filters.converter
+            );
+            
+            if (targetConverter && targetConverter.id === listing.converterId) {
+              score += 1;
+              console.log(`[Match] Listing ${listing.id} matched converter "${filters.converter}" by ID`);
+            }
+          } 
+          // Fallback to title search if converter ID doesn't match
+          else if (listing.title && typeof filters.converter === 'string') {
             const converterName = filters.converter.toLowerCase();
             if (listing.title.toLowerCase().includes(converterName)) {
               score += 1;
               console.log(`[Match] Listing ${listing.id} matched converter "${filters.converter}" in title`);
             }
           }
-          
-          // Once we have converter IDs in the database:
-          // if (listing.converterId) {
-          //   const targetConverter = converters.find(c => 
-          //     c.name.toLowerCase() === filters.converter.toLowerCase() || 
-          //     c.id.toString() === filters.converter
-          //   );
-          //   
-          //   if (targetConverter && targetConverter.id === listing.converterId) {
-          //     score += 1;
-          //   }
-          // }
         }
         
         // Chassis matching (H345, X345, etc)
         if (filters.chassis && filters.chassis !== "all") {
-          // Until we have the chassis table populated, check the title
-          if (listing.title && typeof filters.chassis === 'string') {
+          // First try to match by chassis type ID in the database
+          if (listing.chassisTypeId) {
+            const targetChassis = chassisTypes.find(c => 
+              c.name.toLowerCase() === filters.chassis.toLowerCase() || 
+              c.id.toString() === filters.chassis
+            );
+            
+            if (targetChassis && targetChassis.id === listing.chassisTypeId) {
+              score += 1;
+              console.log(`[Match] Listing ${listing.id} matched chassis "${filters.chassis}" by ID`);
+            }
+          }
+          // Fallback to title search if chassis ID doesn't match
+          else if (listing.title && typeof filters.chassis === 'string') {
             const chassisName = filters.chassis.toLowerCase();
             if (listing.title.toLowerCase().includes(chassisName)) {
               score += 1;
               console.log(`[Match] Listing ${listing.id} matched chassis "${filters.chassis}" in title`);
             }
           }
-          
-          // Once we have chassis IDs in the database:
-          // if (listing.chassisTypeId) {
-          //   const targetChassis = chassisTypes.find(c => 
-          //     c.name.toLowerCase() === filters.chassis.toLowerCase() || 
-          //     c.id.toString() === filters.chassis
-          //   );
-          //   
-          //   if (targetChassis && targetChassis.id === listing.chassisTypeId) {
-          //     score += 1;
-          //   }
-          // }
         }
         
         // Slides matching
