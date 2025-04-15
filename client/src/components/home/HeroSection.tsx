@@ -13,12 +13,16 @@ const HeroSection = () => {
       params.append("manufacturer", searchParams.manufacturer);
     }
     
-    if (searchParams.type && searchParams.type !== "any") {
-      params.append("type", searchParams.type);
+    if (searchParams.chassis && searchParams.chassis !== "all") {
+      params.append("chassis", searchParams.chassis);
     }
     
-    if (searchParams.year && searchParams.year !== "any") {
-      params.append("year", searchParams.year);
+    if (searchParams.slides && searchParams.slides !== "all") {
+      params.append("slides", searchParams.slides);
+    }
+    
+    if (searchParams.features && searchParams.features.length > 0) {
+      params.append("features", searchParams.features.join(','));
     }
     
     // Navigate to browse page with search params
