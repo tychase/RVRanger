@@ -84,8 +84,20 @@ const Browse = () => {
     // Convert to URL query string
     const params = new URLSearchParams();
     for (const key in mergedParams) {
-      if (mergedParams[key] && mergedParams[key] !== "all" && mergedParams[key] !== "any") {
-        params.append(key, mergedParams[key]);
+      // Only add parameters that have values and aren't default/empty values
+      if (
+        mergedParams[key] !== undefined && 
+        mergedParams[key] !== null && 
+        mergedParams[key] !== "" && 
+        mergedParams[key] !== "all" && 
+        mergedParams[key] !== "any"
+      ) {
+        // Handle arrays like features
+        if (Array.isArray(mergedParams[key]) && mergedParams[key].length > 0) {
+          params.append(key, mergedParams[key].join(','));
+        } else {
+          params.append(key, mergedParams[key].toString());
+        }
       }
     }
     

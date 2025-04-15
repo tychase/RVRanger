@@ -40,15 +40,33 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
   const [slides, setSlides] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [features, setFeatures] = useState<string[]>([]);
+  
+  // Keeping length for backward compatibility
+  const [length, setLength] = useState("");
+
+  // Define types for the API data
+  interface Manufacturer {
+    id: number;
+    name: string;
+    logoUrl: string;
+    description: string;
+  }
+  
+  interface RvType {
+    id: number;
+    name: string;
+    description: string;
+    imageUrl: string;
+  }
 
   // Fetch manufacturers
-  const { data: manufacturers = [] } = useQuery({
+  const { data: manufacturers = [] } = useQuery<Manufacturer[]>({
     queryKey: ["/api/manufacturers"],
     staleTime: Infinity, // Data doesn't change often
   });
 
   // Fetch RV types
-  const { data: rvTypes = [] } = useQuery({
+  const { data: rvTypes = [] } = useQuery<RvType[]>({
     queryKey: ["/api/types"],
     staleTime: Infinity,
   });
@@ -59,10 +77,16 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
       manufacturer,
       type,
       year,
-      priceRange,
+      minPrice: priceRange[0],
+      maxPrice: priceRange[1],
       minMileage: minMileage ? parseInt(minMileage) : undefined,
       maxMileage: maxMileage ? parseInt(maxMileage) : undefined,
-      length: length ? parseInt(length) : undefined,
+      minLength: minLength ? parseFloat(minLength) : undefined,
+      maxLength: maxLength ? parseFloat(maxLength) : undefined,
+      bedType: bedType !== "any" ? bedType : undefined,
+      fuelType: fuelType !== "any" ? fuelType : undefined,
+      slides: slides ? parseInt(slides) : undefined,
+      searchTerm,
       features,
     });
   };
@@ -87,7 +111,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Manufacturers</SelectItem>
-                  {manufacturers.map((m: any) => (
+                  {manufacturers.map((m) => (
                     <SelectItem key={m.id} value={m.id.toString()}>
                       {m.name}
                     </SelectItem>
@@ -102,7 +126,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any Type</SelectItem>
-                  {rvTypes.map((t: any) => (
+                  {rvTypes.map((t) => (
                     <SelectItem key={t.id} value={t.id.toString()}>
                       {t.name}
                     </SelectItem>
@@ -182,14 +206,83 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                     </div>
                   </div>
                   
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="minLength">Min Length (ft)</Label>
+                      <Input
+                        id="minLength"
+                        type="number"
+                        placeholder="0"
+                        value={minLength}
+                        onChange={(e) => setMinLength(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="maxLength">Max Length (ft)</Label>
+                      <Input
+                        id="maxLength"
+                        type="number"
+                        placeholder="Any"
+                        value={maxLength}
+                        onChange={(e) => setMaxLength(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="length">Length (ft)</Label>
+                    <Label htmlFor="searchTerm">Keyword Search</Label>
                     <Input
-                      id="length"
+                      id="searchTerm"
+                      type="text"
+                      placeholder="Search by keywords"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bedType">Bed Type</Label>
+                      <Select value={bedType} onValueChange={setBedType}>
+                        <SelectTrigger id="bedType">
+                          <SelectValue placeholder="Any Bed Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="any">Any Bed Type</SelectItem>
+                          <SelectItem value="king">King</SelectItem>
+                          <SelectItem value="queen">Queen</SelectItem>
+                          <SelectItem value="twin">Twin</SelectItem>
+                          <SelectItem value="bunk">Bunk</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="fuelType">Fuel Type</Label>
+                      <Select value={fuelType} onValueChange={setFuelType}>
+                        <SelectTrigger id="fuelType">
+                          <SelectValue placeholder="Any Fuel Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="any">Any Fuel Type</SelectItem>
+                          <SelectItem value="diesel">Diesel</SelectItem>
+                          <SelectItem value="gas">Gas</SelectItem>
+                          <SelectItem value="hybrid">Hybrid</SelectItem>
+                          <SelectItem value="electric">Electric</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="slides">Number of Slides</Label>
+                    <Input
+                      id="slides"
                       type="number"
-                      placeholder="Any length"
-                      value={length}
-                      onChange={(e) => setLength(e.target.value)}
+                      min="0"
+                      max="10"
+                      placeholder="Any"
+                      value={slides}
+                      onChange={(e) => setSlides(e.target.value)}
                     />
                   </div>
                   
@@ -274,7 +367,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Manufacturers</SelectItem>
-                {manufacturers.map((m: any) => (
+                {manufacturers.map((m) => (
                   <SelectItem key={m.id} value={m.id.toString()}>
                     {m.name}
                   </SelectItem>
@@ -290,7 +383,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Type</SelectItem>
-                {rvTypes.map((t: any) => (
+                {rvTypes.map((t) => (
                   <SelectItem key={t.id} value={t.id.toString()}>
                     {t.name}
                   </SelectItem>
