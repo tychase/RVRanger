@@ -126,7 +126,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               <Label className="mb-1 block">Converter</Label>
               <Select value={manufacturer || "all"} onValueChange={setManufacturer}>
                 <SelectTrigger className="w-full">
-                  <SelectValue defaultValue="All Converters">All Converters</SelectValue>
+                  <SelectValue placeholder="Select Converter">All Converters</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Converters</SelectItem>
@@ -142,7 +142,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               <Label className="mb-1 block">Chassis</Label>
               <Select value={chassis || "any"} onValueChange={setChassis}>
                 <SelectTrigger className="w-full">
-                  <SelectValue defaultValue="Any Chassis">Any Chassis</SelectValue>
+                  <SelectValue placeholder="Select Chassis">Any Chassis</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any Chassis</SelectItem>
@@ -158,7 +158,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               <Label className="mb-1 block">Year</Label>
               <Select value={year || "any"} onValueChange={setYear}>
                 <SelectTrigger className="w-full">
-                  <SelectValue defaultValue="Any Year">Any Year</SelectValue>
+                  <SelectValue placeholder="Select Year">Any Year</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any Year</SelectItem>
@@ -266,7 +266,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                       <Label htmlFor="bedType">Bed Type</Label>
                       <Select value={bedType || "any"} onValueChange={setBedType}>
                         <SelectTrigger id="bedType">
-                          <SelectValue defaultValue="Any Bed Type">Any Bed Type</SelectValue>
+                          <SelectValue placeholder="Select Bed Type">Any Bed Type</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="any">Any Bed Type</SelectItem>
@@ -281,7 +281,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                       <Label htmlFor="fuelType">Fuel Type</Label>
                       <Select value={fuelType || "any"} onValueChange={setFuelType}>
                         <SelectTrigger id="fuelType">
-                          <SelectValue defaultValue="Any Fuel Type">Any Fuel Type</SelectValue>
+                          <SelectValue placeholder="Select Fuel Type">Any Fuel Type</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="any">Any Fuel Type</SelectItem>
@@ -298,7 +298,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                     <Label htmlFor="slides">Number of Slides</Label>
                     <Select value={slides || "any"} onValueChange={setSlides}>
                       <SelectTrigger id="slides">
-                        <SelectValue defaultValue="Any Number of Slides">Any Number of Slides</SelectValue>
+                        <SelectValue placeholder="Select Number of Slides">Any Number of Slides</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any Number of Slides</SelectItem>
@@ -413,7 +413,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
             <Label>Converter</Label>
             <Select value={manufacturer || "all"} onValueChange={setManufacturer}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue defaultValue="All Converters">All Converters</SelectValue>
+                <SelectValue placeholder="Select Converter">All Converters</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Converters</SelectItem>
