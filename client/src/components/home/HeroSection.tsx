@@ -40,7 +40,7 @@ const HeroSection = () => {
           <p className="text-lg md:text-xl mb-8 text-neutral-100">
             Browse thousands of premium recreational vehicles from top manufacturers
           </p>
-          <SearchForm onSearch={handleSearch} simplified={false} theme="dark" />
+          <SearchForm onSearch={handleSearch} simplified={false} />
         </div>
       </div>
     </section>
