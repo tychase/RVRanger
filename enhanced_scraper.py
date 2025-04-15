@@ -167,8 +167,22 @@ def scrape_prevost_listings():
     
     soup = BeautifulSoup(response.text, "html.parser")
     listings = []
-
-    for row in soup.select("div.row"):
+    
+    # Debug HTML content
+    print(f"Page content length: {len(response.text)}")
+    print("First 500 characters of page content:")
+    print(response.text[:500])
+    
+    # Debug selected elements 
+    rows = soup.select("div.row")
+    print(f"Found {len(rows)} div.row elements")
+    
+    # Try a more general selector
+    all_divs = soup.find_all("div")
+    print(f"Found {len(all_divs)} total div elements")
+    
+    # Use more general selectors since the website might have changed
+    for row in soup.find_all("div", class_="row"):
         title_tag = row.select_one("h5")
         price_tag = row.find(text=re.compile("Price: "))
         img_tag = row.select_one("img")
