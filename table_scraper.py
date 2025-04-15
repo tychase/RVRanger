@@ -173,7 +173,7 @@ def process_detail_page(url):
         print(f"Error processing detail page {url}: {e}")
         return {}
 
-def scrape_prevost_tables():
+def scrape_prevost_tables(max_listings=20):
     """Scrape RV listings from table-based structure at prevost-stuff.com"""
     print(f"Fetching listings from {BASE_URL}")
     response = requests.get(BASE_URL)
@@ -186,8 +186,10 @@ def scrape_prevost_tables():
     # Find tables with listing data
     tables = soup.find_all("table")
     print(f"Found {len(tables)} tables on the page")
+    print(f"Limiting to {max_listings} listings for performance")
     
     listings = []
+    listing_count = 0
     
     # Process each listing row in each table
     for table in tables:
@@ -290,10 +292,20 @@ def scrape_prevost_tables():
             }
             
             listings.append(listing)
+            listing_count += 1
             print(f"Added listing: {year or 'N/A'} {converter or 'Unknown'} {model or 'N/A'} - ${price}")
             
-            # Be respectful of the server
-            time.sleep(0.5)
+            # Check if we've reached the maximum number of listings
+            if listing_count >= max_listings:
+                print(f"Reached maximum of {max_listings} listings")
+                break
+        
+        # Also break from outer loop if we've reached the limit
+        if listing_count >= max_listings:
+            break
+            
+        # Be respectful of the server between tables
+        time.sleep(0.5)
     
     return listings
 
