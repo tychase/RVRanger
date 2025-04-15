@@ -599,6 +599,40 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
+    // Check if converters exist
+    const existingConverters = await this.getAllConverters();
+    if (existingConverters.length === 0) {
+      // Seed Converters (companies that customize RV chassis)
+      const converterData = [
+        { name: "Marathon", description: "Marathon Coach is one of the world's largest luxury bus converter" },
+        { name: "Liberty", description: "Liberty Coach is a premier luxury motorcoach manufacturer" },
+        { name: "Millennium", description: "Millennium Luxury Coaches creates custom Prevost conversions" },
+        { name: "Featherlite", description: "Featherlite Coaches builds luxury motorcoaches on Prevost chassis" },
+        { name: "Emerald", description: "Emerald Luxury Coaches specializes in Prevost conversions" },
+        { name: "Newell", description: "Newell Coach builds custom luxury motorhomes" }
+      ];
+      
+      for (const converter of converterData) {
+        await this.createConverter(converter);
+      }
+      console.log("Created seed converter companies");
+    }
+    
+    // Check if chassis types exist - add more if needed
+    const existingChassisTypes = await this.getAllChassisTypes();
+    if (existingChassisTypes.length === 0) {
+      // Seed Chassis Types for Prevost
+      const chassisTypeData = [
+        { name: "H3", description: "H3 chassis model." },
+        { name: "X", description: "X chassis model." }
+      ];
+      
+      for (const chassisType of chassisTypeData) {
+        await this.createChassisType(chassisType);
+      }
+      console.log("Created seed chassis types");
+    }
+    
     // Check if admin user exists
     const adminUser = await this.getUserByUsername("admin");
     if (!adminUser) {

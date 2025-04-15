@@ -60,8 +60,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Manufacturers endpoints
   app.get("/api/manufacturers", async (req, res) => {
-    const manufacturers = await storage.getAllManufacturers();
-    res.json(manufacturers);
+    try {
+      const manufacturers = await storage.getAllManufacturers();
+      res.json(manufacturers);
+    } catch (error) {
+      console.error('[GET /api/manufacturers] Error:', error);
+      res.status(500).json({ message: "Failed to fetch manufacturers" });
+    }
+  });
+  
+  // Converters endpoints
+  app.get("/api/converters", async (req, res) => {
+    try {
+      const converters = await storage.getAllConverters();
+      res.json(converters);
+    } catch (error) {
+      console.error('[GET /api/converters] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch converters",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Chassis types endpoints
+  app.get("/api/chassis-types", async (req, res) => {
+    try {
+      const chassisTypes = await storage.getAllChassisTypes();
+      res.json(chassisTypes);
+    } catch (error) {
+      console.error('[GET /api/chassis-types] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch chassis types",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
 
   app.get("/api/manufacturers/:id", async (req, res) => {
