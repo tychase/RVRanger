@@ -27,8 +27,9 @@ interface SearchFormProps {
 }
 
 const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
-  const [manufacturer, setManufacturer] = useState("all");
-  const [type, setType] = useState("any");
+  const [manufacturer, setManufacturer] = useState("all"); // This is now Converter
+  const [chassis, setChassis] = useState("any");
+  const [type, setType] = useState("any"); // Keep for compatibility but not displayed
   const [year, setYear] = useState("any");
   const [priceRange, setPriceRange] = useState([0, 2000000]);
   const [minMileage, setMinMileage] = useState("");
@@ -59,23 +60,40 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
     imageUrl: string;
   }
 
-  // Fetch manufacturers
+  // Fetch manufacturers (used as Converters now)
   const { data: manufacturers = [] } = useQuery<Manufacturer[]>({
     queryKey: ["/api/manufacturers"],
     staleTime: Infinity, // Data doesn't change often
   });
 
-  // Fetch RV types
+  // Fetch RV types - not used anymore but keeping for API compatibility
   const { data: rvTypes = [] } = useQuery<RvType[]>({
     queryKey: ["/api/types"],
     staleTime: Infinity,
   });
 
+  // Define static converters list
+  const converters = [
+    { id: "marathon", name: "Marathon" },
+    { id: "liberty", name: "Liberty" },
+    { id: "millennium", name: "Millennium" },
+    { id: "emerald", name: "Emerald" },
+    { id: "featherlite", name: "Featherlite" },
+    { id: "loki", name: "Loki" },
+    { id: "country_coach", name: "Country Coach" }
+  ];
+
+  // Define chassis options
+  const chassisOptions = [
+    { id: "h345", name: "H345" },
+    { id: "x345", name: "X345" }
+  ];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch({
-      manufacturer,
-      type,
+      manufacturer, // converter
+      chassis,
       year,
       minPrice: priceRange[0],
       maxPrice: priceRange[1],
@@ -107,28 +125,28 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
             <div className="flex-1">
               <Select value={manufacturer} onValueChange={setManufacturer}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Manufacturers" />
+                  <SelectValue placeholder="All Converters" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Manufacturers</SelectItem>
-                  {manufacturers.map((m) => (
-                    <SelectItem key={m.id} value={m.id.toString()}>
-                      {m.name}
+                  <SelectItem value="all">All Converters</SelectItem>
+                  {converters.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex-1">
-              <Select value={type} onValueChange={setType}>
+              <Select value={chassis} onValueChange={setChassis}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Any Type" />
+                  <SelectValue placeholder="Any Chassis" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="any">Any Type</SelectItem>
-                  {rvTypes.map((t) => (
-                    <SelectItem key={t.id} value={t.id.toString()}>
-                      {t.name}
+                  <SelectItem value="any">Any Chassis</SelectItem>
+                  {chassisOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -275,15 +293,18 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="slides">Number of Slides</Label>
-                    <Input
-                      id="slides"
-                      type="number"
-                      min="0"
-                      max="10"
-                      placeholder="Any"
-                      value={slides}
-                      onChange={(e) => setSlides(e.target.value)}
-                    />
+                    <Select value={slides} onValueChange={setSlides}>
+                      <SelectTrigger id="slides">
+                        <SelectValue placeholder="Any Number of Slides" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Any Number of Slides</SelectItem>
+                        <SelectItem value="1">1 Slide</SelectItem>
+                        <SelectItem value="2">2 Slides</SelectItem>
+                        <SelectItem value="3">3 Slides</SelectItem>
+                        <SelectItem value="4">4 Slides</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">
@@ -291,15 +312,54 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox
-                          id="slides"
-                          checked={features.includes("slides")}
-                          onCheckedChange={() => handleFeatureToggle("slides")}
+                          id="adaptive-cruise"
+                          checked={features.includes("adaptiveCruise")}
+                          onCheckedChange={() => handleFeatureToggle("adaptiveCruise")}
                         />
                         <label
-                          htmlFor="slides"
+                          htmlFor="adaptive-cruise"
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          Slides
+                          Adaptive Cruise Control
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="lane-keep"
+                          checked={features.includes("laneKeep")}
+                          onCheckedChange={() => handleFeatureToggle("laneKeep")}
+                        />
+                        <label
+                          htmlFor="lane-keep"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Lane Keep Assist
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="brake-assist"
+                          checked={features.includes("brakeAssist")}
+                          onCheckedChange={() => handleFeatureToggle("brakeAssist")}
+                        />
+                        <label
+                          htmlFor="brake-assist"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Brake Assist
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="cruise-control"
+                          checked={features.includes("cruiseControl")}
+                          onCheckedChange={() => handleFeatureToggle("cruiseControl")}
+                        />
+                        <label
+                          htmlFor="cruise-control"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Cruise Control
                         </label>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -313,19 +373,6 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
                           King Bed
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="diesel"
-                          checked={features.includes("diesel")}
-                          onCheckedChange={() => handleFeatureToggle("diesel")}
-                        />
-                        <label
-                          htmlFor="diesel"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Diesel
                         </label>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -360,32 +407,32 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <Label>Manufacturer</Label>
+            <Label>Converter</Label>
             <Select value={manufacturer} onValueChange={setManufacturer}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="All Manufacturers" />
+                <SelectValue placeholder="All Converters" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Manufacturers</SelectItem>
-                {manufacturers.map((m) => (
-                  <SelectItem key={m.id} value={m.id.toString()}>
-                    {m.name}
+                <SelectItem value="all">All Converters</SelectItem>
+                {converters.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Type</Label>
-            <Select value={type} onValueChange={setType}>
+            <Label>Chassis</Label>
+            <Select value={chassis} onValueChange={setChassis}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="Any Type" />
+                <SelectValue placeholder="Any Chassis" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">Any Type</SelectItem>
-                {rvTypes.map((t) => (
-                  <SelectItem key={t.id} value={t.id.toString()}>
-                    {t.name}
+                <SelectItem value="any">Any Chassis</SelectItem>
+                {chassisOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -415,7 +462,7 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
           </div>
         </div>
         
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label>Price Range (USD)</Label>
             <Slider
@@ -453,6 +500,22 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
               />
             </div>
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="slides-full-select">Number of Slides</Label>
+            <Select value={slides} onValueChange={setSlides}>
+              <SelectTrigger id="slides-full-select">
+                <SelectValue placeholder="Any Number of Slides" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any Number of Slides</SelectItem>
+                <SelectItem value="1">1 Slide</SelectItem>
+                <SelectItem value="2">2 Slides</SelectItem>
+                <SelectItem value="3">3 Slides</SelectItem>
+                <SelectItem value="4">4 Slides</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <div className="mt-4">
@@ -460,15 +523,54 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
           <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="slides-full"
-                checked={features.includes("slides")}
-                onCheckedChange={() => handleFeatureToggle("slides")}
+                id="adaptive-cruise-full"
+                checked={features.includes("adaptiveCruise")}
+                onCheckedChange={() => handleFeatureToggle("adaptiveCruise")}
               />
               <label
-                htmlFor="slides-full"
+                htmlFor="adaptive-cruise-full"
                 className="text-sm font-medium leading-none"
               >
-                Slides
+                Adaptive Cruise Control
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="lane-keep-full"
+                checked={features.includes("laneKeep")}
+                onCheckedChange={() => handleFeatureToggle("laneKeep")}
+              />
+              <label
+                htmlFor="lane-keep-full"
+                className="text-sm font-medium leading-none"
+              >
+                Lane Keep Assist
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="brake-assist-full"
+                checked={features.includes("brakeAssist")}
+                onCheckedChange={() => handleFeatureToggle("brakeAssist")}
+              />
+              <label
+                htmlFor="brake-assist-full"
+                className="text-sm font-medium leading-none"
+              >
+                Brake Assist
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="cruise-control-full"
+                checked={features.includes("cruiseControl")}
+                onCheckedChange={() => handleFeatureToggle("cruiseControl")}
+              />
+              <label
+                htmlFor="cruise-control-full"
+                className="text-sm font-medium leading-none"
+              >
+                Cruise Control
               </label>
             </div>
             <div className="flex items-center space-x-2">
@@ -482,19 +584,6 @@ const SearchForm = ({ onSearch, simplified = true }: SearchFormProps) => {
                 className="text-sm font-medium leading-none"
               >
                 King Bed
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="diesel-full"
-                checked={features.includes("diesel")}
-                onCheckedChange={() => handleFeatureToggle("diesel")}
-              />
-              <label
-                htmlFor="diesel-full"
-                className="text-sm font-medium leading-none"
-              >
-                Diesel
               </label>
             </div>
             <div className="flex items-center space-x-2">
