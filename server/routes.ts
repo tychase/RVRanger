@@ -488,11 +488,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get manufacturers to help with matching
       const manufacturers = await storage.getAllManufacturers();
       
+      // We'll add converters and chassis types support when those tables are populated
+      // For now, we'll infer these values from the listing titles
+      // const converters = await storage.getAllConverters();
+      // const chassisTypes = await storage.getAllChassisTypes();
+      
       // Calculate match scores for each listing
       const results = listings.map(listing => {
         let score = 0;
         
-        // Manufacturer (converter) matching
+        // Manufacturer matching (chassis manufacturer like Prevost)
         if (filters.manufacturer && filters.manufacturer !== "all") {
           // Check direct match by ID or name
           const targetManufacturer = manufacturers.find(m => 
@@ -507,46 +512,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
             manufacturerMatched = true;
           }
           
-          // Also check if the manufacturer name appears in the title (for converters like Marathon)
-          if (!manufacturerMatched && listing.title) {
-            const manufacturerName = typeof filters.manufacturer === 'string' ? filters.manufacturer.toLowerCase() : '';
-            if (manufacturerName && listing.title.toLowerCase().includes(manufacturerName)) {
-              manufacturerMatched = true;
-            }
-          }
-          
           if (manufacturerMatched) {
             score += 1;
-            console.log(`[Match] Listing ${listing.id} matched manufacturer "${filters.manufacturer}" (ID or title)`);
+            console.log(`[Match] Listing ${listing.id} matched manufacturer "${filters.manufacturer}"`);
           }
         }
         
-        // Chassis matching - For future implementation
+        // Converter matching (like Marathon, Liberty)
+        if (filters.converter && filters.converter !== "all") {
+          // Until we have the converter table populated, check the title
+          if (listing.title && typeof filters.converter === 'string') {
+            const converterName = filters.converter.toLowerCase();
+            if (listing.title.toLowerCase().includes(converterName)) {
+              score += 1;
+              console.log(`[Match] Listing ${listing.id} matched converter "${filters.converter}" in title`);
+            }
+          }
+          
+          // Once we have converter IDs in the database:
+          // if (listing.converterId) {
+          //   const targetConverter = converters.find(c => 
+          //     c.name.toLowerCase() === filters.converter.toLowerCase() || 
+          //     c.id.toString() === filters.converter
+          //   );
+          //   
+          //   if (targetConverter && targetConverter.id === listing.converterId) {
+          //     score += 1;
+          //   }
+          // }
+        }
+        
+        // Chassis matching (H345, X345, etc)
         if (filters.chassis && filters.chassis !== "all") {
-          // If we extend the schema to include chassis, we can add matching here
-          // We'd compare listing.chassis with filters.chassis
+          // Until we have the chassis table populated, check the title
+          if (listing.title && typeof filters.chassis === 'string') {
+            const chassisName = filters.chassis.toLowerCase();
+            if (listing.title.toLowerCase().includes(chassisName)) {
+              score += 1;
+              console.log(`[Match] Listing ${listing.id} matched chassis "${filters.chassis}" in title`);
+            }
+          }
+          
+          // Once we have chassis IDs in the database:
+          // if (listing.chassisTypeId) {
+          //   const targetChassis = chassisTypes.find(c => 
+          //     c.name.toLowerCase() === filters.chassis.toLowerCase() || 
+          //     c.id.toString() === filters.chassis
+          //   );
+          //   
+          //   if (targetChassis && targetChassis.id === listing.chassisTypeId) {
+          //     score += 1;
+          //   }
+          // }
         }
         
         // Slides matching
         if (filters.slides && filters.slides !== "all" && 
             listing.slides === parseInt(filters.slides)) {
           score += 1;
+          console.log(`[Match] Listing ${listing.id} matched slides: ${filters.slides}`);
         }
         
         // Features matching
         if (filters.features && Array.isArray(filters.features) && filters.features.length > 0) {
-          // If we extend the schema to include features, we can add matching here
-          // We would count how many features match and add that to the score
+          // Now that we've updated our schema to include a features array:
+          const listingFeatures = listing.features || [];
+          const matchCount = filters.features.filter(f => 
+            listingFeatures.includes(f)
+          ).length;
           
-          // Example implementation if listing.features were an array:
-          // const listingFeatures = listing.features || [];
-          // const matchCount = filters.features.filter(f => 
-          //   listingFeatures.includes(f)
-          // ).length;
-          // score += matchCount;
+          if (matchCount > 0) {
+            score += matchCount;
+            console.log(`[Match] Listing ${listing.id} matched ${matchCount} features`);
+          }
         }
-        
-        return { ...listing, matchScore: score };
       });
       
       // Sort by match score (highest first)
