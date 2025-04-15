@@ -388,6 +388,20 @@ export class DatabaseStorage implements IStorage {
         await this.createRvType(type);
       }
     }
+    
+    // Check if admin user exists
+    const adminUser = await this.getUserByUsername("admin");
+    if (!adminUser) {
+      // Create a demo admin user
+      await this.createUser({
+        username: "admin",
+        email: "admin@example.com",
+        password: "admin123",
+        name: "Admin User",
+        role: "admin"
+      });
+      console.log("Created demo admin user - username: admin, password: admin123");
+    }
   }
 }
 
