@@ -494,15 +494,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Manufacturer (converter) matching
         if (filters.manufacturer && filters.manufacturer !== "all") {
-          // Find manufacturer by name or id from the filter value
+          // Check direct match by ID or name
           const targetManufacturer = manufacturers.find(m => 
             m.name.toLowerCase() === filters.manufacturer.toLowerCase() || 
             m.id.toString() === filters.manufacturer
           );
           
+          let manufacturerMatched = false;
+          
+          // Check if manufacturer ID matches
           if (targetManufacturer && targetManufacturer.id === listing.manufacturerId) {
+            manufacturerMatched = true;
+          }
+          
+          // Also check if the manufacturer name appears in the title (for converters like Marathon)
+          if (!manufacturerMatched && listing.title) {
+            const manufacturerName = typeof filters.manufacturer === 'string' ? filters.manufacturer.toLowerCase() : '';
+            if (manufacturerName && listing.title.toLowerCase().includes(manufacturerName)) {
+              manufacturerMatched = true;
+            }
+          }
+          
+          if (manufacturerMatched) {
             score += 1;
-            console.log(`[Match] Listing ${listing.id} matched manufacturer ${targetManufacturer.name}`);
+            console.log(`[Match] Listing ${listing.id} matched manufacturer "${filters.manufacturer}" (ID or title)`);
           }
         }
         
