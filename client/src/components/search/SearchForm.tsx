@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const converters = [
   { id: "marathon", name: "Marathon" },
@@ -28,7 +29,12 @@ const featureOptions = [
   "Underbay storage",
 ];
 
-const SearchForm = () => {
+interface SearchFormProps {
+  onSearch?: (searchParams: any) => void;
+  simplified?: boolean;
+}
+
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false }) => {
   const [manufacturer, setManufacturer] = React.useState("");
   const [chassis, setChassis] = React.useState("");
   const [slides, setSlides] = React.useState("");
@@ -48,9 +54,21 @@ const SearchForm = () => {
     const converter = converters.find(c => c.id === id);
     return converter ? converter.name : "";
   };
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSearch) {
+      onSearch({
+        manufacturer,
+        chassis,
+        slides,
+        features
+      });
+    }
+  };
 
   return (
-    <form className="space-y-6 p-6">
+    <form className="space-y-6 p-6" onSubmit={handleSubmit}>
       {/* Converter Dropdown */}
       <div>
         <Label htmlFor="converter">Converter</Label>
@@ -141,6 +159,15 @@ const SearchForm = () => {
           ))}
         </div>
       </div>
+      
+      {/* Submit Button */}
+      {onSearch && (
+        <div className="pt-2">
+          <Button type="submit" className="w-full">
+            Search RVs
+          </Button>
+        </div>
+      )}
     </form>
   );
 };
