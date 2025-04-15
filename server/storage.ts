@@ -282,13 +282,51 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRvListing(id: number): Promise<RvListing | undefined> {
-    const [listing] = await db.select().from(rvListings).where(eq(rvListings.id, id));
+    const [listing] = await db.select({
+      id: rvListings.id,
+      title: rvListings.title,
+      description: rvListings.description,
+      year: rvListings.year,
+      price: rvListings.price,
+      manufacturerId: rvListings.manufacturerId,
+      typeId: rvListings.typeId,
+      length: rvListings.length,
+      mileage: rvListings.mileage,
+      location: rvListings.location,
+      fuelType: rvListings.fuelType,
+      bedType: rvListings.bedType,
+      slides: rvListings.slides,
+      featuredImage: rvListings.featuredImage,
+      isFeatured: rvListings.isFeatured,
+      sellerId: rvListings.sellerId,
+      createdAt: rvListings.createdAt,
+      updatedAt: rvListings.updatedAt
+    }).from(rvListings).where(eq(rvListings.id, id));
     return listing;
   }
 
   async getRvListingsByUser(userId: number): Promise<RvListing[]> {
     return await db
-      .select()
+      .select({
+        id: rvListings.id,
+        title: rvListings.title,
+        description: rvListings.description,
+        year: rvListings.year,
+        price: rvListings.price,
+        manufacturerId: rvListings.manufacturerId,
+        typeId: rvListings.typeId,
+        length: rvListings.length,
+        mileage: rvListings.mileage,
+        location: rvListings.location,
+        fuelType: rvListings.fuelType,
+        bedType: rvListings.bedType,
+        slides: rvListings.slides,
+        featuredImage: rvListings.featuredImage,
+        isFeatured: rvListings.isFeatured,
+        sellerId: rvListings.sellerId,
+        createdAt: rvListings.createdAt,
+        updatedAt: rvListings.updatedAt
+      })
       .from(rvListings)
       .where(eq(rvListings.sellerId, userId));
   }

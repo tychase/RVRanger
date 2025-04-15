@@ -494,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // const chassisTypes = await storage.getAllChassisTypes();
       
       // Calculate match scores for each listing
-      const results = listings.map(listing => {
+      const results = listings.map((listing) => {
         let score = 0;
         
         // Manufacturer matching (chassis manufacturer like Prevost)
@@ -599,6 +599,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           //   console.log(`[Match] Listing ${listing.id} matched ${matchCount} features`);
           // }
         }
+        
+        return { ...listing, matchScore: score };
       });
       
       // Sort by match score (highest first)
