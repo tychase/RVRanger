@@ -511,8 +511,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
-        // Chassis matching - listing.chassis doesn't exist in our schema,
-        // We could extend this in the future
+        // Chassis matching - For future implementation
+        if (filters.chassis && filters.chassis !== "all") {
+          // If we extend the schema to include chassis, we can add matching here
+          // We'd compare listing.chassis with filters.chassis
+        }
         
         // Slides matching
         if (filters.slides && filters.slides !== "all" && 
@@ -520,8 +523,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           score += 1;
         }
         
-        // Features matching - features are not currently in our schema
-        // We could extend this in the future to support features
+        // Features matching
+        if (filters.features && Array.isArray(filters.features) && filters.features.length > 0) {
+          // If we extend the schema to include features, we can add matching here
+          // We would count how many features match and add that to the score
+          
+          // Example implementation if listing.features were an array:
+          // const listingFeatures = listing.features || [];
+          // const matchCount = filters.features.filter(f => 
+          //   listingFeatures.includes(f)
+          // ).length;
+          // score += matchCount;
+        }
         
         return { ...listing, matchScore: score };
       });
