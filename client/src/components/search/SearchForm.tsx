@@ -40,6 +40,25 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
   const [slides, setSlides] = React.useState("all");
   const [features, setFeatures] = React.useState<string[]>([]);
 
+  // Helper function to get manufacturer/converter name
+  const getManufacturerName = (id: string) => {
+    if (id === "all") return "All Converters";
+    const converter = converters.find(c => c.id === id);
+    return converter ? converter.name : id;
+  };
+
+  // Helper function to get chassis display text
+  const getChassisDisplay = (value: string) => {
+    if (value === "all") return "Any Chassis";
+    return value;
+  };
+
+  // Helper function to get slides display text
+  const getSlidesDisplay = (value: string) => {
+    if (value === "all") return "Any Number of Slides";
+    return `${value} Slides`;
+  };
+
   const toggleFeature = (feature: string) => {
     setFeatures((prev) =>
       prev.includes(feature)
@@ -67,7 +86,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         <Label htmlFor="converter">Converter</Label>
         <Select value={manufacturer} onValueChange={setManufacturer}>
           <SelectTrigger id="converter" className="relative">
-            <SelectValue placeholder="All Converters" />
+            <span>{getManufacturerName(manufacturer)}</span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Converters</SelectItem>
@@ -83,7 +102,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         <Label htmlFor="chassis">Chassis</Label>
         <Select value={chassis} onValueChange={setChassis}>
           <SelectTrigger id="chassis" className="relative">
-            <SelectValue placeholder="Any Chassis" />
+            <span>{getChassisDisplay(chassis)}</span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Any Chassis</SelectItem>
@@ -99,7 +118,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         <Label htmlFor="slides">Slides</Label>
         <Select value={slides} onValueChange={setSlides}>
           <SelectTrigger id="slides" className="relative">
-            <SelectValue placeholder="Any Number of Slides" />
+            <span>{getSlidesDisplay(slides)}</span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Any Number of Slides</SelectItem>
