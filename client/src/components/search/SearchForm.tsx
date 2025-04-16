@@ -1,24 +1,31 @@
-// Fully patched SearchForm.tsx with stable "all" defaults and proper placeholder rendering
-import React from "react";
+// Fully patched SearchForm.tsx with dynamic converters and chassis types from API
+import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 
-const converters = [
-  { id: "marathon", name: "Marathon" },
-  { id: "liberty", name: "Liberty" },
-  { id: "millennium", name: "Millennium" },
-  { id: "emerald", name: "Emerald" },
-  { id: "featherlite", name: "Featherlite" },
-  { id: "loki", name: "Loki" },
-  { id: "country_coach", name: "Country Coach" },
-];
+// Types for API data
+interface Manufacturer {
+  id: number;
+  name: string;
+}
 
-const chassisOptions = ["H345", "X345"];
+interface Converter {
+  id: number;
+  name: string;
+}
+
+interface ChassisType {
+  id: number;
+  name: string;
+}
+
+// Define static options
 const slidesOptions = ["1", "2", "3", "4"];
 const featureOptions = [
   "Adaptive cruise control",
