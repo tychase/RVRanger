@@ -215,7 +215,7 @@ const Browse = () => {
               </div>
             ) : sortedListings.length > 0 ? (
               sortedListings.map((rv) => (
-                <CoachCard key={rv.id} rv={rv} />
+                <CoachCard key={rv.id} coach={rv} />
               ))
             ) : (
               <div className="col-span-full text-center p-6">

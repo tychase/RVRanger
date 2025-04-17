@@ -353,7 +353,7 @@ const CoachDetail = () => {
                 </Button>
               </div>
               
-              <CoachInquiryForm rvId={parseInt(id)} />
+              <CoachInquiryForm coachId={parseInt(id)} />
             </div>
           </div>
 
