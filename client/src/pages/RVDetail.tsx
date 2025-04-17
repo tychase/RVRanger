@@ -25,12 +25,12 @@ const CoachDetail = () => {
     window.scrollTo(0, 0);
   }, []);
   
-  // Fetch RV details
+  // Fetch Coach details
   const { data: rv, isLoading, error } = useQuery<RvListing>({
     queryKey: [`/api/listings/${id}`],
   });
 
-  // Fetch RV images
+  // Fetch Coach images
   const { data: images } = useQuery<RvImage[]>({
     queryKey: [`/api/listings/${id}/images`],
     enabled: !!rv,
@@ -60,7 +60,7 @@ const CoachDetail = () => {
     enabled: !!rv?.typeId,
   });
   
-  // Check if RV is favorited
+  // Check if Coach is favorited
   useEffect(() => {
     if (isAuthenticated && rv && user) {
       // In a real app we would fetch the favorite status from the API
@@ -314,7 +314,7 @@ const CoachDetail = () => {
                 )}
                 <div>
                   <p className="text-sm text-neutral-500">Type</p>
-                  <p className="font-medium">{rvType?.name || "Loading..."}</p>
+                  <p className="font-medium">{coachType?.name || "Loading..."}</p>
                 </div>
                 <div>
                   <p className="text-sm text-neutral-500">Manufacturer</p>
