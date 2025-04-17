@@ -15,6 +15,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         serif: ['Playfair Display', 'serif'],
+        heading: ['Playfair Display', 'serif'],
       },
       spacing: {
         '8': '0.5rem',

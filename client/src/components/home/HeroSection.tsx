@@ -36,7 +36,7 @@ const HeroSection = () => {
       </div>
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-3xl mx-auto text-center text-white">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 tracking-wider leading-tight">Find Your Dream Luxury Coach</h1>
+          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-wider leading-tight">Find Your Dream Luxury Coach</h1>
           <p className="text-lg md:text-xl mb-8 text-neutral-100 tracking-wide">
           </p>
           <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-lg">
