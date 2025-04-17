@@ -10,15 +10,15 @@ const SellerSection = () => {
             <div className="md:w-1/2 relative">
               <img 
                 src="https://images.unsplash.com/photo-1621198777376-d776d0f523df?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8bHV4dXJ5IFJWIGV4dGVyaW9yc3x8fHx8fDE3MDcxMDMwMjI&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1080" 
-                alt="Sell your luxury RV" 
+                alt="Sell your luxury Coach" 
                 className="w-full h-full object-cover md:absolute inset-0"
               />
             </div>
             <div className="md:w-1/2 p-6 md:p-8 md:ml-auto flex flex-col justify-center">
               <span className="text-accent-foreground font-semibold mb-2">FOR SELLERS</span>
-              <h2 className="text-2xl md:text-3xl font-bold text-neutral-800 mb-4">Ready to Sell Your Luxury RV?</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-neutral-800 mb-4">Ready to Sell Your Luxury Coach?</h2>
               <p className="text-neutral-600 mb-6">
-                Get your RV in front of thousands of serious buyers. Our premium listing options help you showcase your vehicle's best features with high-quality photos and detailed descriptions.
+                Get your Coach in front of thousands of serious buyers. Our premium listing options help you showcase your vehicle's best features with high-quality photos and detailed descriptions.
               </p>
               
               <div className="mb-6 space-y-4">
@@ -37,7 +37,7 @@ const SellerSection = () => {
                     <span>2</span>
                   </div>
                   <div className="ml-4">
-                    <h3 className="font-semibold text-neutral-800">List Your RV</h3>
+                    <h3 className="font-semibold text-neutral-800">List Your Coach</h3>
                     <p className="text-sm text-neutral-600">Upload photos and add detailed specifications</p>
                   </div>
                 </div>
@@ -56,7 +56,7 @@ const SellerSection = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/sell">
                   <Button className="w-full">
-                    List Your RV Today
+                    List Your Coach Today
                   </Button>
                 </Link>
                 <Link href="/sell#packages">

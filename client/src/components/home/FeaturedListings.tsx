@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 
 const FeaturedListings = () => {
-  const { data: featuredRvs, isLoading, error } = useQuery({
+  const { data: featuredCoaches, isLoading, error } = useQuery({
     queryKey: ["/api/listings/featured"],
   });
 
@@ -35,7 +35,7 @@ const FeaturedListings = () => {
     <section className="py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-neutral-800">Featured Luxury RVs</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-neutral-800">Featured Luxury Coaches</h2>
           <Link href="/browse?featured=true" className="text-primary font-medium hover:underline">
             View All
           </Link>
@@ -46,15 +46,15 @@ const FeaturedListings = () => {
             renderSkeletons()
           ) : error ? (
             <div className="col-span-full text-center p-6">
-              <p className="text-red-500">Error loading featured RVs. Please try again later.</p>
+              <p className="text-red-500">Error loading featured Coaches. Please try again later.</p>
             </div>
-          ) : featuredRvs && featuredRvs.length > 0 ? (
-            featuredRvs.map((rv: any) => (
-              <CoachCard key={rv.id} coach={rv} />
+          ) : featuredCoaches && featuredCoaches.length > 0 ? (
+            featuredCoaches.map((coach: any) => (
+              <CoachCard key={coach.id} coach={coach} />
             ))
           ) : (
             <div className="col-span-full text-center p-6">
-              <p className="text-muted-foreground">No featured RVs available at the moment.</p>
+              <p className="text-muted-foreground">No featured Coaches available at the moment.</p>
             </div>
           )}
         </div>
