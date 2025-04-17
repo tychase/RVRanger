@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Browse from "@/pages/Browse";
-import RVDetail from "@/pages/RVDetail";
+import CoachDetail from "@/pages/RVDetail";
 import Sell from "@/pages/Sell";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
@@ -14,7 +14,6 @@ import Register from "@/pages/Register";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import FixImagePage from "@/pages/admin/FixImagePage";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { AuthContext } from "./main";
 
 function App() {
@@ -78,7 +77,7 @@ function App() {
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/browse" component={Browse} />
-              <Route path="/rv/:id" component={RVDetail} />
+              <Route path="/coach/:id" component={CoachDetail} />
               <Route path="/sell" component={Sell} />
               <Route path="/contact" component={Contact} />
               <Route path="/login" component={Login} />
@@ -88,7 +87,6 @@ function App() {
               <Route component={NotFound} />
             </Switch>
           </main>
-          <Footer />
           <Toaster />
         </div>
       </QueryClientProvider>
