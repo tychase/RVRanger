@@ -39,10 +39,10 @@ const Header = () => {
   return (
     <header className="bg-neutral-dark shadow-md">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center justify-between py-4">
-          <div className="flex items-center mb-4 md:mb-0">
+        <div className="flex items-center justify-between py-4">
+          <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <span className="text-white font-bold text-2xl font-heading">Prevost</span>
+              <span className="text-white font-bold text-xl sm:text-2xl font-heading">Prevost</span>
               <span className="text-accent-gold ml-1 font-bold">Go</span>
             </Link>
           </div>
@@ -97,36 +97,40 @@ const Header = () => {
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="text-white border-white">
+                <Button variant="outline" size="icon" className="text-white border-white h-10 w-10 px-2 py-2">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[250px] sm:w-[300px]">
-                <nav className="flex flex-col gap-4 mt-8">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.name}
-                      href={link.path}
-                      onClick={() => setIsOpen(false)}
-                      className={`py-2 ${
-                        location === link.path
-                          ? "text-accent-gold font-medium"
-                          : "text-primary"
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
-                  <div className="mt-4 space-y-3">
+              <SheetContent side="right" className="w-full sm:w-[300px] p-6">
+                <div className="flex flex-col h-full">
+                  <div className="flex-grow">
+                    <nav className="flex flex-col gap-6 mt-8">
+                      {navLinks.map((link) => (
+                        <Link
+                          key={link.name}
+                          href={link.path}
+                          onClick={() => setIsOpen(false)}
+                          className={`py-3 text-base ${
+                            location === link.path
+                              ? "text-accent-gold font-medium"
+                              : "text-primary"
+                          }`}
+                        >
+                          {link.name}
+                        </Link>
+                      ))}
+                    </nav>
+                  </div>
+                  <div className="mt-auto pb-6 space-y-3">
                     {isAuthenticated ? (
                       <>
                         {isAdmin && (
                           <Link 
                             href="/admin" 
-                            className="flex items-center py-2 text-accent-gold font-medium"
+                            className="flex items-center py-3 text-accent-gold font-medium text-base"
                             onClick={() => setIsOpen(false)}
                           >
-                            <Settings className="h-4 w-4 mr-2" />
+                            <Settings className="h-5 w-5 mr-2" />
                             Admin Dashboard
                           </Link>
                         )}
@@ -135,7 +139,7 @@ const Header = () => {
                             logout();
                             setIsOpen(false);
                           }}
-                          className="w-full bg-accent-gold hover:bg-accent-gold/90 text-white"
+                          className="w-full bg-accent-gold hover:bg-accent-gold/90 text-white px-6 py-3 text-base"
                         >
                           Sign Out
                         </Button>
@@ -143,7 +147,7 @@ const Header = () => {
                     ) : (
                       <Link href="/login" className="w-full">
                         <Button 
-                          className="w-full bg-accent-gold hover:bg-accent-gold/90 text-white"
+                          className="w-full bg-accent-gold hover:bg-accent-gold/90 text-white px-6 py-3 text-base"
                           onClick={() => setIsOpen(false)}
                         >
                           Sign In
@@ -151,7 +155,7 @@ const Header = () => {
                       </Link>
                     )}
                   </div>
-                </nav>
+                </div>
               </SheetContent>
             </Sheet>
           </div>
