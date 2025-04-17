@@ -88,9 +88,9 @@ const RVDetail = () => {
 
   useEffect(() => {
     if (rv) {
-      document.title = `${rv.title} - LuxuryRV Market`;
+      document.title = `${rv.title} - Luxury Coach Market`;
     } else {
-      document.title = "RV Details - LuxuryRV Market";
+      document.title = "Coach Details - Luxury Coach Market";
     }
   }, [rv]);
   
@@ -107,7 +107,7 @@ const RVDetail = () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/favorites`] });
       toast({
         title: "Added to favorites",
-        description: "This RV has been added to your favorites",
+        description: "This Coach has been added to your favorites",
       });
     },
     onError: () => {
@@ -132,7 +132,7 @@ const RVDetail = () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/favorites`] });
       toast({
         title: "Removed from favorites",
-        description: "This RV has been removed from your favorites",
+        description: "This Coach has been removed from your favorites",
       });
     },
     onError: () => {
@@ -165,8 +165,8 @@ const RVDetail = () => {
     
     if (navigator.share) {
       navigator.share({
-        title: rv.title || 'RV Listing',
-        text: `Check out this ${rv.year || ''} ${rv.title || 'RV'} on LuxuryRV Market!`,
+        title: rv.title || 'Coach Listing',
+        text: `Check out this ${rv.year || ''} ${rv.title || 'Coach'} on Luxury Coach Market!`,
         url: window.location.href,
       }).catch(err => console.error('Error sharing', err));
     } else {
@@ -219,8 +219,8 @@ const RVDetail = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <h1 className="text-2xl font-bold mb-4">Error Loading RV Details</h1>
-          <p className="text-neutral-600 mb-6">We couldn't find the RV you're looking for.</p>
+          <h1 className="text-2xl font-bold mb-4">Error Loading Coach Details</h1>
+          <p className="text-neutral-600 mb-6">We couldn't find the Coach you're looking for.</p>
           <Button onClick={() => navigate("/browse")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Browse
@@ -231,7 +231,7 @@ const RVDetail = () => {
   }
 
   // Debug information
-  console.log("RV Data:", rv);
+  console.log("Coach Data:", rv);
   console.log("Featured Image:", rv.featuredImage);
   console.log("Images:", images);
   
@@ -268,7 +268,7 @@ const RVDetail = () => {
               <RVDetailGallery images={galleryImages} title={rv.title} />
             </div>
             
-            {/* RV details */}
+            {/* Coach details */}
             <div>
               <div className="flex flex-wrap items-start justify-between mb-4">
                 <h1 className="text-3xl font-bold text-neutral-800">{rv.title}</h1>
@@ -462,7 +462,7 @@ const RVDetail = () => {
           </div>
         </div>
         
-        {/* Related RVs section would go here */}
+        {/* Related Coaches section would go here */}
       </div>
     </div>
   );
