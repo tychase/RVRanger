@@ -9,16 +9,20 @@ import os
 import json
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Request, Form, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
 from openai import OpenAI
 from pydantic import BaseModel
+from pathlib import Path
 
 # Initialize FastAPI app
 app = FastAPI(title="RV Ranger Developer Assistant", 
               description="AI copilot for RV Ranger developers")
+
+# Mount static files directory
+app.mount("/static", StaticFiles(directory=Path("chat_assistant/static")), name="static")
 
 # Create a simple model for chat messages
 class Message(BaseModel):
@@ -250,10 +254,10 @@ CHAT_UI_HTML = """
 </html>
 """
 
-@app.get("/chat-ui", response_class=HTMLResponse)
+@app.get("/chat-ui", response_class=FileResponse)
 async def get_chat_ui():
     """Return the HTML page for the chat UI"""
-    return HTMLResponse(content=CHAT_UI_HTML)
+    return FileResponse('chat_assistant/static/index.html')
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
