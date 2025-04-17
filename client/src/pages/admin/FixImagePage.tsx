@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { RVImage } from "@/components/ui/RVImage";
+import { CoachImage } from "@/components/ui/CoachImage";
 import { AlertTriangle, ArrowLeft, CheckCircle2, FileWarning, Image, Upload } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -238,12 +238,12 @@ const FixImagePage = () => {
                     <h3 className="text-lg font-medium mb-2">Featured Image</h3>
                     <div className="flex items-start gap-4">
                       <div className="w-32 h-24 relative">
-                        <RVImage 
+                        <CoachImage 
                           src={listing?.featuredImage || ""}
                           alt={listing?.title || "Featured image"}
                           aspectRatio="video"
                           objectFit="cover"
-                          fallbackSrc="/images/default-rv.svg"
+                          fallbackSrc="/images/default-coach.svg"
                           className="rounded-md border"
                         />
                         {listing?.featuredImage && !listing.featuredImage.startsWith('/images/') && (
@@ -295,12 +295,12 @@ const FixImagePage = () => {
                           <div key={image.id} className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex items-start gap-4">
                               <div className="w-32 h-24 relative">
-                                <RVImage 
+                                <CoachImage 
                                   src={image.imageUrl}
                                   alt={`Image ${image.id}`}
                                   aspectRatio="video"
                                   objectFit="cover"
-                                  fallbackSrc="/images/default-rv.svg"
+                                  fallbackSrc="/images/default-coach.svg"
                                   className="rounded-md border"
                                 />
                                 {image.imageUrl && !image.imageUrl.startsWith('/images/') && (
@@ -468,7 +468,7 @@ const FixImagePage = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" onClick={() => navigate(`/rv/${id}`)}>
+                <Button variant="outline" onClick={() => navigate(`/coach/${id}`)}>
                   View Public Listing
                 </Button>
               </CardFooter>

@@ -6,15 +6,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Share2, ArrowLeft } from "lucide-react";
-import InquiryForm from "@/components/rv/InquiryForm";
-import RVDetailGallery from "@/components/rv/RVDetailGallery";
+import CoachInquiryForm from "@/components/coach/CoachInquiryForm";
+import CoachDetailGallery from "@/components/coach/CoachDetailGallery";
 import { AuthContext } from "../main";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { RvListing, RvImage } from "@shared/schema";
 
-const RVDetail = () => {
+const CoachDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { isAuthenticated, user } = useContext(AuthContext);
@@ -25,44 +25,44 @@ const RVDetail = () => {
     window.scrollTo(0, 0);
   }, []);
   
-  // Fetch RV details
-  const { data: rv, isLoading, error } = useQuery<RvListing>({
+  // Fetch coach details
+  const { data: coach, isLoading, error } = useQuery<RvListing>({
     queryKey: [`/api/listings/${id}`],
   });
 
-  // Fetch RV images
+  // Fetch coach images
   const { data: images } = useQuery<RvImage[]>({
     queryKey: [`/api/listings/${id}/images`],
-    enabled: !!rv,
+    enabled: !!coach,
   });
   
   // Fetch manufacturer details
   const { data: manufacturer } = useQuery({
-    queryKey: ["/api/manufacturers", rv?.manufacturerId],
+    queryKey: ["/api/manufacturers", coach?.manufacturerId],
     queryFn: async () => {
-      if (!rv?.manufacturerId) return null;
-      const res = await fetch(`/api/manufacturers/${rv.manufacturerId}`);
+      if (!coach?.manufacturerId) return null;
+      const res = await fetch(`/api/manufacturers/${coach.manufacturerId}`);
       if (!res.ok) throw new Error("Failed to fetch manufacturer");
       return res.json();
     },
-    enabled: !!rv?.manufacturerId,
+    enabled: !!coach?.manufacturerId,
   });
   
-  // Fetch RV type details
-  const { data: rvType } = useQuery({
-    queryKey: ["/api/types", rv?.typeId],
+  // Fetch coach type details
+  const { data: coachType } = useQuery({
+    queryKey: ["/api/types", coach?.typeId],
     queryFn: async () => {
-      if (!rv?.typeId) return null;
-      const res = await fetch(`/api/types/${rv.typeId}`);
-      if (!res.ok) throw new Error("Failed to fetch RV type");
+      if (!coach?.typeId) return null;
+      const res = await fetch(`/api/types/${coach.typeId}`);
+      if (!res.ok) throw new Error("Failed to fetch coach type");
       return res.json();
     },
-    enabled: !!rv?.typeId,
+    enabled: !!coach?.typeId,
   });
   
-  // Check if RV is favorited
+  // Check if coach is favorited
   useEffect(() => {
-    if (isAuthenticated && rv && user) {
+    if (isAuthenticated && coach && user) {
       // In a real app we would fetch the favorite status from the API
       const checkFavoriteStatus = async () => {
         try {
@@ -84,15 +84,15 @@ const RVDetail = () => {
       
       checkFavoriteStatus();
     }
-  }, [isAuthenticated, rv, user, id]);
+  }, [isAuthenticated, coach, user, id]);
 
   useEffect(() => {
-    if (rv) {
-      document.title = `${rv.title} - LuxuryRV Market`;
+    if (coach) {
+      document.title = `${coach.title} - Luxury Coach Market`;
     } else {
-      document.title = "RV Details - LuxuryRV Market";
+      document.title = "Coach Details - Luxury Coach Market";
     }
-  }, [rv]);
+  }, [coach]);
   
   // Add to favorites mutation
   const addFavoriteMutation = useMutation({
@@ -107,7 +107,7 @@ const RVDetail = () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/favorites`] });
       toast({
         title: "Added to favorites",
-        description: "This RV has been added to your favorites",
+        description: "This Coach has been added to your favorites",
       });
     },
     onError: () => {
@@ -132,7 +132,7 @@ const RVDetail = () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/favorites`] });
       toast({
         title: "Removed from favorites",
-        description: "This RV has been removed from your favorites",
+        description: "This Coach has been removed from your favorites",
       });
     },
     onError: () => {
@@ -161,12 +161,12 @@ const RVDetail = () => {
   };
   
   const handleShare = () => {
-    if (!rv) return;
+    if (!coach) return;
     
     if (navigator.share) {
       navigator.share({
-        title: rv.title || 'RV Listing',
-        text: `Check out this ${rv.year || ''} ${rv.title || 'RV'} on LuxuryRV Market!`,
+        title: coach.title || 'Coach Listing',
+        text: `Check out this ${coach.year || ''} ${coach.title || 'Coach'} on Luxury Coach Market!`,
         url: window.location.href,
       }).catch(err => console.error('Error sharing', err));
     } else {
@@ -215,12 +215,12 @@ const RVDetail = () => {
     );
   }
 
-  if (error || !rv) {
+  if (error || !coach) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <h1 className="text-2xl font-bold mb-4">Error Loading RV Details</h1>
-          <p className="text-neutral-600 mb-6">We couldn't find the RV you're looking for.</p>
+          <h1 className="text-2xl font-bold mb-4">Error Loading Coach Details</h1>
+          <p className="text-neutral-600 mb-6">We couldn't find the Coach you're looking for.</p>
           <Button onClick={() => navigate("/browse")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Browse
@@ -231,8 +231,8 @@ const RVDetail = () => {
   }
 
   // Debug information
-  console.log("RV Data:", rv);
-  console.log("Featured Image:", rv.featuredImage);
+  console.log("Coach Data:", coach);
+  console.log("Featured Image:", coach.featuredImage);
   console.log("Images:", images);
   
   // Create a fallback image if no images are available
@@ -240,8 +240,8 @@ const RVDetail = () => {
     ? (images as RvImage[])
     : [{ 
         id: 0, 
-        imageUrl: rv.featuredImage && !rv.featuredImage.includes("prevost-stuff.com")
-            ? rv.featuredImage
+        imageUrl: coach.featuredImage && !coach.featuredImage.includes("prevost-stuff.com")
+            ? coach.featuredImage
             : "/images/default-coach.svg", 
         rvId: parseInt(id), 
         isPrimary: true 
@@ -265,13 +265,13 @@ const RVDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Image gallery */}
             <div>
-              <RVDetailGallery images={galleryImages} title={rv.title} />
+              <CoachDetailGallery images={galleryImages} title={coach.title} />
             </div>
             
-            {/* RV details */}
+            {/* Coach details */}
             <div>
               <div className="flex flex-wrap items-start justify-between mb-4">
-                <h1 className="text-3xl font-bold text-neutral-800">{rv.title}</h1>
+                <h1 className="text-3xl font-bold text-neutral-800">{coach.title}</h1>
                 <div className="flex items-center space-x-2 mt-2 sm:mt-0">
                   <Button 
                     variant="outline" 
@@ -293,10 +293,10 @@ const RVDetail = () => {
               
               <div className="flex items-center mb-6">
                 <h2 className="text-2xl text-accent-foreground font-bold">
-                  ${rv.price ? rv.price.toLocaleString() : 'Price on request'}
+                  ${coach.price ? coach.price.toLocaleString() : 'Price on request'}
                 </h2>
-                <Badge variant="outline" className="ml-3">{rv.year}</Badge>
-                {rv.isFeatured && (
+                <Badge variant="outline" className="ml-3">{coach.year}</Badge>
+                {coach.isFeatured && (
                   <Badge className="ml-2 bg-primary">Featured</Badge>
                 )}
               </div>
@@ -304,44 +304,44 @@ const RVDetail = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <p className="text-sm text-neutral-500">Location</p>
-                  <p className="font-medium">{rv.location}</p>
+                  <p className="font-medium">{coach.location}</p>
                 </div>
-                {rv.mileage !== undefined && rv.mileage !== null && (
+                {coach.mileage !== undefined && coach.mileage !== null && (
                   <div>
                     <p className="text-sm text-neutral-500">Mileage</p>
-                    <p className="font-medium">{rv.mileage.toLocaleString()} miles</p>
+                    <p className="font-medium">{coach.mileage.toLocaleString()} miles</p>
                   </div>
                 )}
                 <div>
                   <p className="text-sm text-neutral-500">Type</p>
-                  <p className="font-medium">{rvType?.name || "Loading..."}</p>
+                  <p className="font-medium">{coachType?.name || "Loading..."}</p>
                 </div>
                 <div>
                   <p className="text-sm text-neutral-500">Manufacturer</p>
                   <p className="font-medium">{manufacturer?.name || "Loading..."}</p>
                 </div>
-                {rv.length && (
+                {coach.length && (
                   <div>
                     <p className="text-sm text-neutral-500">Length</p>
-                    <p className="font-medium">{rv.length} ft</p>
+                    <p className="font-medium">{coach.length} ft</p>
                   </div>
                 )}
-                {rv.fuelType && (
+                {coach.fuelType && (
                   <div>
                     <p className="text-sm text-neutral-500">Fuel Type</p>
-                    <p className="font-medium">{rv.fuelType}</p>
+                    <p className="font-medium">{coach.fuelType}</p>
                   </div>
                 )}
-                {rv.slides !== undefined && (
+                {coach.slides !== undefined && (
                   <div>
                     <p className="text-sm text-neutral-500">Slides</p>
-                    <p className="font-medium">{rv.slides}</p>
+                    <p className="font-medium">{coach.slides}</p>
                   </div>
                 )}
-                {rv.bedType && (
+                {coach.bedType && (
                   <div>
                     <p className="text-sm text-neutral-500">Bed Type</p>
-                    <p className="font-medium">{rv.bedType}</p>
+                    <p className="font-medium">{coach.bedType}</p>
                   </div>
                 )}
               </div>
@@ -353,7 +353,7 @@ const RVDetail = () => {
                 </Button>
               </div>
               
-              <InquiryForm rvId={parseInt(id)} />
+              <CoachInquiryForm rvId={parseInt(id)} />
             </div>
           </div>
 
@@ -367,7 +367,7 @@ const RVDetail = () => {
               </TabsList>
               <TabsContent value="description" className="pt-4">
                 <div className="prose max-w-none">
-                  <p>{rv.description}</p>
+                  <p>{coach.description}</p>
                 </div>
               </TabsContent>
               <TabsContent value="specifications" className="pt-4">
@@ -377,11 +377,11 @@ const RVDetail = () => {
                     <ul className="space-y-2">
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Length:</span>
-                        <span className="font-medium">{rv.length || "N/A"} ft</span>
+                        <span className="font-medium">{coach.length || "N/A"} ft</span>
                       </li>
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Slides:</span>
-                        <span className="font-medium">{rv.slides || "N/A"}</span>
+                        <span className="font-medium">{coach.slides || "N/A"}</span>
                       </li>
                     </ul>
                   </div>
@@ -391,11 +391,11 @@ const RVDetail = () => {
                     <ul className="space-y-2">
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Fuel Type:</span>
-                        <span className="font-medium">{rv.fuelType || "N/A"}</span>
+                        <span className="font-medium">{coach.fuelType || "N/A"}</span>
                       </li>
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Mileage:</span>
-                        <span className="font-medium">{rv.mileage ? rv.mileage.toLocaleString() : 'N/A'} {rv.mileage ? 'miles' : ''}</span>
+                        <span className="font-medium">{coach.mileage ? coach.mileage.toLocaleString() : 'N/A'} {coach.mileage ? 'miles' : ''}</span>
                       </li>
                     </ul>
                   </div>
@@ -405,7 +405,7 @@ const RVDetail = () => {
                     <ul className="space-y-2">
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Bed Type:</span>
-                        <span className="font-medium">{rv.bedType || "N/A"}</span>
+                        <span className="font-medium">{coach.bedType || "N/A"}</span>
                       </li>
                     </ul>
                   </div>
@@ -426,11 +426,15 @@ const RVDetail = () => {
                       </li>
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                        <span>LED exterior lighting</span>
+                        <span>Power awnings</span>
                       </li>
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                        <span>Power awnings</span>
+                        <span>Outdoor shower</span>
+                      </li>
+                      <li className="flex items-center">
+                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <span>Slide-out storage compartments</span>
                       </li>
                     </ul>
                   </div>
@@ -440,19 +444,23 @@ const RVDetail = () => {
                     <ul className="space-y-2">
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                        <span>Smart home automation system</span>
+                        <span>Premium leather seating</span>
                       </li>
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                        <span>Premium sound system</span>
+                        <span>Full kitchen with upscale appliances</span>
                       </li>
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                        <span>Residential appliances</span>
+                        <span>Satellite TV system</span>
                       </li>
                       <li className="flex items-center">
                         <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                        <span>Custom cabinetry</span>
+                        <span>Washer and dryer</span>
+                      </li>
+                      <li className="flex items-center">
+                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <span>Smart home automation</span>
                       </li>
                     </ul>
                   </div>
@@ -462,10 +470,10 @@ const RVDetail = () => {
           </div>
         </div>
         
-        {/* Related RVs section would go here */}
+        {/* Related Coaches section would go here */}
       </div>
     </div>
   );
 };
 
-export default RVDetail;
+export default CoachDetail;

@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Browse from "@/pages/Browse";
-import RVDetail from "@/pages/RVDetail";
+import CoachDetail from "@/pages/CoachDetail";
 import Sell from "@/pages/Sell";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
@@ -77,7 +77,7 @@ function App() {
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/browse" component={Browse} />
-              <Route path="/coach/:id" component={RVDetail} />
+              <Route path="/coach/:id" component={CoachDetail} />
               {/* Redirect old RV URLs to coach URLs */}
               <Route path="/rv/:id">
                 {(params) => {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { RVImage } from "@/components/ui/RVImage";
+import { CoachImage } from "@/components/ui/CoachImage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -200,12 +200,12 @@ const BrokenListingsDashboard = () => {
                   </TableCell>
                   <TableCell>
                     <div className="w-20 h-16 relative">
-                      <RVImage 
+                      <CoachImage 
                         src={listing.featuredImage}
                         alt={listing.title}
                         aspectRatio="video"
                         objectFit="cover"
-                        fallbackSrc="/images/default-rv.svg"
+                        fallbackSrc="/images/default-coach.svg"
                         className="rounded-md"
                       />
                       {listing.hasExternalImages && (
@@ -241,7 +241,7 @@ const BrokenListingsDashboard = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Link href={`/rv/${listing.id}`}>
+                      <Link href={`/coach/${listing.id}`}>
                         <Button variant="outline" size="sm">
                           <Image className="h-4 w-4 mr-1" />
                           View

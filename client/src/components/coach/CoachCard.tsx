@@ -8,8 +8,8 @@ import { AuthContext } from "../../main";
 import { useToast } from "@/hooks/use-toast";
 import { CoachImage } from "@/components/ui/CoachImage";
 
-interface RVCardProps {
-  rv: {
+interface CoachCardProps {
+  coach: {
     id: number;
     title: string;
     price?: number | null;
@@ -25,12 +25,12 @@ interface RVCardProps {
   };
 }
 
-const RVCard = ({ rv }: RVCardProps) => {
+const CoachCard = ({ coach }: CoachCardProps) => {
   const { isAuthenticated, user } = useContext(AuthContext);
   const [isFavorited, setIsFavorited] = useState(false);
   const { toast } = useToast();
 
-  // Check if RV is favorited on component mount
+  // Check if coach is favorited on component mount
   // In a real app, we would fetch the favorite status from the server
   
   // Add to favorites mutation
@@ -38,7 +38,7 @@ const RVCard = ({ rv }: RVCardProps) => {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/favorites", {
         userId: user?.id,
-        rvId: rv.id,
+        rvId: coach.id,
       });
     },
     onSuccess: () => {
@@ -63,7 +63,7 @@ const RVCard = ({ rv }: RVCardProps) => {
     mutationFn: async () => {
       return await apiRequest("DELETE", "/api/favorites", {
         userId: user?.id,
-        rvId: rv.id,
+        rvId: coach.id,
       });
     },
     onSuccess: () => {
@@ -106,25 +106,25 @@ const RVCard = ({ rv }: RVCardProps) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
         <CoachImage 
-          src={rv.featuredImage} 
-          alt={rv.title} 
+          src={coach.featuredImage} 
+          alt={coach.title} 
           aspectRatio="video"
           objectFit="cover"
           className="w-full"
           fallbackSrc="/images/default-coach.svg"
         />
-        {rv.isFeatured && (
+        {coach.isFeatured && (
           <span className="absolute top-2 left-2 bg-primary text-white text-xs font-semibold px-2 py-1 rounded">
             Featured
           </span>
         )}
-        {rv.matchScore !== undefined && (
+        {coach.matchScore !== undefined && (
           <span className={`absolute bottom-2 left-2 text-white text-xs font-semibold px-2 py-1 rounded-full shadow ${
-            rv.matchScore > 0 
+            coach.matchScore > 0 
               ? 'bg-gradient-to-r from-green-500 to-blue-500'
               : 'bg-gray-500'
           }`}>
-            Match Score: {rv.matchScore}
+            Match Score: {coach.matchScore}
           </span>
         )}
         <button 
@@ -136,38 +136,38 @@ const RVCard = ({ rv }: RVCardProps) => {
           <Heart className={`h-5 w-5 ${isFavorited ? "fill-current" : ""}`} />
         </button>
       </div>
-      <Link href={`/coach/${rv.id}`}>
+      <Link href={`/coach/${coach.id}`}>
         <div className="p-4">
           <div className="flex justify-between items-start">
-            <h3 className="text-lg font-bold text-neutral-800 mb-1">{rv.title}</h3>
-            <p className="text-accent-foreground font-bold">${rv.price ? rv.price.toLocaleString() : '0'}</p>
+            <h3 className="text-lg font-bold text-neutral-800 mb-1">{coach.title}</h3>
+            <p className="text-accent-foreground font-bold">${coach.price ? coach.price.toLocaleString() : '0'}</p>
           </div>
-          <p className="text-neutral-500 text-sm mb-3">{rv.location || 'Location not specified'}</p>
+          <p className="text-neutral-500 text-sm mb-3">{coach.location || 'Location not specified'}</p>
           <div className="flex flex-wrap gap-2 mb-3">
-            {rv.length && (
+            {coach.length && (
               <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
-                {rv.length} ft
+                {coach.length} ft
               </span>
             )}
-            {rv.fuelType && (
+            {coach.fuelType && (
               <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
-                {rv.fuelType}
+                {coach.fuelType}
               </span>
             )}
-            {rv.bedType && (
+            {coach.bedType && (
               <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
-                {rv.bedType}
+                {coach.bedType}
               </span>
             )}
-            {rv.slides !== undefined && (
+            {coach.slides !== undefined && (
               <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
-                {rv.slides} {rv.slides === 1 ? "Slide" : "Slides"}
+                {coach.slides} {coach.slides === 1 ? "Slide" : "Slides"}
               </span>
             )}
           </div>
           <div className="flex justify-between items-center">
             <p className="text-sm text-neutral-500">
-              {rv.mileage ? `${rv.mileage.toLocaleString()} miles` : 'Mileage not specified'}
+              {coach.mileage ? `${coach.mileage.toLocaleString()} miles` : 'Mileage not specified'}
             </p>
             <span className="text-primary font-medium text-sm hover:underline">
               View Details
@@ -179,4 +179,4 @@ const RVCard = ({ rv }: RVCardProps) => {
   );
 };
 
-export default RVCard;
+export default CoachCard;

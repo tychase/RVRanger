@@ -13,19 +13,19 @@ import {
 } from "@/components/ui/dialog";
 import { CoachImage } from "@/components/ui/CoachImage";
 
-interface RVImage {
+interface CoachImage {
   id: number;
   imageUrl: string;
   rvId: number;
   isPrimary?: boolean | null;
 }
 
-interface RVDetailGalleryProps {
-  images: RVImage[];
+interface CoachDetailGalleryProps {
+  images: CoachImage[];
   title: string;
 }
 
-const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
+const CoachDetailGallery = ({ images, title }: CoachDetailGalleryProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
@@ -120,4 +120,4 @@ const RVDetailGallery = ({ images, title }: RVDetailGalleryProps) => {
   );
 };
 
-export default RVDetailGallery;
+export default CoachDetailGallery;
