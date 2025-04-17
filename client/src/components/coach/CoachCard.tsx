@@ -103,23 +103,23 @@ const CoachCard = ({ coach }: CoachCardProps) => {
   };
 
   return (
-    <div className="card-luxury group transform transition-all duration-300 hover:translate-y-[-5px]">
+    <div className="card-luxury group transform transition-all duration-300 hover:translate-y-[-5px] bg-white rounded-lg shadow-md overflow-hidden">
       <div className="relative overflow-hidden">
         <CoachImage 
           src={coach.featuredImage} 
           alt={coach.title} 
           aspectRatio="video"
           objectFit="cover"
-          className="w-full h-56 object-cover transition-all duration-500 group-hover:scale-105"
+          className="w-full h-48 sm:h-56 object-cover transition-all duration-500 group-hover:scale-105"
           fallbackSrc="/images/default-coach.svg"
         />
         {coach.isFeatured && (
-          <span className="absolute top-3 left-3 bg-accent-gold text-white text-xs tracking-wider font-semibold px-3 py-1 rounded-xl shadow-md">
+          <span className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-accent-gold text-white text-xs tracking-wider font-semibold px-2 sm:px-3 py-1 rounded-xl shadow-md">
             Featured
           </span>
         )}
         {coach.matchScore !== undefined && (
-          <span className={`absolute bottom-3 left-3 text-white text-xs tracking-wider font-semibold px-3 py-1 rounded-xl shadow-md ${
+          <span className={`absolute bottom-2 sm:bottom-3 left-2 sm:left-3 text-white text-xs tracking-wider font-semibold px-2 sm:px-3 py-1 rounded-xl shadow-md ${
             coach.matchScore > 0 
               ? 'bg-accent-gold'
               : 'bg-neutral-dark/70'
@@ -128,7 +128,7 @@ const CoachCard = ({ coach }: CoachCardProps) => {
           </span>
         )}
         <button 
-          className={`absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow-md hover:bg-white transition-all ${
+          className={`absolute top-2 sm:top-3 right-2 sm:right-3 bg-white/90 p-2 rounded-full shadow-md hover:bg-white transition-all ${
             isFavorited ? "text-red-500" : "text-neutral-dark/70"
           }`}
           onClick={handleFavoriteToggle}
@@ -137,39 +137,45 @@ const CoachCard = ({ coach }: CoachCardProps) => {
         </button>
       </div>
       <Link href={`/coach/${coach.id}`}>
-        <div className="p-5">
+        <div className="p-3 sm:p-4 md:p-5">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-serif font-bold text-neutral-dark tracking-wide leading-tight">{coach.title}</h3>
-            <p className="text-accent-gold font-bold text-lg tracking-wide">${coach.price ? coach.price.toLocaleString() : 'Call'}</p>
+            <h3 className="text-base sm:text-lg font-serif font-bold text-neutral-dark tracking-wide leading-tight line-clamp-2">
+              {coach.title}
+            </h3>
+            <p className="text-accent-gold font-bold text-base sm:text-lg tracking-wide whitespace-nowrap ml-2">
+              ${coach.price ? coach.price.toLocaleString() : 'Call'}
+            </p>
           </div>
-          <p className="text-neutral-dark/70 text-sm mb-4 tracking-wide">{coach.location || 'Location not specified'}</p>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <p className="text-neutral-dark/70 text-xs sm:text-sm mb-3 sm:mb-4 tracking-wide line-clamp-1">
+            {coach.location || 'Location not specified'}
+          </p>
+          <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
             {coach.length && (
-              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
+              <span className="bg-neutral-light text-neutral-dark px-2 sm:px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.length} ft
               </span>
             )}
             {coach.fuelType && (
-              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
+              <span className="bg-neutral-light text-neutral-dark px-2 sm:px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.fuelType}
               </span>
             )}
             {coach.bedType && (
-              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
+              <span className="bg-neutral-light text-neutral-dark px-2 sm:px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.bedType}
               </span>
             )}
             {coach.slides !== undefined && (
-              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
+              <span className="bg-neutral-light text-neutral-dark px-2 sm:px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.slides} {coach.slides === 1 ? "Slide" : "Slides"}
               </span>
             )}
           </div>
-          <div className="flex items-center justify-between border-t border-neutral-light pt-3">
-            <p className="text-sm text-neutral-dark/70 tracking-wide">
+          <div className="flex items-center justify-between border-t border-neutral-light pt-2 sm:pt-3">
+            <p className="text-xs sm:text-sm text-neutral-dark/70 tracking-wide line-clamp-1">
               {coach.mileage ? `${coach.mileage.toLocaleString()} miles` : 'Mileage not specified'}
             </p>
-            <span className="flex items-center text-primary font-medium text-sm group-hover:translate-x-1 transition-transform duration-300">
+            <span className="flex items-center text-primary font-medium text-xs sm:text-sm group-hover:translate-x-1 transition-transform duration-300 whitespace-nowrap">
               View Details
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

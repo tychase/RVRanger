@@ -165,30 +165,30 @@ const Browse = () => {
   };
 
   return (
-    <div className="bg-neutral-100 min-h-screen py-8">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-6">Find Your Perfect Coach</h1>
+    <div className="bg-neutral-100 min-h-screen py-6 sm:py-8">
+      <div className="container mx-auto px-4 sm:px-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Find Your Perfect Coach</h1>
         
         {/* Search Form */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <SearchForm onSearch={handleSearch} simplified={false} />
         </div>
         
         {/* Results Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <h2 className="text-xl font-bold mb-2 md:mb-0">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+            <h2 className="text-lg sm:text-xl font-bold">
               {isLoading ? (
-                <Skeleton className="h-8 w-40" />
+                <Skeleton className="h-7 w-32 sm:h-8 sm:w-40" />
               ) : (
                 `${listings.length} Coaches Available`
               )}
             </h2>
             
-            <div className="flex items-center">
-              <span className="mr-2 text-sm font-medium">Sort by:</span>
+            <div className="flex items-center w-full sm:w-auto">
+              <span className="mr-2 text-xs sm:text-sm font-medium">Sort by:</span>
               <Select value={sortOption} onValueChange={setSortOption}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px] h-9 sm:h-10 text-xs sm:text-sm">
                   <SelectValue placeholder="Newest" />
                 </SelectTrigger>
                 <SelectContent>
@@ -206,21 +206,25 @@ const Browse = () => {
           </div>
           
           {/* Listings Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {isLoading ? (
               renderSkeletons()
             ) : error ? (
-              <div className="col-span-full text-center p-6">
-                <p className="text-red-500">Error loading Coaches. Please try again later.</p>
+              <div className="col-span-full text-center p-4 sm:p-6">
+                <p className="text-red-500 text-sm sm:text-base">Error loading Coaches. Please try again later.</p>
               </div>
             ) : sortedListings.length > 0 ? (
               sortedListings.map((rv) => (
                 <CoachCard key={rv.id} coach={rv} />
               ))
             ) : (
-              <div className="col-span-full text-center p-6">
-                <p className="text-muted-foreground mb-4">No Coaches match your current search criteria.</p>
-                <Button variant="outline" onClick={() => handleSearch({})}>
+              <div className="col-span-full text-center p-4 sm:p-6">
+                <p className="text-muted-foreground text-sm sm:text-base mb-4">No Coaches match your current search criteria.</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleSearch({})}
+                  className="text-sm sm:text-base px-4 py-2 h-auto"
+                >
                   Clear All Filters
                 </Button>
               </div>
@@ -229,10 +233,12 @@ const Browse = () => {
           
           {/* Pagination */}
           {!isLoading && listings.length > 0 && (
-            <div className="flex justify-center mt-8">
-              <div className="flex space-x-2">
+            <div className="flex justify-center mt-6 sm:mt-8">
+              <div className="flex space-x-1 sm:space-x-2">
                 <Button
                   variant="outline"
+                  size="sm"
+                  className="text-xs sm:text-sm h-8 sm:h-10"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(currentPage - 1)}
                 >
@@ -241,6 +247,8 @@ const Browse = () => {
                 
                 <Button
                   variant={currentPage === 1 ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs sm:text-sm h-8 sm:h-10"
                   onClick={() => setCurrentPage(1)}
                 >
                   1
@@ -250,6 +258,8 @@ const Browse = () => {
                 
                 <Button
                   variant="outline"
+                  size="sm"
+                  className="text-xs sm:text-sm h-8 sm:h-10"
                   disabled={listings.length < itemsPerPage}
                   onClick={() => setCurrentPage(currentPage + 1)}
                 >
