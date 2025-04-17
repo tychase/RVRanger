@@ -5,9 +5,9 @@ const CTASection = () => {
   return (
     <section className="bg-primary py-16">
       <div className="container mx-auto px-4 text-center">
-        <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Ready to Find Your Dream Luxury RV?</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Ready to Find Your Dream Luxury Coach?</h2>
         <p className="text-neutral-100 mb-8 max-w-3xl mx-auto">
-          Browse our extensive collection of premium recreational vehicles from top manufacturers. Our platform connects serious buyers with quality sellers.
+          Our platform connects serious buyers with quality sellers.
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center gap-4">

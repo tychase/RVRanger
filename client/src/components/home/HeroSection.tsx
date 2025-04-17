@@ -36,9 +36,8 @@ const HeroSection = () => {
       </div>
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Find Your Dream Luxury RV</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Find Your Dream Luxury Coach</h1>
           <p className="text-lg md:text-xl mb-8 text-neutral-100">
-            Browse thousands of premium recreational vehicles from top manufacturers
           </p>
           <SearchForm onSearch={handleSearch} simplified={false} />
         </div>
