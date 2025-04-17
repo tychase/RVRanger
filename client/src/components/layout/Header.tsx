@@ -42,7 +42,7 @@ const Header = () => {
         <div className="flex flex-col md:flex-row items-center justify-between py-4">
           <div className="flex items-center mb-4 md:mb-0">
             <Link href="/" className="flex items-center">
-              <span className="text-primary font-bold text-2xl">LuxuryRV</span>
+              <span className="text-primary font-bold text-2xl">LuxuryCoach</span>
               <span className="text-accent-foreground ml-1 font-bold">Market</span>
             </Link>
           </div>
