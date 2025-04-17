@@ -1,10 +1,10 @@
-// Updated SearchForm.tsx with Popover-based multi-select Features dropdown
+// client/src/components/search/SearchForm.tsx
 import React from "react";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 
 const converters = [
   { id: "marathon", name: "Marathon" },
@@ -39,9 +39,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
   const [features, setFeatures] = React.useState<string[]>([]);
 
   const toggleFeature = (feat: string) => {
-    setFeatures(prev =>
-      prev.includes(feat) ? prev.filter(f => f !== feat) : [...prev, feat]
-    );
+    setFeatures(prev => (prev.includes(feat) ? prev.filter(f => f !== feat) : [...prev, feat]));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -52,15 +50,15 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
   const featureLabel = features.length > 0 ? features.join(", ") : "Select Features";
 
   return (
-    <form className="space-y-6 p-6 bg-white/95 rounded-2xl shadow-lg" onSubmit={handleSubmit}>
+    <form className="space-y-6 p-6 bg-neutralLight rounded-2xl border border-neutralLight/50 shadow-lg" onSubmit={handleSubmit}>
       {/* Converter */}
       <div>
-        <Label htmlFor="converter" className="font-medium text-neutral-dark mb-2 block">Converter</Label>
+        <Label htmlFor="converter">Converter</Label>
         <Select value={converter} onValueChange={setConverter}>
-          <SelectTrigger id="converter" className="w-full search-input">
+          <SelectTrigger id="converter" className="w-full">
             <SelectValue placeholder="All Converters" />
           </SelectTrigger>
-          <SelectContent className="border-neutral-dark/20 rounded-xl">
+          <SelectContent>
             <SelectItem value="all">All Converters</SelectItem>
             {converters.map(c => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -71,12 +69,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
       {/* Chassis */}
       <div>
-        <Label htmlFor="chassis" className="font-medium text-neutral-dark mb-2 block">Chassis</Label>
+        <Label htmlFor="chassis">Chassis</Label>
         <Select value={chassis} onValueChange={setChassis}>
-          <SelectTrigger id="chassis" className="w-full search-input">
+          <SelectTrigger id="chassis" className="w-full">
             <SelectValue placeholder="Any Chassis" />
           </SelectTrigger>
-          <SelectContent className="border-neutral-dark/20 rounded-xl">
+          <SelectContent>
             <SelectItem value="all">Any Chassis</SelectItem>
             {chassisOptions.map(opt => (
               <SelectItem key={opt} value={opt}>{opt}</SelectItem>
@@ -87,12 +85,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
       {/* Slides */}
       <div>
-        <Label htmlFor="slides" className="font-medium text-neutral-dark mb-2 block">Slides</Label>
+        <Label htmlFor="slides">Slides</Label>
         <Select value={slides} onValueChange={setSlides}>
-          <SelectTrigger id="slides" className="w-full search-input">
+          <SelectTrigger id="slides" className="w-full">
             <SelectValue placeholder="Any Number of Slides" />
           </SelectTrigger>
-          <SelectContent className="border-neutral-dark/20 rounded-xl">
+          <SelectContent>
             <SelectItem value="all">Any Number of Slides</SelectItem>
             {slidesOptions.map(opt => (
               <SelectItem key={opt} value={opt}>{opt}</SelectItem>
@@ -101,26 +99,25 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
         </Select>
       </div>
 
-      {/* Features as Popover Multi-Select */}
+      {/* Features */}
       <div>
-        <Label className="font-medium text-neutral-dark mb-2 block">Features</Label>
+        <Label className="mb-1 block">Features</Label>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full text-left search-input">
+            <Button variant="outline" className="w-full text-left">
               {featureLabel}
             </Button>
           </PopoverTrigger>
-          <PopoverContent side="bottom" align="start" className="w-64 border-neutral-dark/20 rounded-xl">
-            <div className="flex flex-col space-y-3 py-2">
+          <PopoverContent side="bottom" align="start" className="w-56">
+            <div className="flex flex-col space-y-2">
               {featureOptions.map((feat, idx) => (
                 <div key={idx} className="flex items-center">
                   <Checkbox
                     id={`feature-${idx}`}
                     checked={features.includes(feat)}
                     onCheckedChange={() => toggleFeature(feat)}
-                    className="text-accent-gold focus:ring-accent-gold"
                   />
-                  <Label htmlFor={`feature-${idx}`} className="ml-3 text-neutral-dark">
+                  <Label htmlFor={`feature-${idx}`} className="ml-2">
                     {feat}
                   </Label>
                 </div>
@@ -132,7 +129,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
       {/* Submit */}
       {onSearch && (
-        <Button type="submit" className="w-full bg-primary text-white rounded-2xl px-6 py-3 shadow-md hover:bg-opacity-90 transition mt-8">
+        <Button type="submit" className="w-full bg-primary text-white rounded-2xl px-6 py-3 shadow-md hover:bg-opacity-90 transition">
           Search Coaches
         </Button>
       )}
@@ -141,4 +138,5 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 };
 
 export default SearchForm;
+
 
