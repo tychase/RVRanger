@@ -14,7 +14,7 @@ const TechnologySection = () => {
     {
       icon: <Tablet className="text-primary text-xl" />,
       title: "Smart Control Systems",
-      description: "Manage your entire RV from a tablet or smartphone. Control lighting, climate, entertainment systems, and monitor tank levels remotely."
+      description: "Manage your entire Coach from a tablet or smartphone. Control lighting, climate, entertainment systems, and monitor tank levels remotely."
     },
     {
       icon: <Sun className="text-primary text-xl" />,
@@ -34,7 +34,7 @@ const TechnologySection = () => {
     {
       icon: <ServerCrash className="text-primary text-xl" />,
       title: "Advanced Safety Features",
-      description: "From collision avoidance systems to adaptive cruise control, modern RVs include automotive safety features for peace of mind."
+      description: "From collision avoidance systems to adaptive cruise control, modern Coaches include automotive safety features for peace of mind."
     },
     {
       icon: <Snowflake className="text-primary text-xl" />,
@@ -49,7 +49,7 @@ const TechnologySection = () => {
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-neutral-800 mb-4">Smart Technology & Innovation</h2>
           <p className="text-neutral-600 max-w-3xl mx-auto">
-            Today's luxury RVs feature cutting-edge technology for comfort, convenience, and safety. Explore the latest innovations in recreational vehicles.
+            Today's luxury Coaches feature cutting-edge technology for comfort, convenience, and safety. Explore the latest innovations in luxury motorcoaches.
           </p>
         </div>
         
