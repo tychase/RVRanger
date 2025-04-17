@@ -1,0 +1,12 @@
+# Replit Workflows
+# This file defines custom workflows for this repl
+
+[env]
+PYTHONUNBUFFERED="1"
+
+[[workflows]]
+name = "Start Chat Assistant"
+command = "python start_assistant.py"
+persistent = true
+restartOn = ["exit", "change"]
+repoConfigPath = ".replit.assistant_workflow"
