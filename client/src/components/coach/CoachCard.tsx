@@ -103,33 +103,33 @@ const CoachCard = ({ coach }: CoachCardProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative">
+    <div className="card-luxury group transform transition-all duration-300 hover:translate-y-[-5px]">
+      <div className="relative overflow-hidden">
         <CoachImage 
           src={coach.featuredImage} 
           alt={coach.title} 
           aspectRatio="video"
           objectFit="cover"
-          className="w-full"
+          className="w-full h-56 object-cover transition-all duration-500 group-hover:scale-105"
           fallbackSrc="/images/default-coach.svg"
         />
         {coach.isFeatured && (
-          <span className="absolute top-2 left-2 bg-primary text-white text-xs font-semibold px-2 py-1 rounded">
+          <span className="absolute top-3 left-3 bg-accent-gold text-white text-xs tracking-wider font-semibold px-3 py-1 rounded-xl shadow-md">
             Featured
           </span>
         )}
         {coach.matchScore !== undefined && (
-          <span className={`absolute bottom-2 left-2 text-white text-xs font-semibold px-2 py-1 rounded-full shadow ${
+          <span className={`absolute bottom-3 left-3 text-white text-xs tracking-wider font-semibold px-3 py-1 rounded-xl shadow-md ${
             coach.matchScore > 0 
-              ? 'bg-gradient-to-r from-green-500 to-blue-500'
-              : 'bg-gray-500'
+              ? 'bg-accent-gold'
+              : 'bg-neutral-dark/70'
           }`}>
-            Match Score: {coach.matchScore}
+            Match: {coach.matchScore}
           </span>
         )}
         <button 
-          className={`absolute top-2 right-2 bg-white bg-opacity-80 p-2 rounded-full hover:bg-opacity-100 transition-all ${
-            isFavorited ? "text-red-500" : "text-gray-400"
+          className={`absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow-md hover:bg-white transition-all ${
+            isFavorited ? "text-red-500" : "text-neutral-dark/70"
           }`}
           onClick={handleFavoriteToggle}
         >
@@ -137,40 +137,43 @@ const CoachCard = ({ coach }: CoachCardProps) => {
         </button>
       </div>
       <Link href={`/coach/${coach.id}`}>
-        <div className="p-4">
-          <div className="flex justify-between items-start">
-            <h3 className="text-lg font-bold text-neutral-800 mb-1">{coach.title}</h3>
-            <p className="text-accent-foreground font-bold">${coach.price ? coach.price.toLocaleString() : '0'}</p>
+        <div className="p-5">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-serif font-bold text-neutral-dark tracking-wide leading-tight">{coach.title}</h3>
+            <p className="text-accent-gold font-bold text-lg tracking-wide">${coach.price ? coach.price.toLocaleString() : 'Call'}</p>
           </div>
-          <p className="text-neutral-500 text-sm mb-3">{coach.location || 'Location not specified'}</p>
-          <div className="flex flex-wrap gap-2 mb-3">
+          <p className="text-neutral-dark/70 text-sm mb-4 tracking-wide">{coach.location || 'Location not specified'}</p>
+          <div className="flex flex-wrap gap-2 mb-4">
             {coach.length && (
-              <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
+              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.length} ft
               </span>
             )}
             {coach.fuelType && (
-              <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
+              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.fuelType}
               </span>
             )}
             {coach.bedType && (
-              <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
+              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.bedType}
               </span>
             )}
             {coach.slides !== undefined && (
-              <span className="bg-neutral-100 text-neutral-800 px-2 py-1 rounded-md text-xs font-medium">
+              <span className="bg-neutral-light text-neutral-dark px-3 py-1 rounded-xl text-xs font-medium tracking-wide">
                 {coach.slides} {coach.slides === 1 ? "Slide" : "Slides"}
               </span>
             )}
           </div>
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-neutral-500">
+          <div className="flex items-center justify-between border-t border-neutral-light pt-3">
+            <p className="text-sm text-neutral-dark/70 tracking-wide">
               {coach.mileage ? `${coach.mileage.toLocaleString()} miles` : 'Mileage not specified'}
             </p>
-            <span className="text-primary font-medium text-sm hover:underline">
+            <span className="flex items-center text-primary font-medium text-sm group-hover:translate-x-1 transition-transform duration-300">
               View Details
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </span>
           </div>
         </div>

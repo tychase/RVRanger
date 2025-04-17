@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 const Home = () => {
   useEffect(() => {
-    document.title = "LuxuryRV Market - Premium RV Marketplace";
+    document.title = "Luxury Coach Market - Premium Coach Marketplace";
   }, []);
 
   return (
