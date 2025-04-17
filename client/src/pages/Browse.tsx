@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import SearchForm from "@/components/search/SearchForm";
-import RVCard from "@/components/rv/RVCard";
+import CoachCard from "@/components/coach/CoachCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -21,7 +21,7 @@ const Browse = () => {
   const itemsPerPage = 12;
 
   useEffect(() => {
-    document.title = "Browse RVs - LuxuryRV Market";
+    document.title = "Browse Coaches - Luxury Coach Market";
     
     // Parse URL query parameters
     const params = new URLSearchParams(location.split("?")[1]);
@@ -167,7 +167,7 @@ const Browse = () => {
   return (
     <div className="bg-neutral-100 min-h-screen py-8">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-6">Find Your Perfect RV</h1>
+        <h1 className="text-3xl font-bold mb-6">Find Your Perfect Coach</h1>
         
         {/* Search Form */}
         <div className="mb-8">
@@ -181,7 +181,7 @@ const Browse = () => {
               {isLoading ? (
                 <Skeleton className="h-8 w-40" />
               ) : (
-                `${listings.length} RVs Available`
+                `${listings.length} Coaches Available`
               )}
             </h2>
             
@@ -211,15 +211,15 @@ const Browse = () => {
               renderSkeletons()
             ) : error ? (
               <div className="col-span-full text-center p-6">
-                <p className="text-red-500">Error loading RVs. Please try again later.</p>
+                <p className="text-red-500">Error loading Coaches. Please try again later.</p>
               </div>
             ) : sortedListings.length > 0 ? (
               sortedListings.map((rv) => (
-                <RVCard key={rv.id} rv={rv} />
+                <CoachCard key={rv.id} rv={rv} />
               ))
             ) : (
               <div className="col-span-full text-center p-6">
-                <p className="text-muted-foreground mb-4">No RVs match your current search criteria.</p>
+                <p className="text-muted-foreground mb-4">No Coaches match your current search criteria.</p>
                 <Button variant="outline" onClick={() => handleSearch({})}>
                   Clear All Filters
                 </Button>
