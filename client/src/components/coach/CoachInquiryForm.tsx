@@ -29,10 +29,10 @@ const inquirySchema = z.object({
 type InquiryFormValues = z.infer<typeof inquirySchema>;
 
 interface CoachInquiryFormProps {
-  rvId: number;
+  coachId: number;
 }
 
-const CoachInquiryForm = ({ rvId }: CoachInquiryFormProps) => {
+const CoachInquiryForm = ({ coachId }: CoachInquiryFormProps) => {
   const { user, isAuthenticated } = useContext(AuthContext);
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -52,7 +52,7 @@ const CoachInquiryForm = ({ rvId }: CoachInquiryFormProps) => {
   const inquiryMutation = useMutation({
     mutationFn: async (values: InquiryFormValues) => {
       const payload = {
-        rvId,
+        rvId: coachId, // Using rvId in the payload for database compatibility
         userId: isAuthenticated ? user.id : undefined,
         ...values,
       };

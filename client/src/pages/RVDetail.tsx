@@ -99,7 +99,7 @@ const CoachDetail = () => {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/favorites", {
         userId: user?.id,
-        rvId: parseInt(id),
+        coachId: parseInt(id),
       });
     },
     onSuccess: () => {
@@ -124,7 +124,7 @@ const CoachDetail = () => {
     mutationFn: async () => {
       return await apiRequest("DELETE", "/api/favorites", {
         userId: user?.id,
-        rvId: parseInt(id),
+        coachId: parseInt(id),
       });
     },
     onSuccess: () => {
@@ -353,7 +353,7 @@ const CoachDetail = () => {
                 </Button>
               </div>
               
-              <CoachInquiryForm rvId={parseInt(id)} />
+              <CoachInquiryForm coachId={parseInt(id)} />
             </div>
           </div>
 
