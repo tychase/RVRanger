@@ -46,7 +46,7 @@ const RVCard = ({ rv }: RVCardProps) => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/favorites`] });
       toast({
         title: "Added to favorites",
-        description: "This RV has been added to your favorites",
+        description: "This Coach has been added to your favorites",
       });
     },
     onError: (error) => {
@@ -71,7 +71,7 @@ const RVCard = ({ rv }: RVCardProps) => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}/favorites`] });
       toast({
         title: "Removed from favorites",
-        description: "This RV has been removed from your favorites",
+        description: "This Coach has been removed from your favorites",
       });
     },
     onError: (error) => {
@@ -111,7 +111,7 @@ const RVCard = ({ rv }: RVCardProps) => {
           aspectRatio="video"
           objectFit="cover"
           className="w-full"
-          fallbackSrc="/images/default-rv.svg"
+          fallbackSrc="/images/default-coach.svg"
         />
         {rv.isFeatured && (
           <span className="absolute top-2 left-2 bg-primary text-white text-xs font-semibold px-2 py-1 rounded">
@@ -136,7 +136,7 @@ const RVCard = ({ rv }: RVCardProps) => {
           <Heart className={`h-5 w-5 ${isFavorited ? "fill-current" : ""}`} />
         </button>
       </div>
-      <Link href={`/rv/${rv.id}`}>
+      <Link href={`/coach/${rv.id}`}>
         <div className="p-4">
           <div className="flex justify-between items-start">
             <h3 className="text-lg font-bold text-neutral-800 mb-1">{rv.title}</h3>

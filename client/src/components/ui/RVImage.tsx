@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
-interface RVImageProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CoachImageProps extends React.HTMLAttributes<HTMLDivElement> {
   src: string | null | undefined;
   alt: string;
   fallbackSrc?: string;

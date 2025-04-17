@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Browse from "@/pages/Browse";
-import CoachDetail from "@/pages/RVDetail";
+import RVDetail from "@/pages/RVDetail";
 import Sell from "@/pages/Sell";
 import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
@@ -77,7 +77,14 @@ function App() {
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/browse" component={Browse} />
-              <Route path="/coach/:id" component={CoachDetail} />
+              <Route path="/coach/:id" component={RVDetail} />
+              {/* Redirect old RV URLs to coach URLs */}
+              <Route path="/rv/:id">
+                {(params) => {
+                  window.location.href = `/coach/${params.id}`;
+                  return null;
+                }}
+              </Route>
               <Route path="/sell" component={Sell} />
               <Route path="/contact" component={Contact} />
               <Route path="/login" component={Login} />
