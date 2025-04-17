@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Menu, Settings, UserCircle } from "lucide-react";
 import { AuthContext } from "../../main";
+import { DevAssistantLink } from '@/components/ai/DevAssistantLink';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,6 +91,7 @@ const Header = () => {
                   <Button>Sign In</Button>
                 </Link>
               )}
+              <DevAssistantLink />
             </div>
           </nav>
 
@@ -150,6 +152,9 @@ const Header = () => {
                         </Button>
                       </Link>
                     )}
+                    <div className="mt-4">
+                      <DevAssistantLink />
+                    </div>
                   </div>
                 </nav>
               </SheetContent>
