@@ -6,6 +6,7 @@ import { z } from "zod";
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+
 import axios from 'axios';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -643,68 +644,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('[POST /api/search] Error:', error);
       res.status(500).json({ 
         message: "Failed to perform ranked search", 
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // Simple Chat Assistant endpoint
-  app.post("/api/chat", async (req, res) => {
-    try {
-      const { message } = req.body;
-      
-      if (!message || typeof message !== 'string') {
-        return res.status(400).json({ 
-          message: "Invalid request. Message is required and must be a string." 
-        });
-      }
-      
-      console.log(`[POST /api/chat] Received chat message: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
-      
-      // Simple assistant for this development environment
-      const getResponse = (query: string): string => {
-        query = query.toLowerCase();
-        
-        if (query.includes('help') || query.includes('what can you do')) {
-          return "I can help you with information about the RVRanger project. Ask me about features, code structure, or how to implement specific functionality.";
-        }
-        
-        if (query.includes('search') || query.includes('relevance')) {
-          return "The relevance-based search functionality ranks listings by how well they match search criteria instead of filtering them out. It calculates match scores based on exact and partial matches across various fields like manufacturer, converter, chassis type, and other RV specifications.";
-        }
-        
-        if (query.includes('converter') || query.includes('marathon') || query.includes('liberty')) {
-          return "Converters like Marathon and Liberty are companies that customize Prevost bus chassis into luxury RVs. In our data model, we distinguish between the chassis manufacturer (Prevost) and the converter company. This allows for more accurate search and filtering.";
-        }
-        
-        if (query.includes('prevost') || query.includes('chassis') || query.includes('h3') || query.includes('x model')) {
-          return "Prevost is a manufacturer of bus chassis used in luxury RVs. They have different chassis models like H3 and X series, each with different specifications. The RVRanger platform properly categorizes these to improve search relevance.";
-        }
-        
-        if (query.includes('database') || query.includes('schema')) {
-          return "The RVRanger database schema includes tables for rv_listings, rv_types, manufacturers, converters, chassis_types, users, favorites, inquiries, and rv_images. This structure allows for comprehensive relevance-based search functionality.";
-        }
-        
-        if (query.includes('architecture') || query.includes('structure')) {
-          return "RVRanger uses a React frontend with TypeScript and a Node.js Express backend. Search functionality uses a custom relevance algorithm that returns match scores with each listing. The database uses PostgreSQL with Drizzle ORM.";
-        }
-        
-        if (query.includes('how to') || query.includes('implement')) {
-          return "To implement new features in RVRanger, you should first define the data model in shared/schema.ts, then update storage.ts with necessary database operations, add API endpoints in routes.ts, and finally build the UI components in the client directory.";
-        }
-        
-        // Default response
-        return "I'm here to help with the RVRanger luxury RV marketplace project. Ask me about the code structure, search functionality, or technical details about RVs, converters like Marathon and Liberty, or Prevost chassis models like H3 and X.";
-      };
-      
-      const reply = getResponse(message);
-      console.log(`[POST /api/chat] Generated response`);
-      
-      res.json({ reply });
-    } catch (error) {
-      console.error('[POST /api/chat] Error:', error);
-      res.status(500).json({ 
-        message: "Failed to process chat message", 
         error: error instanceof Error ? error.message : String(error)
       });
     }
