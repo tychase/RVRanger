@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
 import { pool } from "./db";
+import { startFastAPIServer, registerAIProxyRoutes } from "./ai_proxy";
 
 const app = express();
 app.use(express.json());
@@ -48,6 +49,12 @@ app.use((req, res, next) => {
     await storage.seedInitialData();
     log("Database initialized with seed data");
     
+    // Start the FastAPI server for developer assistant
+    const fastApiProcess = startFastAPIServer();
+    
+    // Register AI proxy routes
+    registerAIProxyRoutes(app);
+    
     const server = await registerRoutes(app);
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -83,6 +90,12 @@ app.use((req, res, next) => {
     const shutdown = async () => {
       log("Shutting down server");
       try {
+        // Kill the FastAPI process if it's running
+        if (fastApiProcess && !fastApiProcess.killed) {
+          log("Terminating FastAPI developer assistant");
+          fastApiProcess.kill();
+        }
+        
         await pool.end();
         log("Database connection closed");
         process.exit(0);
