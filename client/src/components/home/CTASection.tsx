@@ -3,7 +3,7 @@ import { Link } from "wouter";
 
 const CTASection = () => {
   return (
-    <section className="bg-primary py-20">
+    <section className="bg-neutral-dark py-20">
       <div className="container mx-auto px-4 md:px-6 text-center">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 tracking-wider">Ready to Find Your Dream Luxury Coach?</h2>
@@ -13,7 +13,7 @@ const CTASection = () => {
           
           <div className="flex flex-col sm:flex-row justify-center gap-6">
             <Link href="/browse">
-              <Button variant="secondary" className="bg-white text-primary hover:bg-neutral-100 rounded-2xl px-8 py-3 shadow-md">
+              <Button variant="secondary" className="bg-white text-neutral-dark hover:bg-neutral-100 rounded-2xl px-8 py-3 shadow-md">
                 Browse Inventory
               </Button>
             </Link>
@@ -23,7 +23,7 @@ const CTASection = () => {
               </Button>
             </Link>
             <Link href="/contact">
-              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-primary rounded-2xl px-8 py-3 shadow-md">
+              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-neutral-dark rounded-2xl px-8 py-3 shadow-md">
                 Contact Us
               </Button>
             </Link>

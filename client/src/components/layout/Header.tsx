@@ -37,13 +37,13 @@ const Header = () => {
   ];
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-neutral-dark shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between py-4">
           <div className="flex items-center mb-4 md:mb-0">
             <Link href="/" className="flex items-center">
-              <span className="text-primary font-bold text-2xl">LuxuryCoach</span>
-              <span className="text-accent-foreground ml-1 font-bold">Market</span>
+              <span className="text-white font-bold text-2xl font-heading">Prevost</span>
+              <span className="text-accent-gold ml-1 font-bold">Go</span>
             </Link>
           </div>
           
@@ -55,8 +55,8 @@ const Header = () => {
                 href={link.path}
                 className={`py-2 px-3 ${
                   location === link.path
-                    ? "text-primary font-medium"
-                    : "text-neutral-700 hover:text-primary transition-colors"
+                    ? "text-accent-gold font-medium"
+                    : "text-white hover:text-accent-gold transition-colors"
                 }`}
               >
                 {link.name}
@@ -66,7 +66,7 @@ const Header = () => {
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="ml-2">
+                    <Button variant="outline" className="ml-2 text-white border-white">
                       <UserCircle className="mr-2 h-4 w-4" />
                       Account
                     </Button>
@@ -87,7 +87,7 @@ const Header = () => {
                 </DropdownMenu>
               ) : (
                 <Link href="/login">
-                  <Button>Sign In</Button>
+                  <Button className="bg-accent-gold hover:bg-accent-gold/90 text-white">Sign In</Button>
                 </Link>
               )}
             </div>
@@ -97,7 +97,7 @@ const Header = () => {
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="text-white border-white">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
@@ -110,8 +110,8 @@ const Header = () => {
                       onClick={() => setIsOpen(false)}
                       className={`py-2 ${
                         location === link.path
-                          ? "text-primary font-medium"
-                          : "text-neutral-700"
+                          ? "text-accent-gold font-medium"
+                          : "text-primary"
                       }`}
                     >
                       {link.name}
@@ -123,7 +123,7 @@ const Header = () => {
                         {isAdmin && (
                           <Link 
                             href="/admin" 
-                            className="flex items-center py-2 text-primary font-medium"
+                            className="flex items-center py-2 text-accent-gold font-medium"
                             onClick={() => setIsOpen(false)}
                           >
                             <Settings className="h-4 w-4 mr-2" />
@@ -135,7 +135,7 @@ const Header = () => {
                             logout();
                             setIsOpen(false);
                           }}
-                          className="w-full"
+                          className="w-full bg-accent-gold hover:bg-accent-gold/90 text-white"
                         >
                           Sign Out
                         </Button>
@@ -143,7 +143,7 @@ const Header = () => {
                     ) : (
                       <Link href="/login" className="w-full">
                         <Button 
-                          className="w-full"
+                          className="w-full bg-accent-gold hover:bg-accent-gold/90 text-white"
                           onClick={() => setIsOpen(false)}
                         >
                           Sign In
