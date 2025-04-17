@@ -649,6 +649,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat Assistant endpoint
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { message } = req.body;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ 
+          message: "Invalid request. Message is required and must be a string." 
+        });
+      }
+      
+      console.log(`[POST /api/chat] Received chat message: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
+      
+      // Initialize OpenAI
+      const OpenAI = require('openai');
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      
+      // Send message to OpenAI
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system", 
+            content: "You're a helpful assistant embedded inside the RVRanger project. This is a luxury RV marketplace with search, favorites, and listing functionality. Help users find, manage, and understand RV listings. Provide information about Prevost luxury coaches, converters like Marathon and Liberty, and different chassis types like H3 and X models."
+          },
+          { role: "user", content: message }
+        ],
+        max_tokens: 500
+      });
+      
+      const reply = response.choices[0].message.content;
+      console.log(`[POST /api/chat] Successfully generated response`);
+      
+      res.json({ reply });
+    } catch (error) {
+      console.error('[POST /api/chat] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to process chat message", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Inquiry endpoints
   app.post("/api/inquiries", async (req, res) => {
     try {
