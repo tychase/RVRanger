@@ -32,16 +32,19 @@ const FeaturedListings = () => {
   };
 
   return (
-    <section className="py-12 md:py-16">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-neutral-800">Featured Luxury Coaches</h2>
-          <Link href="/browse?featured=true" className="text-primary font-medium hover:underline">
-            View All
+    <section className="py-16 md:py-24 bg-neutral-light">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-neutral-dark mb-4 md:mb-0 font-serif tracking-wider">Featured Luxury Coaches</h2>
+          <Link href="/browse?featured=true" className="group flex items-center text-primary font-medium tracking-wide">
+            <span className="border-b border-transparent group-hover:border-primary transition-all duration-300">View All Featured</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {isLoading ? (
             renderSkeletons()
           ) : error ? (

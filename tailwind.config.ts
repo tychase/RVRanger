@@ -9,8 +9,47 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "0.75rem",
+        "2xl": "1rem",
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
+      },
+      spacing: {
+        '8': '0.5rem',
+        '16': '1rem',
+        '24': '1.5rem',
+        '32': '2rem',
+        '48': '3rem',
+        '64': '4rem',
+      },
+      fontSize: {
+        xs: '0.75rem', // 12px
+        sm: '0.875rem', // 14px
+        base: '1rem', // 16px
+        lg: '1.25rem', // 20px
+        xl: '1.5rem', // 24px
+        '2xl': '2rem', // 32px
+        '3xl': '3rem', // 48px
+      },
+      letterSpacing: {
+        tighter: '-0.05em',
+        tight: '-0.025em',
+        normal: '0',
+        wide: '0.2px',
+        wider: '0.5px',
+      },
+      lineHeight: {
+        tighter: '1.1',
+        tight: '1.2',
+        normal: '1.5',
       },
       colors: {
+        'neutral-dark': 'rgb(var(--neutral-dark) / <alpha-value>)',
+        'neutral-light': 'rgb(var(--neutral-light) / <alpha-value>)',
+        'accent-gold': 'rgb(var(--accent-gold) / <alpha-value>)',
+        'secondary-accent': 'rgb(var(--secondary-accent) / <alpha-value>)',
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
