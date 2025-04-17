@@ -15,6 +15,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import FixImagePage from "@/pages/admin/FixImagePage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import ChatAssistant from "@/components/chat/ChatAssistant";
 import { AuthContext } from "./main";
 
 function App() {
@@ -89,6 +90,7 @@ function App() {
             </Switch>
           </main>
           <Footer />
+          <ChatAssistant />
           <Toaster />
         </div>
       </QueryClientProvider>
