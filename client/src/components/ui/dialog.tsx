@@ -31,11 +31,11 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Ensure there's always a title for accessibility
+  // Add default title for accessibility if none provided
   const hasTitle = React.Children.toArray(children).some(
     child => React.isValidElement(child) && child.type === DialogTitle
   );
-  
+
   return (
     <DialogPortal>
       <DialogOverlay />
