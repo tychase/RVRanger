@@ -6,15 +6,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Share2, ArrowLeft } from "lucide-react";
-import InquiryForm from "@/components/rv/InquiryForm";
-import RVDetailGallery from "@/components/rv/RVDetailGallery";
+import CoachInquiryForm from "@/components/coach/CoachInquiryForm";
+import CoachDetailGallery from "@/components/coach/CoachDetailGallery";
 import { AuthContext } from "../main";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { RvListing, RvImage } from "@shared/schema";
 
-const RVDetail = () => {
+const CoachDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { isAuthenticated, user } = useContext(AuthContext);
@@ -48,13 +48,13 @@ const RVDetail = () => {
     enabled: !!rv?.manufacturerId,
   });
   
-  // Fetch RV type details
-  const { data: rvType } = useQuery({
+  // Fetch Coach type details
+  const { data: coachType } = useQuery({
     queryKey: ["/api/types", rv?.typeId],
     queryFn: async () => {
       if (!rv?.typeId) return null;
       const res = await fetch(`/api/types/${rv.typeId}`);
-      if (!res.ok) throw new Error("Failed to fetch RV type");
+      if (!res.ok) throw new Error("Failed to fetch coach type");
       return res.json();
     },
     enabled: !!rv?.typeId,
@@ -265,7 +265,7 @@ const RVDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Image gallery */}
             <div>
-              <RVDetailGallery images={galleryImages} title={rv.title} />
+              <CoachDetailGallery images={galleryImages} title={rv.title} />
             </div>
             
             {/* Coach details */}
@@ -353,7 +353,7 @@ const RVDetail = () => {
                 </Button>
               </div>
               
-              <InquiryForm rvId={parseInt(id)} />
+              <CoachInquiryForm rvId={parseInt(id)} />
             </div>
           </div>
 
@@ -468,4 +468,4 @@ const RVDetail = () => {
   );
 };
 
-export default RVDetail;
+export default CoachDetail;
