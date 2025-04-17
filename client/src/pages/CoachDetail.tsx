@@ -182,32 +182,32 @@ const CoachDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <Skeleton className="h-6 sm:h-8 w-48 sm:w-64 mb-4" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             <div>
-              <Skeleton className="h-96 w-full mb-4" />
-              <div className="grid grid-cols-4 gap-2">
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-64 sm:h-80 md:h-96 w-full mb-3 sm:mb-4" />
+              <div className="grid grid-cols-4 gap-1 sm:gap-2">
+                <Skeleton className="h-16 sm:h-20 md:h-24 w-full" />
+                <Skeleton className="h-16 sm:h-20 md:h-24 w-full" />
+                <Skeleton className="h-16 sm:h-20 md:h-24 w-full" />
+                <Skeleton className="h-16 sm:h-20 md:h-24 w-full" />
               </div>
             </div>
             <div>
-              <Skeleton className="h-10 w-48 mb-4" />
-              <Skeleton className="h-6 w-32 mb-6" />
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-3/4 mb-6" />
+              <Skeleton className="h-8 sm:h-10 w-36 sm:w-48 mb-3 sm:mb-4" />
+              <Skeleton className="h-5 sm:h-6 w-28 sm:w-32 mb-4 sm:mb-6" />
+              <Skeleton className="h-3 sm:h-4 w-full mb-2" />
+              <Skeleton className="h-3 sm:h-4 w-full mb-2" />
+              <Skeleton className="h-3 sm:h-4 w-3/4 mb-4 sm:mb-6" />
               
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6">
+                <Skeleton className="h-9 sm:h-10 w-full" />
+                <Skeleton className="h-9 sm:h-10 w-full" />
               </div>
               
-              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-36 sm:h-48 w-full" />
             </div>
           </div>
         </div>
@@ -217,11 +217,11 @@ const CoachDetail = () => {
 
   if (error || !coach) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <h1 className="text-2xl font-bold mb-4">Error Loading Coach Details</h1>
-          <p className="text-neutral-600 mb-6">We couldn't find the Coach you're looking for.</p>
-          <Button onClick={() => navigate("/browse")}>
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 text-center">
+          <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Error Loading Coach Details</h1>
+          <p className="text-neutral-600 text-sm sm:text-base mb-4 sm:mb-6">We couldn't find the Coach you're looking for.</p>
+          <Button onClick={() => navigate("/browse")} className="text-sm sm:text-base py-2 px-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Browse
           </Button>
@@ -250,19 +250,19 @@ const CoachDetail = () => {
   console.log("Gallery Images to display:", galleryImages);
 
   return (
-    <div className="bg-neutral-100 min-h-screen py-8">
-      <div className="container mx-auto px-4">
+    <div className="bg-neutral-100 min-h-screen py-6 sm:py-8">
+      <div className="container mx-auto px-4 sm:px-6">
         {/* Breadcrumb navigation */}
-        <div className="mb-6">
-          <Link href="/browse" className="flex items-center text-primary hover:underline font-medium">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+        <div className="mb-4 sm:mb-6">
+          <Link href="/browse" className="flex items-center text-primary hover:underline font-medium text-sm sm:text-base">
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
             Back to results
           </Link>
         </div>
         
         {/* Main content */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Image gallery */}
             <div>
               <CoachDetailGallery images={galleryImages} title={coach.title} />
@@ -270,85 +270,86 @@ const CoachDetail = () => {
             
             {/* Coach details */}
             <div>
-              <div className="flex flex-wrap items-start justify-between mb-4">
-                <h1 className="text-3xl font-bold text-neutral-800">{coach.title}</h1>
-                <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+              <div className="flex flex-wrap items-start justify-between mb-3 sm:mb-4">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-neutral-800 leading-tight">{coach.title}</h1>
+                <div className="flex items-center space-x-2 mt-2">
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    className={isFavorited ? "text-red-500" : ""}
+                    className={`h-8 w-8 sm:h-10 sm:w-10 ${isFavorited ? "text-red-500" : ""}`}
                     onClick={handleFavoriteToggle}
                   >
-                    <Heart className={`h-5 w-5 ${isFavorited ? "fill-current" : ""}`} />
+                    <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFavorited ? "fill-current" : ""}`} />
                   </Button>
                   <Button 
                     variant="outline" 
                     size="icon"
+                    className="h-8 w-8 sm:h-10 sm:w-10"
                     onClick={handleShare}
                   >
-                    <Share2 className="h-5 w-5" />
+                    <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </div>
               </div>
               
-              <div className="flex items-center mb-6">
-                <h2 className="text-2xl text-accent-foreground font-bold">
+              <div className="flex flex-wrap items-center mb-4 sm:mb-6 gap-2">
+                <h2 className="text-xl sm:text-2xl text-accent-foreground font-bold">
                   ${coach.price ? coach.price.toLocaleString() : 'Price on request'}
                 </h2>
-                <Badge variant="outline" className="ml-3">{coach.year}</Badge>
+                <Badge variant="outline" className="text-xs sm:text-sm">{coach.year}</Badge>
                 {coach.isFeatured && (
-                  <Badge className="ml-2 bg-primary">Featured</Badge>
+                  <Badge className="text-xs sm:text-sm bg-primary">Featured</Badge>
                 )}
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div>
-                  <p className="text-sm text-neutral-500">Location</p>
-                  <p className="font-medium">{coach.location}</p>
+                  <p className="text-xs sm:text-sm text-neutral-500">Location</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{coach.location}</p>
                 </div>
                 {coach.mileage !== undefined && coach.mileage !== null && (
                   <div>
-                    <p className="text-sm text-neutral-500">Mileage</p>
-                    <p className="font-medium">{coach.mileage.toLocaleString()} miles</p>
+                    <p className="text-xs sm:text-sm text-neutral-500">Mileage</p>
+                    <p className="font-medium text-sm sm:text-base">{coach.mileage.toLocaleString()} miles</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-neutral-500">Type</p>
-                  <p className="font-medium">{coachType?.name || "Loading..."}</p>
+                  <p className="text-xs sm:text-sm text-neutral-500">Type</p>
+                  <p className="font-medium text-sm sm:text-base">{coachType?.name || "Loading..."}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-neutral-500">Manufacturer</p>
-                  <p className="font-medium">{manufacturer?.name || "Loading..."}</p>
+                  <p className="text-xs sm:text-sm text-neutral-500">Manufacturer</p>
+                  <p className="font-medium text-sm sm:text-base">{manufacturer?.name || "Loading..."}</p>
                 </div>
                 {coach.length && (
                   <div>
-                    <p className="text-sm text-neutral-500">Length</p>
-                    <p className="font-medium">{coach.length} ft</p>
+                    <p className="text-xs sm:text-sm text-neutral-500">Length</p>
+                    <p className="font-medium text-sm sm:text-base">{coach.length} ft</p>
                   </div>
                 )}
                 {coach.fuelType && (
                   <div>
-                    <p className="text-sm text-neutral-500">Fuel Type</p>
-                    <p className="font-medium">{coach.fuelType}</p>
+                    <p className="text-xs sm:text-sm text-neutral-500">Fuel Type</p>
+                    <p className="font-medium text-sm sm:text-base">{coach.fuelType}</p>
                   </div>
                 )}
                 {coach.slides !== undefined && (
                   <div>
-                    <p className="text-sm text-neutral-500">Slides</p>
-                    <p className="font-medium">{coach.slides}</p>
+                    <p className="text-xs sm:text-sm text-neutral-500">Slides</p>
+                    <p className="font-medium text-sm sm:text-base">{coach.slides}</p>
                   </div>
                 )}
                 {coach.bedType && (
                   <div>
-                    <p className="text-sm text-neutral-500">Bed Type</p>
-                    <p className="font-medium">{coach.bedType}</p>
+                    <p className="text-xs sm:text-sm text-neutral-500">Bed Type</p>
+                    <p className="font-medium text-sm sm:text-base">{coach.bedType}</p>
                   </div>
                 )}
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Button className="flex-1">Contact Seller</Button>
-                <Button variant="outline" className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
+                <Button className="flex-1 py-2 text-sm sm:text-base h-auto">Contact Seller</Button>
+                <Button variant="outline" className="flex-1 py-2 text-sm sm:text-base h-auto">
                   Get Financing Options
                 </Button>
               </div>
@@ -358,23 +359,23 @@ const CoachDetail = () => {
           </div>
 
           {/* Tabbed content area */}
-          <div className="mt-12">
+          <div className="mt-8 sm:mt-12">
             <Tabs defaultValue="description">
-              <TabsList className="mb-4">
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="specifications">Specifications</TabsTrigger>
-                <TabsTrigger value="features">Features</TabsTrigger>
+              <TabsList className="mb-4 w-full overflow-x-auto flex-nowrap">
+                <TabsTrigger value="description" className="text-xs sm:text-sm">Description</TabsTrigger>
+                <TabsTrigger value="specifications" className="text-xs sm:text-sm">Specifications</TabsTrigger>
+                <TabsTrigger value="features" className="text-xs sm:text-sm">Features</TabsTrigger>
               </TabsList>
               <TabsContent value="description" className="pt-4">
-                <div className="prose max-w-none">
+                <div className="prose max-w-none text-sm sm:text-base">
                   <p>{coach.description}</p>
                 </div>
               </TabsContent>
               <TabsContent value="specifications" className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-neutral-50 p-4 rounded-md">
-                    <h3 className="font-semibold mb-2 text-lg">Dimensions</h3>
-                    <ul className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="bg-neutral-50 p-3 sm:p-4 rounded-md">
+                    <h3 className="font-semibold mb-2 text-base sm:text-lg">Dimensions</h3>
+                    <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base">
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Length:</span>
                         <span className="font-medium">{coach.length || "N/A"} ft</span>
@@ -386,9 +387,9 @@ const CoachDetail = () => {
                     </ul>
                   </div>
                   
-                  <div className="bg-neutral-50 p-4 rounded-md">
-                    <h3 className="font-semibold mb-2 text-lg">Performance</h3>
-                    <ul className="space-y-2">
+                  <div className="bg-neutral-50 p-3 sm:p-4 rounded-md">
+                    <h3 className="font-semibold mb-2 text-base sm:text-lg">Performance</h3>
+                    <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base">
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Fuel Type:</span>
                         <span className="font-medium">{coach.fuelType || "N/A"}</span>
@@ -400,9 +401,9 @@ const CoachDetail = () => {
                     </ul>
                   </div>
                   
-                  <div className="bg-neutral-50 p-4 rounded-md">
-                    <h3 className="font-semibold mb-2 text-lg">Interior</h3>
-                    <ul className="space-y-2">
+                  <div className="bg-neutral-50 p-3 sm:p-4 rounded-md">
+                    <h3 className="font-semibold mb-2 text-base sm:text-lg">Interior</h3>
+                    <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base">
                       <li className="flex justify-between">
                         <span className="text-neutral-600">Bed Type:</span>
                         <span className="font-medium">{coach.bedType || "N/A"}</span>
@@ -412,54 +413,54 @@ const CoachDetail = () => {
                 </div>
               </TabsContent>
               <TabsContent value="features" className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <h3 className="font-semibold mb-3 text-lg">Exterior Features</h3>
-                    <ul className="space-y-2">
+                    <h3 className="font-semibold mb-2 sm:mb-3 text-base sm:text-lg">Exterior Features</h3>
+                    <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base">
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Automatic leveling system</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Exterior entertainment center</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Power awnings</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Outdoor shower</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Slide-out storage compartments</span>
                       </li>
                     </ul>
                   </div>
                   
                   <div>
-                    <h3 className="font-semibold mb-3 text-lg">Interior Features</h3>
-                    <ul className="space-y-2">
+                    <h3 className="font-semibold mb-2 sm:mb-3 text-base sm:text-lg">Interior Features</h3>
+                    <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base">
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Premium leather seating</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Full kitchen with upscale appliances</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Satellite TV system</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Washer and dryer</span>
                       </li>
                       <li className="flex items-center">
-                        <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
+                        <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-primary mr-2"></div>
                         <span>Smart home automation</span>
                       </li>
                     </ul>
