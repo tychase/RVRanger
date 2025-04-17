@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import RVCard from "@/components/rv/RVCard";
+import CoachCard from "@/components/coach/CoachCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 
@@ -50,7 +50,7 @@ const FeaturedListings = () => {
             </div>
           ) : featuredRvs && featuredRvs.length > 0 ? (
             featuredRvs.map((rv: any) => (
-              <RVCard key={rv.id} rv={rv} />
+              <CoachCard key={rv.id} coach={rv} />
             ))
           ) : (
             <div className="col-span-full text-center p-6">
