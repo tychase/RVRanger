@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RVRanger Assistant</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 700px; 
+      margin: 2rem auto; 
+      padding: 1rem;
+      background-color: #f7f9fc;
+    }
+    .chat-container {
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background-color: white;
+      padding: 1.5rem;
+    }
+    h1 {
+      color: #2563eb;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    textarea { 
+      width: 100%; 
+      margin-top: 1rem; 
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      resize: none;
+      font-size: 16px;
+      height: 100px;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    button { 
+      width: 100%; 
+      margin-top: 1rem; 
+      padding: 0.75rem;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .chat-box { 
+      margin-top: 1.5rem; 
+      border: 1px solid #e5e7eb; 
+      border-radius: 6px;
+      padding: 1rem; 
+      height: 350px; 
+      overflow-y: scroll;
+      background-color: #f9fafb;
+    }
+    .user { 
+      font-weight: 600; 
+      margin-top: 1rem; 
+      background-color: #e0f2fe;
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+    .gpt { 
+      color: #374151; 
+      margin-top: 0.75rem;
+      background-color: #f3f4f6;
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+    .loading {
+      text-align: center;
+      margin-top: 0.75rem;
+      color: #6b7280;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h1>RVRanger Assistant</h1>
+    <textarea id="message" placeholder="Ask me anything about RVs, listings, or how to use the platform..."></textarea>
+    <button id="sendBtn" onclick="sendMessage()">Send Message</button>
+    <div class="chat-box" id="chatBox">
+      <div class="gpt">Hello! I'm your RVRanger assistant. How can I help you with luxury RVs today?</div>
+    </div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const message = document.getElementById('message').value;
+      if (!message.trim()) return;
+
+      const chatBox = document.getElementById('chatBox');
+      const sendBtn = document.getElementById('sendBtn');
+      
+      // Disable button while processing
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+      
+      chatBox.innerHTML += `<div class='user'>You: ${message}</div>`;
+      chatBox.innerHTML += `<div class='loading'>Assistant is thinking...</div>`;
+      document.getElementById('message').value = '';
+      
+      // Scroll to bottom
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+
+        // Remove loading message
+        document.querySelector('.loading').remove();
+        
+        const data = await response.json();
+        if (data.reply) {
+          chatBox.innerHTML += `<div class='gpt'>Assistant: ${data.reply}</div>`;
+        } else {
+          chatBox.innerHTML += `<div class='gpt'>Error: ${data.error || 'Something went wrong'}</div>`;
+        }
+      } catch (error) {
+        // Remove loading message
+        if (document.querySelector('.loading')) {
+          document.querySelector('.loading').remove();
+        }
+        chatBox.innerHTML += `<div class='gpt'>Error: Unable to connect to the assistant. Please try again.</div>`;
+      } finally {
+        // Re-enable button
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send Message';
+        
+        // Scroll to bottom
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    // Add support for pressing Enter to send message
+    document.getElementById('message').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
