@@ -1,0 +1,116 @@
+1. Duplicate createRoot Call
+Symptom:
+Running
+
+js
+Copy
+Edit
+ReactDOMClient.createRoot(container)
+twice on the same DOM node.
+
+Fix:
+Pick one entry point—either your main.tsx or another bootstrap file—and remove the extra call. Your main.tsx should look something like:
+
+tsx
+Copy
+Edit
+// client/src/main.tsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+
+const container = document.getElementById('root')!;
+const root = createRoot(container);
+
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+Make sure you don’t also do a second createRoot(document.getElementById('root')) elsewhere. If you have hot‑reload code or a service worker registration that also calls root.render, move it into this single spot.
+
+2. “Error checking favorite status”
+Symptom:
+Your UI logs show
+
+txt
+Copy
+Edit
+Error checking favorite status {}
+because you’re catching an error but not surfacing any details.
+
+Fix:
+Adjust your API helper to log or throw the actual error message:
+
+ts
+Copy
+Edit
+// client/src/api/favorites.ts
+export async function checkFavorite(listingId: number) {
+  try {
+    const res = await fetch(`/api/favorites/${listingId}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err: any) {
+    console.error('Error checking favorite status:', err.message || err);
+    throw err;  // rethrow or return a fallback
+  }
+}
+Then in your component:
+
+tsx
+Copy
+Edit
+useEffect(() => {
+  checkFavorite(id)
+    .then(setIsFav)
+    .catch(err => {
+      // show a toast or UI message
+      toast.error(`Couldn’t load favorite status: ${err.message}`);
+    });
+}, [id]);
+Also verify your backend route /api/favorites/:id is returning a JSON error payload (e.g., { error: 'Not found' }) and an appropriate HTTP status code.
+
+3. Accessibility: DialogContent Needs a DialogTitle
+Symptom:
+Radix UI warns:
+
+“DialogContent requires a DialogTitle for accessibility.”
+
+Fix:
+Every <DialogContent> block should include a <DialogTitle> (and optionally <DialogDescription>). For example:
+
+tsx
+Copy
+Edit
+// client/src/components/ui/dialog.tsx
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose
+} from '@radix-ui/react-dialog';
+
+export function MyDialog({ open, onOpenChange }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button>Open Dialog</Button>
+      </DialogTrigger>
+
+      <DialogContent className="…">
+        <DialogTitle className="font-heading text-xl">Confirm Action</DialogTitle>
+        <DialogDescription className="mb-4 text-sm">
+          Are you sure you want to delete this coach listing? This can’t be undone.
+        </DialogDescription>
+        {/* dialog body… */}
+        <DialogClose asChild>
+          <Button variant="secondary">Cancel</Button>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
+  );
+}
+That satisfies the ARIA requirements and removes the warning.
