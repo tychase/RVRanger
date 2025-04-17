@@ -7,7 +7,7 @@ const ChatAssistant = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   
   // The URL for the chat assistant
-  const chatAssistantUrl = 'http://localhost:5001/chat-ui';
+  const chatAssistantUrl = 'https://5001-' + window.location.hostname.replace(/^[^-]+-/, '') + '/chat-ui';
   
   const toggleChat = () => {
     setIsOpen(!isOpen);
