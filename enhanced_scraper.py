@@ -141,6 +141,12 @@ def fetch_listing_detail(detail_url):
         if desc_div:
             description = desc_div.get_text(strip=True)
         
+        # Extract full title from detail page (e.g., the headline)
+        full_title = ""
+        headline_tag = soup.find("h2") or soup.find("h1")
+        if headline_tag:
+            full_title = headline_tag.get_text(strip=True)
+        
         # Extract additional images
         additional_images = []
         for img in soup.select("div.detail-images img"):
@@ -152,6 +158,7 @@ def fetch_listing_detail(detail_url):
         
         return {
             "full_description": description,
+            "full_title": full_title,
             "additional_image_urls": additional_images
         }
     except Exception as e:
@@ -222,6 +229,9 @@ def scrape_prevost_listings():
         # Extract additional info from full description
         full_description = details.get("full_description", "")
         
+        # Get full title from detail page if available
+        full_title = details.get("full_title", "")
+        
         # If we couldn't detect from title, try the description
         if not converter:
             converter = detect_converter(full_description)
@@ -247,9 +257,46 @@ def scrape_prevost_listings():
             # Add a small delay to avoid overloading the server
             time.sleep(0.2)
         
+        # Clean and format the title
+        # Use full title from detail page if available, otherwise use the list page title
+        clean_title = full_title if full_title else title
+        
+        # Remove "Prevost" from the title
+        clean_title = re.sub(r"\bPrevost\b", "", clean_title, flags=re.IGNORECASE)
+        
+        # Collapse extra whitespace
+        clean_title = " ".join(clean_title.split())
+        
+        # Ensure year stays at the front if available
+        if year:
+            # Remove the year from the title if it's already there
+            year_pattern = r"^" + str(year) + r"\s+"
+            clean_title = re.sub(year_pattern, "", clean_title)
+            # Add the year at the beginning
+            clean_title = f"{year} {clean_title}"
+        
+        # Add converter and chassis if not in the title
+        title_parts = []
+        if year:
+            title_parts.append(str(year))
+        if converter and converter.lower() not in clean_title.lower():
+            title_parts.append(converter)
+        
+        # Extract existing text after year or add all components
+        if title_parts:
+            year_prefix = title_parts[0] if title_parts else ""
+            remaining_title = clean_title.replace(year_prefix, "", 1).strip()
+            if remaining_title:
+                title_parts = [year_prefix] + [remaining_title]
+        else:
+            title_parts = [clean_title]
+        
+        # Final clean title
+        clean_title = " ".join(title_parts).strip()
+        
         # Create the listing object with all extracted information
         listing = {
-            "title": title,
+            "title": clean_title,
             "description": full_description,
             "price": price,
             "year": year,

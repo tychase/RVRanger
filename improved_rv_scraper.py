@@ -232,6 +232,13 @@ def fetch_detailed_listing(listing_url):
     listing_data = {}
     images = []
     
+    # Extract the full title from the page (usually in a heading element)
+    full_title = ""
+    headline_tag = soup.find("h2") or soup.find("h1")
+    if headline_tag:
+        full_title = headline_tag.get_text(strip=True)
+        listing_data['full_title'] = full_title
+    
     # Look for all images on the page
     for img in soup.find_all('img'):
         src = img.get('src')
@@ -374,9 +381,31 @@ def scrape_listings():
             print(f"No images found for {link}")
             # We'll rely on a fallback in the frontend
         
+        # Clean and format the title
+        full_title = detailed_data.get('full_title', '')
+        
+        # If we have a full title from the detail page, use it; otherwise, construct one
+        if full_title:
+            # Remove "Prevost" from the title
+            clean_title = re.sub(r"\bPrevost\b", "", full_title, flags=re.IGNORECASE)
+            # Collapse extra whitespace
+            clean_title = " ".join(clean_title.split())
+        else:
+            # Construct from parts
+            clean_title = f"{year} {converter or ''} {model or ''}".strip()
+        
+        # Ensure year stays at the front if available
+        if year:
+            # Remove the year from the title if it's already there
+            year_pattern = r"^" + str(year) + r"\s+"
+            clean_title = re.sub(year_pattern, "", clean_title)
+            # Add the year at the beginning
+            clean_title = f"{year} {clean_title}"
+        
+        # Final title should be in the format "2009 Liberty Elegant Lady H3-45 Double Slide"
         # Merge all the information
         listing = {
-            "title": f"{year} {converter or 'Prevost'} {model or ''}".strip(),
+            "title": clean_title,
             "description": detailed_data.get('description', f"Luxury {year} Prevost coach."),
             "price": detailed_data.get('price'),
             "year": year,
