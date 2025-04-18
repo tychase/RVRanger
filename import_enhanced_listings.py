@@ -24,7 +24,7 @@ except ImportError:
     print("python-dotenv not installed, using environment variables as is")
 
 # Configuration
-INPUT_FILE = "enhanced_prevost_listings.json"
+INPUT_FILE = "improved_prevost_listings.json"
 API_BASE_URL = "http://localhost:5000/api"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -158,10 +158,18 @@ def ensure_rv_type_exists(conn):
 
 def import_listing_to_database(listing, conn, type_id, seller_id=1):
     """Import a listing to the database directly."""
-    # Ensure manufacturer exists
+    # Ensure manufacturer exists - handle both camelCase and snake_case keys
     manufacturer_id = None
     if listing.get("manufacturer"):
         manufacturer_id = ensure_manufacturer_exists(listing["manufacturer"], conn)
+    elif listing.get("manufacturerId"):
+        # If we don't have a manufacturer name but have an ID, use a default name
+        manufacturer_id = listing["manufacturerId"]
+        print(f"Using provided manufacturerId: {manufacturer_id}")
+    else:
+        # Default to Prevost as manufacturer if none specified
+        manufacturer_id = ensure_manufacturer_exists("Prevost", conn)
+        print(f"No manufacturer info found, defaulting to Prevost (ID: {manufacturer_id})")
     
     # Ensure converter exists if available
     converter_id = None
@@ -197,7 +205,7 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
                 type_id,
                 converter_id,
                 chassis_type_id,
-                listing.get("featured_image"),
+                listing.get("featured_image", listing.get("featuredImage")),
                 True,  # Mark all imported listings as featured
                 seller_id
             )
@@ -206,24 +214,35 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
         result = cursor.fetchone()
         rv_id = result["id"]
         
-        # Import additional images
-        for image_url in listing.get("additional_images", []):
+        # Import additional images - handle both formats
+        additional_images = listing.get("additional_images", listing.get("additionalImages", []))
+        
+        for img in additional_images:
+            # Handle both simple string URLs and object format
+            if isinstance(img, dict) and "imageUrl" in img:
+                img_url = img["imageUrl"]
+                is_primary = img.get("isPrimary", False)
+            else:
+                img_url = img
+                is_primary = False
+                
             cursor.execute(
                 """
                 INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
                 VALUES (%s, %s, %s, NOW(), NOW())
                 """,
-                (rv_id, image_url, False)
+                (rv_id, img_url, is_primary)
             )
         
         # Import primary image as the first image
-        if listing.get("featured_image"):
+        featured_image = listing.get("featured_image", listing.get("featuredImage"))
+        if featured_image:
             cursor.execute(
                 """
                 INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
                 VALUES (%s, %s, %s, NOW(), NOW())
                 """,
-                (rv_id, listing.get("featured_image"), True)
+                (rv_id, featured_image, True)
             )
         
         conn.commit()
