@@ -186,6 +186,13 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
         # Provide default location if not provided
         location = listing.get("location", "United States")
         
+        # Ensure we have a price (required field)
+        price = listing.get("price")
+        if price is None:
+            # Use a placeholder price for "Call for price" listings
+            price = 999999
+            print(f"No price found for listing '{listing.get('title')}', using placeholder price of ${price}")
+        
         cursor.execute(
             """
             INSERT INTO rv_listings (
@@ -200,7 +207,7 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
                 listing.get("title", "Luxury RV Listing"),
                 listing.get("description", ""),
                 listing.get("year"),
-                listing.get("price"),
+                price,
                 listing.get("mileage"),
                 listing.get("length"),
                 listing.get("slides"),
