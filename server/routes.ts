@@ -690,10 +690,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Debug route to verify listings and their featuredImage paths
   app.get("/debug/listings", async (req, res) => {
     try {
-      console.log('[GET /debug/listings] Fetching first 5 listings for debugging');
+      console.log('[GET /debug/listings] Fetching all listings for debugging');
       
-      // Use the storage API to get the first 5 listings
-      const listings = await storage.getAllRvListings({ limit: 5 });
+      // Use the storage API to get all listings
+      const listings = await storage.getAllRvListings();
       
       // Check if each featuredImage exists in the filesystem
       
@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: listing.id,
           title: listing.title,
           featuredImage: listing.featuredImage,
-          isExternalUrl: isExternal,
+          isExternal, // Renamed isExternalUrl to isExternal
           fileExists: exists
         };
       });
@@ -738,11 +738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json({
-        message: "First 5 listings with featured image paths",
-        listings: debugInfo,
-        sampleImagePaths: sampleImages
-      });
+      res.json(debugInfo);
     } catch (error) {
       console.error('[GET /debug/listings] Error:', error);
       res.status(500).json({ 
