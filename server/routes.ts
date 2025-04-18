@@ -6,8 +6,10 @@ import { z } from "zod";
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-
 import axios from 'axios';
+
+// Import API routes
+import brokenImagesRouter from './api/listings/broken-images';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Explicitly serve static files from the public directory
@@ -57,6 +59,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const apiRouter = app.use("/api", (req, res, next) => {
     next();
   });
+  
+  // Use broken-images router - needs to come after the /api prefix
+  app.use('/api/listings/broken-images', brokenImagesRouter);
 
   // Manufacturers endpoints
   app.get("/api/manufacturers", async (req, res) => {

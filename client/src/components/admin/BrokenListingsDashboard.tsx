@@ -45,75 +45,48 @@ const BrokenListingsDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all listings
-  const { data: allListings } = useQuery<RVListing[]>({
-    queryKey: ["/api/listings"],
-    queryFn: async () => {
-      // We need to fetch all listings, so we'll make multiple requests if needed
-      const fetchListings = async (offset = 0, limit = 100) => {
-        const response = await fetch(`/api/listings?limit=${limit}&offset=${offset}`);
-        if (!response.ok) throw new Error("Failed to fetch listings");
-        return response.json();
-      };
-      
-      // First batch
-      const firstBatch = await fetchListings();
-      
-      // If we got a full batch, there might be more
-      if (firstBatch.length === 100) {
-        const secondBatch = await fetchListings(100);
-        return [...firstBatch, ...secondBatch];
-      }
-      
-      return firstBatch;
-    }
-  });
-
-  // Check all listings for image issues
+  // Use our new API endpoint to check for image issues
   useEffect(() => {
-    if (!allListings) return;
-    
     const checkListings = async () => {
       setIsLoading(true);
       setError(null);
       
       try {
-        const results: ImageCheckResult[] = [];
+        const response = await fetch('/api/listings/broken-images');
         
-        for (const listing of allListings) {
-          // Fetch images for this listing
-          const imagesResponse = await fetch(`/api/listings/${listing.id}/images`);
-          const images: RVImage[] = await imagesResponse.json();
-          
-          // Check for external images (not starting with /images/)
-          const hasExternalImages = listing.featuredImage && !listing.featuredImage.startsWith('/images/') ||
-            images.some(img => !img.imageUrl.startsWith('/images/'));
-          
-          // Check for missing images (empty URLs)
-          const hasMissingImages = !listing.featuredImage || 
-            images.some(img => !img.imageUrl);
-          
-          // For now, we'll assume broken images would be detected on the client side
-          // We could enhance this with a server-side check in the future
-          const hasBrokenImages = false;
-          
-          // Add to results if there are any issues
-          if (hasExternalImages || hasMissingImages || hasBrokenImages) {
-            results.push({
-              id: listing.id,
-              title: listing.title,
-              year: listing.year,
-              featuredImage: listing.featuredImage,
-              images,
-              hasExternalImages,
-              hasMissingImages,
-              hasBrokenImages
-            });
-          }
+        if (!response.ok) {
+          throw new Error(`API responded with status ${response.status}`);
         }
+        
+        const problemListings = await response.json();
+        
+        // Transform the data to match our component's expected format
+        const results: ImageCheckResult[] = await Promise.all(
+          problemListings.map(async (item: any) => {
+            // Fetch images for this listing to show in UI
+            const imagesResponse = await fetch(`/api/listings/${item.id}/images`);
+            const images: RVImage[] = await imagesResponse.json();
+            
+            // Get the listing details to get the year
+            const listingResponse = await fetch(`/api/listings/${item.id}`);
+            const listing = await listingResponse.json();
+            
+            return {
+              id: item.id,
+              title: item.title,
+              year: listing.year || 0,
+              featuredImage: item.featuredImage || '',
+              images,
+              hasExternalImages: item.isExternal,
+              hasMissingImages: !item.fileExists || item.galleryMissingFiles > 0,
+              hasBrokenImages: !item.fileExists // For now, treat missing files as broken
+            };
+          })
+        );
         
         setListings(results);
       } catch (err) {
+        console.error('Error checking listings:', err);
         setError("Failed to check listings: " + (err instanceof Error ? err.message : String(err)));
       } finally {
         setIsLoading(false);
@@ -121,7 +94,7 @@ const BrokenListingsDashboard = () => {
     };
     
     checkListings();
-  }, [allListings]);
+  }, []);
 
   if (isLoading) {
     return (
