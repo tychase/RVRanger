@@ -183,14 +183,17 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
     
     # Prepare the listing data
     with conn.cursor() as cursor:
+        # Provide default location if not provided
+        location = listing.get("location", "United States")
+        
         cursor.execute(
             """
             INSERT INTO rv_listings (
                 title, description, year, price, mileage, length, slides,
                 manufacturer_id, type_id, converter_id, chassis_type_id,
-                featured_image, is_featured, seller_id, created_at, updated_at
+                featured_image, is_featured, seller_id, location, created_at, updated_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
             RETURNING id
             """,
             (
@@ -207,7 +210,8 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
                 chassis_type_id,
                 listing.get("featured_image", listing.get("featuredImage")),
                 True,  # Mark all imported listings as featured
-                seller_id
+                seller_id,
+                location
             )
         )
         conn.commit()
@@ -228,8 +232,8 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
                 
             cursor.execute(
                 """
-                INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
-                VALUES (%s, %s, %s, NOW(), NOW())
+                INSERT INTO rv_images (rv_id, image_url, is_primary)
+                VALUES (%s, %s, %s)
                 """,
                 (rv_id, img_url, is_primary)
             )
@@ -239,8 +243,8 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
         if featured_image:
             cursor.execute(
                 """
-                INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
-                VALUES (%s, %s, %s, NOW(), NOW())
+                INSERT INTO rv_images (rv_id, image_url, is_primary)
+                VALUES (%s, %s, %s)
                 """,
                 (rv_id, featured_image, True)
             )

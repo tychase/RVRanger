@@ -320,8 +320,13 @@ def scrape_listings(limit=1, max_images_per_listing=5):  # Process only 1 listin
     
     print(f"Found {len(listing_links)} potential listing links")
     
-    # Process only a limited number of listings
-    listing_links = listing_links[:limit]
+    # Process a different listing from further down the list
+    if len(listing_links) > 10:
+        # Take the 10th listing if available
+        listing_links = [listing_links[10]]
+    else:
+        # Otherwise just take the first one
+        listing_links = listing_links[:limit]
     print(f"Processing {len(listing_links)} listings (limited for testing)")
     
     # Process each listing link
