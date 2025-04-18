@@ -1,7 +1,7 @@
+import React, { createContext } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { createContext } from "react";
 
 export const AuthContext = createContext<{
   isAuthenticated: boolean;
