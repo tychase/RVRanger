@@ -1,0 +1,93 @@
+Now I want to dig into our scraper. take a look at it and also the page we're meant to be scraping https://www.prevost-stuff.com/forsale/public_list_ads.php 
+We want the title to omit "Prevost" and include the year, converter, and chasis. So if you look at https://www.prevost-stuff.com/2009PrevostLibertyH_TMS2523041825.html It should pull "2009 Liberty Elegant Lady H3-45 Double Slide"
+
+
+ChatGPT said:
+
+Thought for 14 seconds
+You’ve got two jobs ahead:
+
+Clean up the title in your scraper so it strips out “Prevost” and grabs the full, human‑readable name from the detail page (where things like “Elegant Lady” live).
+
+Omit “Prevost” and only surface year + converter + model + chassis + slides in your JSON.
+
+1. How the listing page vs. detail page differ
+Listing page (public_list_ads.php) shows truncated links like
+
+kotlin
+Copy
+Edit
+2009 Prevost Parliament XLII Double Slide
+Detail page (2009PrevostLibertyH_TMS2523041825.html) typically contains the full name, e.g.
+
+css
+Copy
+Edit
+2009 Prevost Liberty Elegant Lady H3-45 Double Slide
+To get “2009 Liberty Elegant Lady H3-45 Double Slide” you need to:
+
+Follow the link to the detail URL.
+
+Parse the main headline there (often in an <h2>, <h1> or other prominent tag).
+
+Remove the word “Prevost” from that string.
+
+2. Patch for improved_rv_scraper.py
+Below is a minimal snippet showing how to pull the full title from the detail page and clean it up. Insert this in place of your current title-extraction logic:
+
+python
+Copy
+Edit
+import re
+import requests
+from bs4 import BeautifulSoup
+
+# … inside your loop, where you have detail_url for each listing …
+
+# 1) Fetch and parse the detail page
+detail_res = requests.get(detail_url, timeout=10)
+detail_soup = BeautifulSoup(detail_res.text, "html.parser")
+
+# 2) Extract the headline (adjust selector to your page)
+#    Try looking at devtools to confirm the tag – here I'm guessing <h2>
+headline_tag = detail_soup.find("h2") or detail_soup.find("h1")
+raw_title = headline_tag.get_text(strip=True) if headline_tag else title_from_list_page
+
+# 3) Strip out "Prevost" (case‑insensitive)
+#    And collapse extra whitespace
+clean_title = re.sub(r"\bPrevost\b", "", raw_title, flags=re.IGNORECASE)
+clean_title = " ".join(clean_title.split())
+
+# 4) (Optional) Ensure year stays at front
+#    If you want to force the year to always lead:
+year_match = re.match(r"^(\d{4})", clean_title)
+if year_match:
+    year = year_match.group(1)
+    rest = clean_title[len(year):].strip()
+    clean_title = f"{year} {rest}"
+
+# Now use `clean_title` for your JSON output
+listing["title"] = clean_title
+What this does:
+Follows the detail link (so you capture “Elegant Lady” etc.)
+
+Finds the main heading (<h2> or <h1>) on that page
+
+Removes the standalone word “Prevost” via regex
+
+Collapses any double‑spaces
+
+Re‑prefixes the 4‑digit year so titles always begin with the year
+
+3. Verify & Roll Out
+Run the modified scraper on a single URL to confirm it now spits out:
+
+arduino
+Copy
+Edit
+"2009 Liberty Elegant Lady H3-45 Double Slide"
+Import that into your DB and spot‑check the rv_listings.title column.
+
+Scale up to more listings once you’re satisfied.
+
+With that in place, all your cards and search results will show a clean, no‑“Prevost” title that highlights exactly what your buyer cares about. Let me know how it goes!
