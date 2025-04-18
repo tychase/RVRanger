@@ -24,7 +24,7 @@ except ImportError:
     print("python-dotenv not installed, using environment variables as is")
 
 # Configuration
-INPUT_FILE = "improved_prevost_listings.json"
+INPUT_FILE = "enhanced_prevost_listings.json"
 API_BASE_URL = "http://localhost:5000/api"
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -158,18 +158,10 @@ def ensure_rv_type_exists(conn):
 
 def import_listing_to_database(listing, conn, type_id, seller_id=1):
     """Import a listing to the database directly."""
-    # Ensure manufacturer exists - handle both camelCase and snake_case keys
+    # Ensure manufacturer exists
     manufacturer_id = None
     if listing.get("manufacturer"):
         manufacturer_id = ensure_manufacturer_exists(listing["manufacturer"], conn)
-    elif listing.get("manufacturerId"):
-        # If we don't have a manufacturer name but have an ID, use a default name
-        manufacturer_id = listing["manufacturerId"]
-        print(f"Using provided manufacturerId: {manufacturer_id}")
-    else:
-        # Default to Prevost as manufacturer if none specified
-        manufacturer_id = ensure_manufacturer_exists("Prevost", conn)
-        print(f"No manufacturer info found, defaulting to Prevost (ID: {manufacturer_id})")
     
     # Ensure converter exists if available
     converter_id = None
@@ -183,31 +175,21 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
     
     # Prepare the listing data
     with conn.cursor() as cursor:
-        # Provide default location if not provided
-        location = listing.get("location", "United States")
-        
-        # Ensure we have a price (required field)
-        price = listing.get("price")
-        if price is None:
-            # Use a placeholder price for "Call for price" listings
-            price = 999999
-            print(f"No price found for listing '{listing.get('title')}', using placeholder price of ${price}")
-        
         cursor.execute(
             """
             INSERT INTO rv_listings (
                 title, description, year, price, mileage, length, slides,
                 manufacturer_id, type_id, converter_id, chassis_type_id,
-                featured_image, is_featured, seller_id, location, created_at, updated_at
+                featured_image, is_featured, seller_id, created_at, updated_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
             RETURNING id
             """,
             (
                 listing.get("title", "Luxury RV Listing"),
                 listing.get("description", ""),
                 listing.get("year"),
-                price,
+                listing.get("price"),
                 listing.get("mileage"),
                 listing.get("length"),
                 listing.get("slides"),
@@ -215,45 +197,33 @@ def import_listing_to_database(listing, conn, type_id, seller_id=1):
                 type_id,
                 converter_id,
                 chassis_type_id,
-                listing.get("featured_image", listing.get("featuredImage")),
+                listing.get("featured_image"),
                 True,  # Mark all imported listings as featured
-                seller_id,
-                location
+                seller_id
             )
         )
         conn.commit()
         result = cursor.fetchone()
         rv_id = result["id"]
         
-        # Import additional images - handle both formats
-        additional_images = listing.get("additional_images", listing.get("additionalImages", []))
-        
-        for img in additional_images:
-            # Handle both simple string URLs and object format
-            if isinstance(img, dict) and "imageUrl" in img:
-                img_url = img["imageUrl"]
-                is_primary = img.get("isPrimary", False)
-            else:
-                img_url = img
-                is_primary = False
-                
+        # Import additional images
+        for image_url in listing.get("additional_images", []):
             cursor.execute(
                 """
-                INSERT INTO rv_images (rv_id, image_url, is_primary)
-                VALUES (%s, %s, %s)
+                INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
+                VALUES (%s, %s, %s, NOW(), NOW())
                 """,
-                (rv_id, img_url, is_primary)
+                (rv_id, image_url, False)
             )
         
         # Import primary image as the first image
-        featured_image = listing.get("featured_image", listing.get("featuredImage"))
-        if featured_image:
+        if listing.get("featured_image"):
             cursor.execute(
                 """
-                INSERT INTO rv_images (rv_id, image_url, is_primary)
-                VALUES (%s, %s, %s)
+                INSERT INTO rv_images (rv_id, image_url, is_primary, created_at, updated_at)
+                VALUES (%s, %s, %s, NOW(), NOW())
                 """,
-                (rv_id, featured_image, True)
+                (rv_id, listing.get("featured_image"), True)
             )
         
         conn.commit()
