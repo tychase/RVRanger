@@ -278,9 +278,13 @@ def fetch_detailed_listing(listing_url):
     return listing_data
 
 
-def scrape_listings():
+def scrape_listings(limit=1, max_images_per_listing=5):  # Process only 1 listing with 5 images by default
     """
     Scrape RV listings from prevost-stuff.com and return them as a list of dictionaries.
+    
+    Args:
+        limit: Maximum number of listings to process
+        max_images_per_listing: Maximum number of images to download per listing
     """
     print(f"Fetching listings from {LISTINGS_URL}...")
     
@@ -316,6 +320,10 @@ def scrape_listings():
     
     print(f"Found {len(listing_links)} potential listing links")
     
+    # Process only a limited number of listings
+    listing_links = listing_links[:limit]
+    print(f"Processing {len(listing_links)} listings (limited for testing)")
+    
     # Process each listing link
     for idx, link in enumerate(listing_links):
         print(f"Processing listing {idx+1}/{len(listing_links)}: {link}")
@@ -348,7 +356,11 @@ def scrape_listings():
         
         # First, find the main image
         if 'images' in detailed_data and detailed_data['images']:
-            for img_url in detailed_data['images']:
+            # Limit the number of images to process
+            limited_images = detailed_data['images'][:max_images_per_listing]
+            print(f"Processing {len(limited_images)} of {len(detailed_data['images'])} available images")
+            
+            for img_url in limited_images:
                 local_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_{len(additional_images)}")
                 if local_path:
                     if not main_image_path:
