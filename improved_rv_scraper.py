@@ -15,7 +15,7 @@ from urllib.parse import urljoin
 import uuid
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 # Base URL for the website
 BASE_URL = "https://www.prevost-stuff.com"
@@ -285,11 +285,17 @@ def fetch_detailed_listing(listing_url):
     return listing_data
 
 
-def scrape_listings():
+def scrape_listings(max_listings=5):
     """
     Scrape RV listings from prevost-stuff.com and return them as a list of dictionaries.
+    
+    Args:
+        max_listings: Maximum number of listings to process (default: 5)
+    
+    Returns:
+        List of listing dictionaries
     """
-    print(f"Fetching listings from {LISTINGS_URL}...")
+    print(f"Fetching listings from {LISTINGS_URL} (max: {max_listings} listings)...")
     
     # Setup headers to mimic a browser request
     headers = {
@@ -323,6 +329,10 @@ def scrape_listings():
     
     print(f"Found {len(listing_links)} potential listing links")
     
+    # Limit the number of listings to process
+    listing_links = listing_links[:max_listings]
+    print(f"Processing {len(listing_links)} listings (limited by max_listings={max_listings})")
+    
     # Process each listing link
     for idx, link in enumerate(listing_links):
         print(f"Processing listing {idx+1}/{len(listing_links)}: {link}")
@@ -355,7 +365,8 @@ def scrape_listings():
         
         # First, find the main image
         if 'images' in detailed_data and detailed_data['images']:
-            for img_url in detailed_data['images']:
+            # Limit to max 3 images per listing to save time
+            for img_url in detailed_data['images'][:3]:
                 local_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_{len(additional_images)}")
                 if local_path:
                     if not main_image_path:
@@ -372,9 +383,11 @@ def scrape_listings():
             link_element = soup.find('a', href=re.compile(os.path.basename(link)))
             if link_element:
                 img_element = link_element.find('img')
-                if img_element and img_element.has_attr('src'):
-                    img_url = urljoin(BASE_URL, img_element['src'])
-                    main_image_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_main")
+                if img_element and hasattr(img_element, 'get') and img_element.get('src'):
+                    img_src = img_element.get('src')
+                    if img_src:
+                        img_url = urljoin(BASE_URL, str(img_src))
+                        main_image_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_main")
         
         # If we still don't have a main image, try a fallback
         if not main_image_path:
