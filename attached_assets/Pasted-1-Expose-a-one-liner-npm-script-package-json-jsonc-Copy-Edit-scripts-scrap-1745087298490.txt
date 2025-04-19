@@ -1,0 +1,91 @@
+1 — Expose a one‑liner npm script
+package.json
+
+jsonc
+Copy
+Edit
+{
+  "scripts": {
+    // …
+    "scrape": "ts-node --esm server/scraper/detailScraper.ts",
+    "migrate": "drizzle-kit up"          // if you want migrations to run first
+  }
+}
+ If you transpile to plain JS in dist/, swap the command to
+ node dist/server/scraper/detailScraper.js.
+
+2 — Add the workflow file
+Create .github/workflows/scrape.yml
+
+yaml
+Copy
+Edit
+name: Daily Coach Scrape
+
+on:
+  schedule:
+    # ┌─ min (0)   ─┐  ┌ hour (UTC) (5) ─┐  ┌ day‑of‑month ─┐  ┌ month ─┐  ┌ day‑of‑week ─┐
+    - cron:  '0       5                    *                  *           *'
+  workflow_dispatch:   # <‑‑ lets you run it on‑demand from the Actions tab
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}      # add this in repo settings
+      # (optional) if you need pgsslmode or other vars, include them here
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run DB migrations   # safe even if there are none
+        run: npm run migrate
+
+      - name: Run daily scrape
+        run: npm run scrape
+Cron timing
+0 5 * * * runs at 05:00 UTC every day.
+Change the hour to suit your traffic (e.g., 2 = 02:00 UTC).
+
+3 — Add the DB connection secret
+Go to Repo ▸ Settings ▸ Secrets → Actions
+
+Click “New repository secret”
+
+Name: DATABASE_URL
+
+Value:
+postgresql://user:password@hostname:5432/database?sslmode=require
+(same string you use in Replit)
+
+If you connect via separate vars (PGHOST, PGUSER, PGPASSWORD), add those as separate secrets and reference them in the env: block.
+
+4 — Commit & push
+bash
+Copy
+Edit
+git add .github/workflows/scrape.yml package.json
+git commit -m "CI: daily detail-scraper workflow"
+git push
+You’ll now see “Daily Coach Scrape” in the Actions tab.
+Click it ▸ Run workflow once to verify; the log should show:
+
+vbnet
+Copy
+Edit
+✓ 2009 Liberty Elegant Lady H3‑45 Double Slide
+✓ 2020 Marathon X3‑45 Double Slide
+…
+scrape: 2m 31s
+…and Postgres will have freshly updated rows.
