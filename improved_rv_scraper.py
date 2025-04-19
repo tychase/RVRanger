@@ -604,11 +604,15 @@ def scrape_listings(max_listings=5):
             "fuelType": "Diesel",  # All Prevost RVs are diesel
             "isFeatured": True,  # Make all detailed listings featured
             "sellerId": 1,  # Default seller ID, to be replaced later if needed
-            "additionalImages": additional_images
+            "additionalImages": additional_images.copy()  # Make a deep copy to avoid reference issues
         }
+        
+        print(f"DEBUG PRE-FILTER: Listing has {len(listing['additionalImages'])} additionalImages")
         
         # Filter out None values
         listing = {k: v for k, v in listing.items() if v is not None}
+        
+        print(f"DEBUG POST-FILTER: Listing has {len(listing['additionalImages'])} additionalImages")
         
         # Add to our listings array
         listings.append(listing)
@@ -622,6 +626,11 @@ def scrape_listings(max_listings=5):
 
 def save_listings_to_json(listings, output_file='improved_prevost_listings.json'):
     """Save the listings to a JSON file."""
+    # Debug info about images
+    for i, listing in enumerate(listings):
+        img_count = len(listing.get('additionalImages', []))
+        print(f"DEBUG SAVE: Listing {i+1} has {img_count} additional images") 
+        
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(listings, f, indent=2)
     print(f"Saved {len(listings)} listings to {output_file}")
@@ -629,7 +638,8 @@ def save_listings_to_json(listings, output_file='improved_prevost_listings.json'
 
 def main():
     """Main function."""
-    listings = scrape_listings()
+    # Use a smaller max_listings value for debugging
+    listings = scrape_listings(max_listings=1)
     
     if listings:
         save_listings_to_json(listings)

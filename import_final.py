@@ -152,7 +152,9 @@ def import_listings_to_database(listings):
                 # Insert additional images
                 if additional_images:
                     # now insert all images scraped
-                    for img in additional_images:
+                    print(f"DEBUG: Found {len(additional_images)} images to insert")
+                    for index, img in enumerate(additional_images):
+                        print(f"DEBUG: Inserting image {index+1}: {img['imageUrl']}")
                         cur.execute(
                             """
                             INSERT INTO rv_images (rv_id, image_url, is_primary)
@@ -160,6 +162,9 @@ def import_listings_to_database(listings):
                             """,
                             (rv_id, img['imageUrl'], img.get('isPrimary', False))
                         )
+                        print(f"DEBUG: Successfully inserted image {index+1}")
+                else:
+                    print("DEBUG: No additional images found to insert")
                 
                 success_count += 1
                 print(f"Imported listing: {listing['title']}")
