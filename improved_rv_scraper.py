@@ -431,16 +431,20 @@ def scrape_listings(max_listings=5):
         # First, find the main image
         if 'images' in detailed_data and detailed_data['images']:
             # Now using max 5 images per listing as requested
-            for img_url in detailed_data['images'][:5]:
-                local_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_{len(additional_images)}")
+            image_count = 0
+            for img_url in detailed_data['images'][:5]:  # Limit to 5 images
+                local_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_{image_count}")
                 if local_path:
                     if not main_image_path:
+                        # First image becomes the featured image
                         main_image_path = local_path
                     else:
+                        # All other images become additional images
                         additional_images.append({
                             "imageUrl": local_path,
                             "isPrimary": False
                         })
+                    image_count += 1
         
         # If no images found, try to get the preview image from the coach listing
         if not main_image_path:
