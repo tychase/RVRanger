@@ -1,0 +1,83 @@
+Why you’re seeing the fallback SVG coach
+* featured_image is being saved, but the URL is wrong – the card points to something like
+https://www.prevost‑stuff.com/forsale/2009PrevostLibertyH_TMS2523041825-04.jpg
+(The real file lives at the site‑root, not under /forsale/.)
+Because that 404s, your React component drops down to the default placeholder bus.
+
+The bad URL comes from this block in server/scraper/detailScraper.ts:
+
+ts
+Copy
+Edit
+.map((src) =>
+  src.startsWith("http")      ? src
+  : src.startsWith("/")       ? `${BASE}${src}`
+  : /* <-- this branch is wrong for most listings */
+    `${BASE}/forsale/${src}`
+)
+Most listing pages use relative file names like
+2009PrevostLibertyH_TMS2523041825-04.jpg (no slash, no /photos/ folder).
+Our fallback branch prepends /forsale/, which breaks the link.
+
+1 — Patch the URL normaliser
+Open server/scraper/detailScraper.ts, find the photo map block, and replace it with:
+
+ts
+Copy
+Edit
+const toAbsolute = (src: string) => {
+  if (src.startsWith("http")) return src;
+  if (src.startsWith("/"))    return `${BASE}${src}`;
+  // relative to site‑root
+  return `${BASE}/${src}`;
+};
+
+const photos = filteredImages
+  .map(toAbsolute)
+  .filter((v, i, a) => a.indexOf(v) === i)  // dedupe
+  .slice(0, MAX_PHOTOS);
+(That final path gives you https://www.prevost-stuff.com/2009PrevostLibertyH_TMS2523041825-04.jpg, which exists.)
+
+2 — Optional: keep the simpler image filter
+Your current regex tries to guess the filename pattern; but the site uses mixed cases. The safest filter is just “JPG + comes from the same domain”:
+
+ts
+Copy
+Edit
+const allImages = $("img[src]").map((_, el) => $(el).attr("src")!).get();
+
+const filteredImages = allImages.filter((src) =>
+  /\.jpe?g$/i.test(src) && !/logo|banner/i.test(src)
+);
+3 — Reset & re‑scrape a few coaches
+bash
+Copy
+Edit
+# delete only listings that have the bad /forsale/ prefix so you can re‑test fast
+psql $DATABASE_URL -c "
+DELETE FROM rv_images  WHERE image_url LIKE '%/forsale/%';
+DELETE FROM rv_listings WHERE featured_image LIKE '%/forsale/%';
+"
+
+curl -X POST http://localhost:5000/api/scrape
+Then check:
+
+bash
+Copy
+Edit
+psql $DATABASE_URL -c "
+SELECT title, featured_image FROM rv_listings
+ORDER BY created_at DESC LIMIT 5;"
+You should now see clean URLs directly off https://www.prevost-stuff.com/….
+
+4 — Reload the site
+Refresh your browser (hard‑reload) – the cards should show real coach photos instead of the blue bus placeholder.
+
+TL;DR
+Fix the URL mapping branch so relative filenames get https:// … /<file>.jpg
+
+(Optional) simplify the photo filter to “any JPG that isn’t a logo”
+
+Re‑scrape → featured images load correctly, no more placeholders.
+
+Give that a try and let me know if any listing still shows the fallback image – we’ll tighten the filter further if needed!

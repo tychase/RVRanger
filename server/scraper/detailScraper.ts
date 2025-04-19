@@ -116,22 +116,22 @@ export default async function scrapeDetailPages() {
           const allImages = $("img[src]").map((_: number, el: any) => $(el).attr("src")!).get();
           console.log(`Found ${allImages.length} images on the page:`, allImages);
           
-          // Updated filter to match image file patterns typical in the listings
-          const filteredImages = allImages.filter((src: string) => 
-            /\d{4}prevost.*\.jpe?g$/i.test(src) || // Match year pattern like 2009prevost...
-            /prevost.*\d{4}.*\.jpe?g$/i.test(src) || // Match prevost...2009...
-            /.*coach.*\.jpe?g$/i.test(src) // Match any coach images
+          // Simpler image filter - include any JPG that isn't a logo or banner
+          const filteredImages = allImages.filter((src: string) =>
+            /\.jpe?g$/i.test(src) && !/logo|banner/i.test(src)
           );
           console.log(`Filtered to ${filteredImages.length} matching images:`, filteredImages);
           
+          // Convert relative paths to absolute URLs correctly
+          const toAbsolute = (src: string) => {
+            if (src.startsWith("http")) return src;
+            if (src.startsWith("/")) return `${BASE}${src}`;
+            // relative to site-root, not /forsale/ subdirectory
+            return `${BASE}/${src}`;
+          };
+          
           const photos = filteredImages
-            .map((src: string) =>
-              src.startsWith("http")
-                ? src
-                : src.startsWith("/")
-                ? `${BASE}${src}`
-                : `${BASE}/forsale/${src}`
-            )
+            .map(toAbsolute)
             .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i) // dedupe
             .slice(0, MAX_PHOTOS);
 
