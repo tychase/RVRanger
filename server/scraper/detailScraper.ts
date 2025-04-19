@@ -32,6 +32,7 @@ const limit = pLimit(8);   // Limit concurrent requests to be polite to the serv
 
 export default async function scrapeDetailPages() {
   console.time("scrape");
+  console.log("Starting detail page scraper...");
   const { data: indexHtml } = await axios.get(INDEX_URL, { timeout: 20000 });
   const $index = cheerio.load(indexHtml);
 
