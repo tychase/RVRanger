@@ -86,6 +86,7 @@ export const rvListings = pgTable("rv_listings", {
   featuredImage: text("featured_image").notNull(),
   isFeatured: boolean("is_featured").default(false),
   sellerId: integer("seller_id").notNull(),
+  sourceId: text("source_id").unique(), // Unique ID from the source website
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
