@@ -86,10 +86,22 @@ def extract_model(url_or_text):
         return None
     
     # Common Prevost models to look for
-    models = ['H3-45', 'X3-45', 'X3', 'H3', 'XLII', 'XL II', 'Le Mirage']
+    models = [
+        'H3-45', 'X3-45', 'XLII', 'XL II', 'XL-II', 
+        'H3', 'X3', 'H345', 'X345', 
+        'Le Mirage', 'LeMirage', 
+        'Elegant Lady'
+    ]
     
+    # First try exact matches with word boundaries
     for model in models:
-        if model.replace('-', '') in url_or_text.replace('-', ''):
+        if re.search(r'\b' + re.escape(model) + r'\b', url_or_text, re.IGNORECASE):
+            return model
+    
+    # Then try more flexible matches
+    for model in models:
+        # Replace dashes and spaces for more flexible matching
+        if model.replace('-', '').replace(' ', '') in url_or_text.replace('-', '').replace(' ', ''):
             return model
     
     return None
@@ -103,9 +115,17 @@ def extract_converter(url_or_text):
     # Common converters/manufacturers
     converters = [
         'Marathon', 'Liberty', 'Featherlite', 'Millennium', 'Emerald', 
-        'Vogue', 'Newell', 'Prevost', 'Epic', 'Nashville', 'Country Coach'
+        'Vogue', 'Newell', 'Prevost', 'Epic', 'Nashville', 'Country Coach',
+        'Parliament', 'Executive', 'Angola', 'American Heritage', 
+        'Foretravel', 'Newmar', 'Entegra', 'Tiffin', 'Monaco'
     ]
     
+    # First try exact matches with word boundaries
+    for converter in converters:
+        if re.search(r'\b' + re.escape(converter) + r'\b', url_or_text, re.IGNORECASE):
+            return converter
+    
+    # Then try more flexible matches
     for converter in converters:
         if converter.lower() in url_or_text.lower():
             return converter
@@ -346,6 +366,7 @@ def scrape_listings(max_listings=5):
         
         # Extract what we can from the URL
         title_part = url_parts[0]
+        url_filename = os.path.basename(link)
         year_match = re.search(r'^(\d{4})Prevost', title_part)
         
         if not year_match:
@@ -355,6 +376,23 @@ def scrape_listings(max_listings=5):
         year = int(year_match.group(1))
         converter = extract_converter(title_part)
         model = extract_model(title_part)
+        
+        # Look for chassis in the URL itself
+        # The 'H' or 'X' in the URL often indicates the chassis model
+        if not model:
+            chassis_match = re.search(r'Prevost([HX][^_]*)', url_filename)
+            if chassis_match:
+                chassis_code = chassis_match.group(1)
+                # Check if it's one of the common chassis designations
+                if chassis_code == 'H':
+                    model = 'H3-45'
+                elif chassis_code == 'X':
+                    model = 'X3-45'
+                elif chassis_code == 'XLII' or chassis_code == 'XL':
+                    model = 'XLII'
+                else:
+                    # Use whatever was matched
+                    model = chassis_code
         
         # Fetch detailed information from the listing page
         detailed_data = fetch_detailed_listing(link)
@@ -406,6 +444,39 @@ def scrape_listings(max_listings=5):
         else:
             # Construct from parts
             clean_title = f"{year} {converter or ''} {model or ''}".strip()
+        
+        # Extract additional details from the description
+        description = detailed_data.get('description', '')
+        
+        # Check for chassis model in description if not already in title
+        if model and model not in clean_title:
+            # Add chassis model to the title
+            clean_title = f"{clean_title} {model}".strip()
+        elif not model and description:
+            # Try to find chassis model in description
+            for chassis in ['H3-45', 'X3-45', 'XLII', 'H3', 'X3']:
+                # Look for the chassis model with word boundaries to avoid partial matches
+                if re.search(r'\b' + re.escape(chassis) + r'\b', description, re.IGNORECASE):
+                    clean_title = f"{clean_title} {chassis}".strip()
+                    break
+        
+        # Check for slides information
+        slides_count = None
+        slides_match = re.search(r'\b(\d+)[- ]slide', description, re.IGNORECASE)
+        if slides_match:
+            slides_count = slides_match.group(1)
+            # Only add if not already in title
+            if 'slide' not in clean_title.lower():
+                if slides_count == "1":
+                    clean_title = f"{clean_title} Single Slide"
+                elif slides_count == "2":
+                    clean_title = f"{clean_title} Double Slide"
+                elif slides_count == "3":
+                    clean_title = f"{clean_title} Triple Slide"
+                elif slides_count == "4":
+                    clean_title = f"{clean_title} Quad Slide"
+                else:
+                    clean_title = f"{clean_title} {slides_count}-Slide"
         
         # Ensure year stays at the front if available
         if year:
