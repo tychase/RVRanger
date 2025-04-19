@@ -85,23 +85,33 @@ def extract_model(url_or_text):
     if not url_or_text:
         return None
     
-    # Common Prevost models to look for
-    models = [
+    # Common Prevost chassis models
+    chassis_models = [
         'H3-45', 'X3-45', 'XLII', 'XL II', 'XL-II', 
         'H3', 'X3', 'H345', 'X345', 
-        'Le Mirage', 'LeMirage', 
-        'Elegant Lady'
+        'Le Mirage', 'LeMirage'
     ]
     
-    # First try exact matches with word boundaries
-    for model in models:
+    # Common converter models
+    converter_models = [
+        'Elegant Lady', 'Executive', 'Imperial', 'Marquis', 
+        'Classic', 'Signature', 'Legacy', 'Royale'
+    ]
+    
+    # First try exact chassis model matches with word boundaries
+    for model in chassis_models:
         if re.search(r'\b' + re.escape(model) + r'\b', url_or_text, re.IGNORECASE):
             return model
     
-    # Then try more flexible matches
-    for model in models:
+    # Then try more flexible matches for chassis models
+    for model in chassis_models:
         # Replace dashes and spaces for more flexible matching
         if model.replace('-', '').replace(' ', '') in url_or_text.replace('-', '').replace(' ', ''):
+            return model
+            
+    # Try to find converter models (secondary)
+    for model in converter_models:
+        if re.search(r'\b' + re.escape(model) + r'\b', url_or_text, re.IGNORECASE):
             return model
     
     return None
@@ -252,11 +262,28 @@ def fetch_detailed_listing(listing_url):
     listing_data = {}
     images = []
     
-    # Extract the full title from the page (usually in a heading element)
+    # Extract the full title from the page
     full_title = ""
+    
+    # First try to find in headings (which might be present on some pages)
     headline_tag = soup.find("h2") or soup.find("h1")
-    if headline_tag:
+    if headline_tag and headline_tag.get_text(strip=True):
         full_title = headline_tag.get_text(strip=True)
+    
+    # If not found, look for the typical div/p pattern
+    if not full_title or "Prevost" not in full_title:
+        # Look for divs or paragraphs containing a pattern like "2xxx Prevost [Converter] [Model]"
+        title_pattern = re.compile(r"\d{4}\s+Prevost\s+\w+")
+        
+        for tag in soup.find_all(['div', 'p']):
+            text = tag.get_text(strip=True)
+            if title_pattern.search(text) and len(text) > 15 and len(text) < 100:
+                # This looks like a title - it contains year, Prevost, and converter name
+                full_title = text
+                break
+    
+    # Save the title if found
+    if full_title:
         listing_data['full_title'] = full_title
     
     # Look for all images on the page
@@ -448,35 +475,62 @@ def scrape_listings(max_listings=5):
         # Extract additional details from the description
         description = detailed_data.get('description', '')
         
+        # Look for model names like "Elegant Lady" that should appear in the title
+        # Separate from chassis models like H3-45
+        elegant_lady_match = re.search(r'\bElegant\s+Lady\b', full_title + ' ' + description, re.IGNORECASE)
+        if elegant_lady_match and 'Elegant Lady' not in clean_title:
+            # Add "Elegant Lady" model name after the converter name
+            # For example: "2009 Liberty" -> "2009 Liberty Elegant Lady"
+            parts = clean_title.split()
+            if len(parts) > 1:  # Make sure we have at least year and converter
+                converter_index = 1  # Position after year
+                clean_title = " ".join(parts[:converter_index+1] + ["Elegant Lady"] + parts[converter_index+1:])
+            else:
+                clean_title = f"{clean_title} Elegant Lady"
+        
         # Check for chassis model in description if not already in title
-        if model and model not in clean_title:
-            # Add chassis model to the title
-            clean_title = f"{clean_title} {model}".strip()
-        elif not model and description:
+        chassis_model = None
+        
+        # First check if we already have a model from URL extraction
+        if model:
+            chassis_model = model
+        else:
             # Try to find chassis model in description
             for chassis in ['H3-45', 'X3-45', 'XLII', 'H3', 'X3']:
                 # Look for the chassis model with word boundaries to avoid partial matches
                 if re.search(r'\b' + re.escape(chassis) + r'\b', description, re.IGNORECASE):
-                    clean_title = f"{clean_title} {chassis}".strip()
+                    chassis_model = chassis
                     break
+        
+        # Only add the chassis model if it's not already in the title
+        if chassis_model and chassis_model not in clean_title:
+            # Add chassis model to the title
+            clean_title = f"{clean_title} {chassis_model}".strip()
         
         # Check for slides information
         slides_count = None
-        slides_match = re.search(r'\b(\d+)[- ]slide', description, re.IGNORECASE)
-        if slides_match:
-            slides_count = slides_match.group(1)
-            # Only add if not already in title
-            if 'slide' not in clean_title.lower():
-                if slides_count == "1":
-                    clean_title = f"{clean_title} Single Slide"
-                elif slides_count == "2":
-                    clean_title = f"{clean_title} Double Slide"
-                elif slides_count == "3":
-                    clean_title = f"{clean_title} Triple Slide"
-                elif slides_count == "4":
-                    clean_title = f"{clean_title} Quad Slide"
-                else:
-                    clean_title = f"{clean_title} {slides_count}-Slide"
+        
+        # First look for "Double Slide" in the full title (more accurate)
+        double_slide_match = re.search(r'\bDouble\s+Slide\b', full_title, re.IGNORECASE) 
+        if double_slide_match and 'slide' not in clean_title.lower():
+            clean_title = f"{clean_title} Double Slide"
+        else:
+            # Try to find numeric slide count in description
+            slides_match = re.search(r'\b(\d+)[- ]slide', description + ' ' + full_title, re.IGNORECASE)
+            if slides_match:
+                slides_count = slides_match.group(1)
+                # Only add if not already in title
+                if 'slide' not in clean_title.lower():
+                    if slides_count == "1":
+                        clean_title = f"{clean_title} Single Slide"
+                    elif slides_count == "2":
+                        clean_title = f"{clean_title} Double Slide"
+                    elif slides_count == "3":
+                        clean_title = f"{clean_title} Triple Slide"
+                    elif slides_count == "4":
+                        clean_title = f"{clean_title} Quad Slide"
+                    else:
+                        clean_title = f"{clean_title} {slides_count}-Slide"
         
         # Ensure year stays at the front if available
         if year:
