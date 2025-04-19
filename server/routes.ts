@@ -118,6 +118,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const types = await storage.getAllRvTypes();
     res.json(types);
   });
+  
+  // Detail Scraper endpoint
+  app.post("/api/scrape", async (req, res) => {
+    try {
+      console.log('[POST /api/scrape] Running detail page scraper...');
+      await scrapeDetailPages();
+      console.log('[POST /api/scrape] Scraper completed successfully');
+      res.json({ ok: true, message: "Scraper completed successfully" });
+    } catch (error) {
+      console.error('[POST /api/scrape] Error:', error);
+      res.status(500).json({ 
+        ok: false, 
+        message: "Scraper failed to complete", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
 
   app.get("/api/types/:id", async (req, res) => {
     const id = parseInt(req.params.id);

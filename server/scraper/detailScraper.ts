@@ -30,6 +30,8 @@ export default async function scrapeDetailPages() {
         !/hauler|stacker|trailer/i.test(href) &&
         !href.includes("public_list_ads.php")
     );
+    
+  console.log(`Found ${links.length} links to process:`, links);
 
   await Promise.all(
     links.map((href: string) =>
@@ -97,10 +99,18 @@ export default async function scrapeDetailPages() {
           });
 
           // ----- Photos -----
-          const photos = $("img[src]")
-            .map((_: number, el: any) => $(el).attr("src")!)
-            .get()
-            .filter((src: string) => /\/(photos|Photos)\//.test(src) && /\.jpe?g$/i.test(src))
+          const allImages = $("img[src]").map((_: number, el: any) => $(el).attr("src")!).get();
+          console.log(`Found ${allImages.length} images on the page:`, allImages);
+          
+          // Updated filter to match image file patterns typical in the listings
+          const filteredImages = allImages.filter((src: string) => 
+            /\d{4}prevost.*\.jpe?g$/i.test(src) || // Match year pattern like 2009prevost...
+            /prevost.*\d{4}.*\.jpe?g$/i.test(src) || // Match prevost...2009...
+            /.*coach.*\.jpe?g$/i.test(src) // Match any coach images
+          );
+          console.log(`Filtered to ${filteredImages.length} matching images:`, filteredImages);
+          
+          const photos = filteredImages
             .map((src: string) =>
               src.startsWith("http")
                 ? src
@@ -111,7 +121,11 @@ export default async function scrapeDetailPages() {
             .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i) // dedupe
             .slice(0, MAX_PHOTOS);
 
-          if (!photos.length) return; // skip if no real images
+          console.log(`Final photo set (${photos.length}):`, photos);
+          if (!photos.length) {
+            console.log("Skipping listing due to no photos");
+            return; // skip if no real images
+          }
 
           // ----- DB upsert (transaction) -----
           await db.transaction(async (tx) => {
