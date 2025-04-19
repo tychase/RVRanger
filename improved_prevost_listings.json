@@ -1,32 +1,73 @@
 [
   {
     "title": "2009 Liberty Elegant Lady H3-45 Double Slide",
-    "description": "Luxury 2009 Prevost coach.",
+    "converter": "Liberty",
+    "model": "Liberty",
     "year": 2009,
+    "location": "Unknown",
+    "description": "Luxury 2009 Prevost coach.",
+    "additionalImages": [],
     "manufacturerId": 1,
     "typeId": 1,
-    "location": "Unknown",
-    "featuredImage": "/images/rv_listings/rv_2009_Liberty_0_193a5520a21b465f862e0aa1562eca94.jpg",
     "fuelType": "Diesel",
     "isFeatured": true,
-    "sellerId": 1,
-    "additionalImages": [
-      {
-        "imageUrl": "/images/rv_listings/rv_2009_Liberty_1_3abb777b74a94482855d8b1437752381.jpg",
-        "isPrimary": false
-      },
-      {
-        "imageUrl": "/images/rv_listings/rv_2009_Liberty_2_332058fe6b8d44158e75ed9a041a4a14.jpg",
-        "isPrimary": false
-      },
-      {
-        "imageUrl": "/images/rv_listings/rv_2009_Liberty_3_429afc4b41724e41b88c247808e3bc81.jpg",
-        "isPrimary": false
-      },
-      {
-        "imageUrl": "/images/rv_listings/rv_2009_Liberty_4_af2e3a101a7142bc9f8df0539d1053ce.jpg",
-        "isPrimary": false
-      }
-    ]
+    "sellerId": 1
+  },
+  {
+    "title": "1996 Marathon XLNon Slide",
+    "converter": "Marathon",
+    "model": "Marathon",
+    "year": 1996,
+    "location": "Unknown",
+    "description": "Detroit Series 60Independent Front SuspensionHoward Power Steering2023 Lifeline Agm House Batteries2023 Chassis BatteriesMarathon 20kw GenWebasto HeaterMarine Water Heaters2018 Tires On Tag And Steer 2019 DrivesSamsung Tv And Sound Bar In Salon(2) Jack Knife SofasWood Lvt Floor In Salon And Stateroom. Tile In Galley And HallSharp Micro/Convection2 Burner CooktopDishwasherKenmore Side By Side FrigePrivate Toilet RoomLarge ShowerSplendide Washer/DryerRoku Tv In StateroomNorth South Queen BedWheels Off Inspection Done 2024Services Done 2500 Miles Ago We Do Our Best to Provide Accurate Specifications in Our Listings. Please Inquire to Confirm All Listed Specifications. ",
+    "additionalImages": [],
+    "manufacturerId": 1,
+    "typeId": 1,
+    "fuelType": "Diesel",
+    "isFeatured": true,
+    "sellerId": 1
+  },
+  {
+    "title": "2015 Marathon H3-45 Quad Slide",
+    "converter": "Marathon",
+    "model": "Marathon",
+    "year": 2015,
+    "location": "Unknown",
+    "description": "VIN:\u00c2\u00a0 2PCV33494EC712552 Stunning 2015 Prevost Marathon H3-45 - Quad Slide Just In! This Immaculate Bus Underwent $150,000 In Documented Renovations And Upgrades At Marathon In 2024 Including Updated Exterior Body Panels - Interior Upholstery And So Much More Coaches  Shown By Appointment Only LEGACY COACH represents only the finest luxury coaches and invites you to view our current inventory at our Dallas area indoor showroom. For a full photo tour and specifications of this coach as well as others, visit us online at\u00c2www.legacycoach.com. All trades welcome. Shown by appointment. Please call to schedule your personal showing. For Additional Information Please Contact : James Thompson \n          at 214-893-8471 or For Additional Information Please Contact : James Thompson \n            at 214-893-8471 or ",
+    "additionalImages": [],
+    "manufacturerId": 1,
+    "typeId": 1,
+    "fuelType": "Diesel",
+    "isFeatured": true,
+    "sellerId": 1
+  },
+  {
+    "title": "2006 Royale XLII Double Slide",
+    "converter": "Prevost",
+    "model": "Royale",
+    "year": 2006,
+    "location": "Unknown",
+    "description": "VIN:\u00c2\u00a0 2PCW3349151028610 2006 Prevost Royale XLII Double Slide Just Arrived On Consignment From A Former Customer Of Ours. A Royale Of This Vintage Represents Simplicity And Solid\u00a0Functionality In A Budget-Friendly Package. We Find That Higher-Mileage Coaches Owned By Equipment Operators Are Generally Well-Maintained On The Chassis Side And Run Well. That Is Exactly The Case With This Coach, Coming From Trucking Company Owners. Full Engine Service In 2024 With The Overhead Run (Valves Adjusted) And New Turbo Installed. This Bus Is A Solid Runner With Normal Wear And Tear. A Partial List Of Upgraded Or Installed Items Includes:House Batteries April 2023Brand New Wilderness MattressSalon Slide Seal New Dec 2024New Directtv Satellite June 2024Inline Automatic Water Shut-Off Valve And New House Water Pump March 2024New Steer Tires Dec 2023New Inverter October 2023New Fan Clutch May 2023Engine Serviced, Overhead Run, New Turbo And Waterlines, New Air To Air Chamber And Boots May 2024New Headhunter Water PumpAll New Slide Master Slide-Out TraysAll New Magna Shades For Front WindowPrewired Antenna For CradlepointInstalled Under Glow LightingAnd So Much More! Coaches  Shown By Appointment Only LEGACY COACH represents only the finest luxury coaches and invites you to view our current inventory at our Dallas area indoor showroom. For a full photo tour and specifications of this coach as well as others, visit us online at\u00c2www.legacycoach.com. All trades welcome. Shown by appointment. Please call to schedule your personal showing. For Additional Information Please Contact : James Thompson \n          at 214-893-8471 or For Additional Information Please Contact : James Thompson \n            at 214-893-8471 or ",
+    "additionalImages": [],
+    "manufacturerId": 1,
+    "typeId": 1,
+    "fuelType": "Diesel",
+    "isFeatured": true,
+    "sellerId": 1
+  },
+  {
+    "title": "2006 Liberty Elegant Lady H3-45 Double Slide # M 7218A",
+    "converter": "Liberty",
+    "model": "Liberty",
+    "year": 2006,
+    "location": "Unknown",
+    "price": 499000,
+    "description": "Complete Liberty Coach PDI And Services Last YearLED Cargo LightingLED Ceiling LightsLED Undercarriage LightingRefrigerator UpdatedNew Prana Sleep MattressUpdated TV'sDish Network Satellite (New)Tires/Batteries Replaced Last Year ",
+    "additionalImages": [],
+    "manufacturerId": 1,
+    "typeId": 1,
+    "fuelType": "Diesel",
+    "isFeatured": true,
+    "sellerId": 1
   }
 ]

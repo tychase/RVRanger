@@ -610,17 +610,25 @@ def scrape_listings(max_listings=5):
         # Merge all the information
         listing = {
             "title": clean_title,
-            "description": detailed_data.get('description', f"Luxury {year} Prevost coach."),
-            "price": detailed_data.get('price'),
+            # core detail fields for your UI
+            "seller": detailed_data.get('seller'),
+            "converter": detailed_data.get('converter') or converter,
+            "model": detailed_data.get('model') or model,
+            "slides": detailed_data.get('slides'),
             "year": year,
+            "location": detailed_data.get('location', "Unknown"),
+            "price": detailed_data.get('price'),
+            # if you still want description & metadata you can keep it here:
+            "description": detailed_data.get('description', f"Luxury {year} Prevost coach."),
+            # images
+            "featuredImage": main_image_path,
+            "additionalImages": additional_images.copy(),
+            # any extra internal IDs you need
             "manufacturerId": PREVOST_MANUFACTURER_ID,
             "typeId": CLASS_A_TYPE_ID,
-            "location": "Unknown",
-            "featuredImage": main_image_path,
-            "fuelType": "Diesel",  # All Prevost RVs are diesel
-            "isFeatured": True,  # Make all detailed listings featured
-            "sellerId": 1,  # Default seller ID, to be replaced later if needed
-            "additionalImages": additional_images.copy()  # Make a deep copy to avoid reference issues
+            "fuelType": "Diesel",
+            "isFeatured": True,
+            "sellerId": 1,
         }
         
         print(f"DEBUG PRE-FILTER: Listing has {len(listing['additionalImages'])} additionalImages")
