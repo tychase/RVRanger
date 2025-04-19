@@ -6,7 +6,7 @@
  * 
  * 1. Crawls the main listing page to find links to detail pages
  * 2. Extracts detailed specifications (price, year, mileage, etc.)
- * 3. Processes and stores up to 5 images per listing
+ * 3. Processes and stores up to 20 images per listing
  * 4. Uses sourceId for deduplication and updates
  * 5. Implements concurrency control to avoid overwhelming the target site
  * 
@@ -26,7 +26,7 @@ import { eq, sql } from "drizzle-orm";
 const BASE = "https://www.prevost-stuff.com";
 const INDEX_URL = `${BASE}/forsale/public_list_ads.php`;
 const LUXURY_TYPE_ID = 4;  // Using type ID 4 for luxury coaches
-const MAX_PHOTOS = 5;      // Maximum number of photos to fetch per listing
+const MAX_PHOTOS = 20;     // Maximum number of photos to fetch per listing
 
 const limit = pLimit(8);   // Limit concurrent requests to be polite to the server
 

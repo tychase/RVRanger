@@ -4,8 +4,8 @@ Fix Image Imports
 
 This script:
 1. Connects to our database
-2. Extracts 5 images per listing from our scraper images
-3. Updates the database to store all 5 images instead of just 2 per listing
+2. Extracts up to 20 images per listing from our scraper images
+3. Updates the database to store all available images for each listing
 """
 
 import json
@@ -151,8 +151,8 @@ def main():
                         break
             
             if key in downloaded_images:
-                # Get up to 5 images for this listing
-                image_paths = [img[1] for img in downloaded_images[key][:5]]
+                # Get up to 20 images for this listing
+                image_paths = [img[1] for img in downloaded_images[key][:20]]
                 if image_paths:
                     print(f"Updating listing {listing_id}: {title} with {len(image_paths)} images")
                     update_listing_images(listing_id, image_paths)
