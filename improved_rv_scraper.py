@@ -510,7 +510,13 @@ def scrape_listings(max_listings=5):
         # Check for slides information
         slides_count = None
         
-        # First look for "Double Slide" in the full title (more accurate)
+        # First check if we have slide information without proper spacing in the title
+        # Pattern like "H3-45Double Slide" or "H3-45DoubleSlide" should be fixed to "H3-45 Double Slide"
+        slide_spacing_fix = re.sub(r'(\w+)(Double|Single|Triple|Quad)(\s+)?Slide', r'\1 \2 Slide', clean_title)
+        if slide_spacing_fix != clean_title:
+            clean_title = slide_spacing_fix
+        
+        # Look for "Double Slide" in the full title (more accurate)
         double_slide_match = re.search(r'\bDouble\s+Slide\b', full_title, re.IGNORECASE) 
         if double_slide_match and 'slide' not in clean_title.lower():
             clean_title = f"{clean_title} Double Slide"
@@ -539,6 +545,31 @@ def scrape_listings(max_listings=5):
             clean_title = re.sub(year_pattern, "", clean_title)
             # Add the year at the beginning
             clean_title = f"{year} {clean_title}"
+            
+        # Final cleanup to remove any duplicate information and normalize spacing
+        # 1. Remove duplicate chassis model mentions
+        for chassis in ['H3-45', 'X3-45', 'XLII']:
+            # If the chassis appears twice, remove the second instance
+            chassis_pattern = fr'({chassis})(.+?)\1'
+            clean_title = re.sub(chassis_pattern, r'\1\2', clean_title, flags=re.IGNORECASE)
+            
+        # 2. Fix multiple spaces
+        clean_title = ' '.join(clean_title.split())
+        
+        # 3. Add missing space between text and numbers
+        clean_title = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', clean_title)
+        
+        # 4. Fix the case of chassis models for consistency
+        for chassis in ['H3-45', 'X3-45', 'XLII']:
+            clean_title = re.sub(fr'\b{re.escape(chassis)}\b', chassis, clean_title, flags=re.IGNORECASE)
+            
+        # 5. Fix specific spacing problems
+        # Fix "H 3-45" to "H3-45"
+        clean_title = re.sub(r'H\s+3-45', 'H3-45', clean_title)
+        clean_title = re.sub(r'X\s+3-45', 'X3-45', clean_title)
+        
+        # 6. Fix "XLIINon Slide" to "XLII Non Slide"
+        clean_title = re.sub(r'XLII(\w+)', r'XLII \1', clean_title)
         
         # Final title should be in the format "2009 Liberty Elegant Lady H3-45 Double Slide"
         # Merge all the information
