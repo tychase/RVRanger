@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup, Tag
 # Base URL for the website
 BASE_URL = "https://www.prevost-stuff.com"
 # URL of the page with RV listings
-LISTINGS_URL = f"{BASE_URL}/used_coaches.htm"
+LISTINGS_URL = f"{BASE_URL}/forsale/public_list_ads.php"
 
 # Directory to save downloaded images
 IMAGE_DIR = "public/images/rv_listings"
