@@ -245,6 +245,7 @@ const FixImagePage = () => {
                           objectFit="cover"
                           fallbackSrc="/images/default-coach.svg"
                           className="rounded-md border"
+                          priority={true}
                         />
                         {listing?.featuredImage && !listing.featuredImage.startsWith('/images/') && (
                           <span className="absolute bottom-0 right-0 bg-amber-500 rounded-full p-1">
@@ -302,6 +303,7 @@ const FixImagePage = () => {
                                   objectFit="cover"
                                   fallbackSrc="/images/default-coach.svg"
                                   className="rounded-md border"
+                                  priority={false}
                                 />
                                 {image.imageUrl && !image.imageUrl.startsWith('/images/') && (
                                   <span className="absolute bottom-0 right-0 bg-amber-500 rounded-full p-1">

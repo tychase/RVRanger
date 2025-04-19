@@ -112,6 +112,7 @@ const CoachCard = ({ coach }: CoachCardProps) => {
           objectFit="cover"
           className="w-full h-48 sm:h-56 object-cover transition-all duration-500 group-hover:scale-105"
           fallbackSrc="/images/default-coach.svg"
+          priority={false}
         />
         {coach.isFeatured && (
           <span className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-accent-gold text-white text-xs tracking-wider font-semibold px-2 sm:px-3 py-1 rounded-xl shadow-md">

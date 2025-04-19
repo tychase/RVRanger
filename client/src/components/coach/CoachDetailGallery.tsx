@@ -55,6 +55,7 @@ const CoachDetailGallery = ({ images, title }: CoachDetailGalleryProps) => {
               objectFit="cover"
               className="rounded-lg hover:scale-105 transition-transform duration-300"
               fallbackSrc="/images/default-coach.svg"
+              priority={true}
             />
             <div className="absolute bottom-4 right-4 bg-black/70 text-white text-xs font-medium px-2 py-1 rounded">
               Click to expand
