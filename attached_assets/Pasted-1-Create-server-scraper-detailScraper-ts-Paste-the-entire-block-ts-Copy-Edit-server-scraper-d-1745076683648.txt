@@ -1,0 +1,222 @@
+1 — Create server/scraper/detailScraper.ts
+Paste the entire block:
+
+ts
+Copy
+Edit
+// server/scraper/detailScraper.ts
+import axios from "axios";
+import cheerio from "cheerio";
+import pLimit from "p-limit";
+import { db } from "../db";              // adjust if your DB client path differs
+import {
+  coaches,
+  coachImages,
+  sql,
+} from "@shared/schema";                 // adjust import paths if needed
+import { eq } from "drizzle-orm";
+
+const BASE      = "https://www.prevost-stuff.com";
+const INDEX_URL = `${BASE}/forsale/public_list_ads.php`;
+const LUXURY_TYPE_ID = 4;                // or whatever your luxury id is
+const MAX_PHOTOS = 5;                    // change to 20 later if desired
+
+const limit = pLimit(8);                 // polite concurrency
+
+export default async function scrapeDetailPages() {
+  console.time("scrape");
+  const { data: indexHtml } = await axios.get(INDEX_URL, { timeout: 20000 });
+  const $index = cheerio.load(indexHtml);
+
+  // collect all listing hrefs
+  const links = $index("a[href$='.html']")
+    .map((_, el) => $index(el).attr("href")!)
+    .get()
+    .filter(
+      (href) =>
+        !/hauler|stacker|trailer/i.test(href) &&
+        !href.includes("public_list_ads.php")
+    );
+
+  await Promise.all(
+    links.map((href) =>
+      limit(async () => {
+        const fullUrl = href.startsWith("http")
+          ? href
+          : href.startsWith("/")
+          ? `${BASE}${href}`
+          : `${BASE}/forsale/${href}`;
+
+        const sourceId = fullUrl
+          .split("/")
+          .pop()!
+          .replace(/\.[^.]+$/, "")
+          .toLowerCase();
+
+        // skip if we already have up‑to‑date data
+        const existing = await db.query.coaches.findFirst({
+          where: eq(coaches.sourceId, sourceId),
+        });
+        if (existing) return;
+
+        try {
+          const { data: pageHtml } = await axios.get(fullUrl, {
+            timeout: 15000,
+          });
+          const $ = cheerio.load(pageHtml);
+
+          // ----- Title -----
+          let title =
+            $("h2 b").first().text().trim() ||
+            $("title").text().trim() ||
+            sourceId;
+          title = title.replace(/\bPrevost\b/gi, "").trim();
+
+          // ----- Structured fields -----
+          const txt = $("body").text().replace(/\s+/g, " ");
+          const grab = (re: RegExp) => {
+            const m = txt.match(re);
+            return m ? m[1].trim() : null;
+          };
+
+          const year   = Number(title.match(/\b(19|20)\d{2}\b/)?.[0]);
+          const price  = Number(grab(/\$\s?([\d,]+)/));
+          const seller = grab(/Contact:\s*([^@]+?)\s+at/i);
+          const conv   = grab(/(?:Converter|Interior Design|Conversion)\s*:\s*([A-Za-z ]+)/i);
+          const model  = (title.match(/\b(H3-45|X3-45|XLII|XL|X3)\b/i)?.[1]) || grab(/Model:\s*([A-Z0-9\-]+)/i);
+          const slides = Number(grab(/(\d)\s*Slide/i));
+          const state  = grab(/\b([A-Z]{2})\s*(?:\d{5})?\s*Coach/i);
+
+          // ----- Photos -----
+          const photos = $("img[src]")
+            .map((_, el) => $(el).attr("src")!)
+            .get()
+            .filter((src) => /\/(photos|Photos)\//.test(src) && /\.jpe?g$/i.test(src))
+            .map((src) =>
+              src.startsWith("http")
+                ? src
+                : src.startsWith("/")
+                ? `${BASE}${src}`
+                : `${BASE}/forsale/${src}`
+            )
+            .filter((v, i, a) => a.indexOf(v) === i) // dedupe
+            .slice(0, MAX_PHOTOS);
+
+          if (!photos.length) return; // skip if no real images
+
+          // ----- DB upsert (transaction) -----
+          await db.transaction(async (tx) => {
+            const [coach] = await tx
+              .insert(coaches)
+              .values({
+                sourceId,
+                title,
+                year,
+                converter: conv,
+                model,
+                price,
+                slideCount: slides,
+                location: state,
+                seller,
+                featuredImage: photos[0],
+                typeId: LUXURY_TYPE_ID,
+              })
+              .onConflictDoUpdate({
+                target: coaches.sourceId,
+                set: { price, updatedAt: sql`NOW()` },
+              })
+              .returning();
+
+            await tx.delete(coachImages).where(eq(coachImages.coachId, coach.id));
+            await tx.insert(coachImages).values(
+              photos.map((url, i) => ({
+                coachId: coach.id,
+                imageUrl: url,
+                position: i,
+                isFeatured: i === 0,
+              }))
+            );
+          });
+          console.log("✓", title);
+        } catch (err) {
+          console.warn("✗", fullUrl, (err as Error).message);
+        }
+      })
+    )
+  );
+  console.timeEnd("scrape");
+}
+2 — Install the concurrency library
+Open the Replit shell and run:
+
+bash
+Copy
+Edit
+npm i p-limit
+3 — Expose a route so you can trigger the new scraper
+Open server/routes.ts (or similar) and append:
+
+ts
+Copy
+Edit
+import scrapeDetailPages from "./scraper/detailScraper";
+
+router.post("/api/scrape", async (ctx) => {
+  await scrapeDetailPages();
+  ctx.body = { ok: true };
+});
+(Replace any old /api/scrape handler.)
+
+4 — Add new columns via Drizzle migration
+Open shared/schema.ts:
+
+ts
+Copy
+Edit
+// inside coachListings definition
+seller: text("seller"),
+sourceId: text("source_id").unique(),
+
+…
+
+// inside coachImages definition
+isFeatured: boolean("is_featured").default(false),
+position: integer("position"),
+Then run in the shell:
+
+bash
+Copy
+Edit
+npx drizzle-kit generate
+npx drizzle-kit up
+5 — (Optionally) wipe old rows and test
+bash
+Copy
+Edit
+psql $DATABASE_URL -c "TRUNCATE coach_images, coach_features, coach_listings RESTART IDENTITY;"
+curl -X POST http://localhost:5000/api/scrape
+Run a quick check:
+
+bash
+Copy
+Edit
+psql $DATABASE_URL -c \
+"SELECT title, seller, converter, model, slide_count, location, price
+ FROM coach_listings ORDER BY created_at DESC LIMIT 5;"
+You should see something like:
+
+less
+Copy
+Edit
+2009 Liberty Elegant Lady H3-45 Double Slide | The Motorcoach Store | Liberty | H3-45 | 2 | FL | 599999
+…and each ID has 5 images in coach_images (positions 0‑4).
+
+Once this works locally, commit & push:
+
+bash
+Copy
+Edit
+git add .
+git commit -m "Add detail-page scraper + schema fields"
+git push
+Your RVRanger stack now has accurate titles, sellers, models, states, prices, and real photos—all from the detail pages. Let me know if anything still looks off!
