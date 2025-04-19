@@ -638,8 +638,8 @@ def save_listings_to_json(listings, output_file='improved_prevost_listings.json'
 
 def main():
     """Main function."""
-    # Use a smaller max_listings value for debugging
-    listings = scrape_listings(max_listings=1)
+    # Use the default max_listings value
+    listings = scrape_listings(max_listings=5)
     
     if listings:
         save_listings_to_json(listings)

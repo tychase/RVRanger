@@ -1,0 +1,88 @@
+Fetching listings from https://www.prevost-stuff.com/forsale/public_list_ads.php (max: 5 listings)...
+Found 225 potential listing links
+Processing 5 listings (limited by max_listings=5)
+Processing listing 1/5: https://www.prevost-stuff.com/2009PrevostLibertyH_TMS2523041825.html
+Fetching detailed listing from https://www.prevost-stuff.com/2009PrevostLibertyH_TMS2523041825.html
+DEBUG: Detailed listing found 49 image URLs
+Downloading image from https://www.prevost-stuff.com/2009prevostlibertyh_tms2523041825-04.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2009_Liberty_0_9f5a5fc8cb4f458bac88b860ada0083c.jpg
+Downloading image from https://www.prevost-stuff.com/LOGO The Motorcoach Store _52016.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2009_Liberty_1_bfdfac84051547a0ba2b06ffb5d8a1bf.jpg
+Downloading image from https://www.prevost-stuff.com/2009prevostlibertyh_tms2523041825-01.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2009_Liberty_2_8fc72a1ad6df443fa1488e15f0993ddd.jpg
+Downloading image from https://www.prevost-stuff.com/2009prevostlibertyh_tms2523041825-02.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2009_Liberty_3_53e7d9becf194844ab10bf811fdd4dff.jpg
+Downloading image from https://www.prevost-stuff.com/2009prevostlibertyh_tms2523041825-03.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2009_Liberty_4_4bf7127c807a49f2ace50fb66eb1a4e3.jpg
+DEBUG: Setting featured image to /images/rv_listings/rv_2009_Liberty_0_9f5a5fc8cb4f458bac88b860ada0083c.jpg
+DEBUG: Found 4 additional images
+DEBUG: Additional image 1: /images/rv_listings/rv_2009_Liberty_1_bfdfac84051547a0ba2b06ffb5d8a1bf.jpg
+DEBUG: Additional image 2: /images/rv_listings/rv_2009_Liberty_2_8fc72a1ad6df443fa1488e15f0993ddd.jpg
+DEBUG: Additional image 3: /images/rv_listings/rv_2009_Liberty_3_53e7d9becf194844ab10bf811fdd4dff.jpg
+DEBUG: Additional image 4: /images/rv_listings/rv_2009_Liberty_4_4bf7127c807a49f2ace50fb66eb1a4e3.jpg
+DEBUG: Final additionalImages array has 4 items
+DEBUG PRE-FILTER: Listing has 4 additionalImages
+DEBUG POST-FILTER: Listing has 4 additionalImages
+Processing listing 2/5: https://www.prevost-stuff.com/1996PrevostMarathonXL_Tradewinds041725.html
+Fetching detailed listing from https://www.prevost-stuff.com/1996PrevostMarathonXL_Tradewinds041725.html
+DEBUG: Detailed listing found 55 image URLs
+Downloading image from https://www.prevost-stuff.com/1996prevostmarathonxl_tradewinds041725-01.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_1996_Marathon_0_aba5a2ecabf54190b8edf486ad4f3c86.jpg
+Downloading image from https://www.prevost-stuff.com/1996prevostmarathonxl_tradewinds041725-02.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_1996_Marathon_1_f8e32d3a0f33467e938a4b83015be3fb.jpg
+Downloading image from https://www.prevost-stuff.com/1996prevostmarathonxl_tradewinds041725-03.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_1996_Marathon_2_0f38a4b0562a4bea8cd08a04f625851b.jpg
+Downloading image from https://www.prevost-stuff.com/1996prevostmarathonxl_tradewinds041725-04.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_1996_Marathon_3_d8af945a1e414304b5aca66d2d1b135b.jpg
+Downloading image from https://www.prevost-stuff.com/1996prevostmarathonxl_tradewinds041725-05.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_1996_Marathon_4_5930e89b87814e059418572bd4650df3.jpg
+DEBUG: Setting featured image to /images/rv_listings/rv_1996_Marathon_0_aba5a2ecabf54190b8edf486ad4f3c86.jpg
+DEBUG: Found 4 additional images
+DEBUG: Additional image 1: /images/rv_listings/rv_1996_Marathon_1_f8e32d3a0f33467e938a4b83015be3fb.jpg
+DEBUG: Additional image 2: /images/rv_listings/rv_1996_Marathon_2_0f38a4b0562a4bea8cd08a04f625851b.jpg
+DEBUG: Additional image 3: /images/rv_listings/rv_1996_Marathon_3_d8af945a1e414304b5aca66d2d1b135b.jpg
+DEBUG: Additional image 4: /images/rv_listings/rv_1996_Marathon_4_5930e89b87814e059418572bd4650df3.jpg
+DEBUG: Final additionalImages array has 4 items
+DEBUG PRE-FILTER: Listing has 4 additionalImages
+DEBUG POST-FILTER: Listing has 4 additionalImages
+Processing listing 3/5: https://www.prevost-stuff.com/2015PrevostMarathonH_Legacy041725.html
+Fetching detailed listing from https://www.prevost-stuff.com/2015PrevostMarathonH_Legacy041725.html
+DEBUG: Detailed listing found 67 image URLs
+Downloading image from https://www.prevost-stuff.com/2015prevostmarathonh_legacy041725-01.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2015_Marathon_0_ed0552a9811c4e0b8cfebf1ff60c55a6.jpg
+Downloading image from https://www.prevost-stuff.com/legacy_new_logo.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2015_Marathon_1_5d2a5fa8737c4ce4b6ce7aa9cff5186f.jpg
+Downloading image from https://www.prevost-stuff.com/2015prevostmarathonh_legacy041725-02.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2015_Marathon_2_ff571267d9254fd2b5755b05237aec56.jpg
+Downloading image from https://www.prevost-stuff.com/2015prevostmarathonh_legacy041725-03.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2015_Marathon_3_3cb0b563813f46eb944e54f9996bd814.jpg
+Downloading image from https://www.prevost-stuff.com/2015prevostmarathonh_legacy041725-04.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2015_Marathon_4_4b59b7138b5b4cac8421628c0d3de44d.jpg
+DEBUG: Setting featured image to /images/rv_listings/rv_2015_Marathon_0_ed0552a9811c4e0b8cfebf1ff60c55a6.jpg
+DEBUG: Found 4 additional images
+DEBUG: Additional image 1: /images/rv_listings/rv_2015_Marathon_1_5d2a5fa8737c4ce4b6ce7aa9cff5186f.jpg
+DEBUG: Additional image 2: /images/rv_listings/rv_2015_Marathon_2_ff571267d9254fd2b5755b05237aec56.jpg
+DEBUG: Additional image 3: /images/rv_listings/rv_2015_Marathon_3_3cb0b563813f46eb944e54f9996bd814.jpg
+DEBUG: Additional image 4: /images/rv_listings/rv_2015_Marathon_4_4b59b7138b5b4cac8421628c0d3de44d.jpg
+DEBUG: Final additionalImages array has 4 items
+DEBUG PRE-FILTER: Listing has 4 additionalImages
+DEBUG POST-FILTER: Listing has 4 additionalImages
+Processing listing 4/5: https://www.prevost-stuff.com/2006PrevostRoyaleXLII_Legacy041725.html
+Fetching detailed listing from https://www.prevost-stuff.com/2006PrevostRoyaleXLII_Legacy041725.html
+DEBUG: Detailed listing found 60 image URLs
+Downloading image from https://www.prevost-stuff.com/2006prevostroyalexlii_legacy041725-01.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2006_Prevost_0_f22a3c612bde473781defb268349f69d.jpg
+Downloading image from https://www.prevost-stuff.com/legacy_new_logo.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2006_Prevost_1_b7e67c4a3ffd41718c6e5102c2e9ebe4.jpg
+Downloading image from https://www.prevost-stuff.com/2006prevostroyalexlii_legacy041725-02.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2006_Prevost_2_305c8c3d79bd429789ebf183f8a7d002.jpg
+Downloading image from https://www.prevost-stuff.com/2006prevostroyalexlii_legacy041725-03.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2006_Prevost_3_60964eaf046a42749b706a1a5c6f2ca0.jpg
+Downloading image from https://www.prevost-stuff.com/2006prevostroyalexlii_legacy041725-04.jpg (attempt 1/3)
+Successfully downloaded image to public/images/rv_listings/rv_2006_Prevost_4_8a3a08ec4e7a4abca90a60a401245f8e.jpg
+DEBUG: Setting featured image to /images/rv_listings/rv_2006_Prevost_0_f22a3c612bde473781defb268349f69d.jpg
+DEBUG: Found 4 additional images
+DEBUG: Additional image 1: /images/rv_listings/rv_2006_Prevost_1_b7e67c4a3ffd41718c6e5102c2e9ebe4.jpg
+DEBUG: Additional image 2: /images/rv_listings/rv_2006_Prevost_2_305c8c3d79bd429789ebf183f8a7d002.jpg
+DEBUG: Additional image 3: /images/rv_listings/rv_2006_Prevost_3_60964eaf046a42749b706a1a5c6f2ca0.jpg
+DEBUG: Additional image 4: /images/rv_listings/rv_2006_Prevost_4_8a3a08ec4e7a4abca90a60a401245f8e.jpg
