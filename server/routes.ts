@@ -13,7 +13,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Explicitly serve static files from the public directory
   app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
   // Image proxy route to fetch external images
-  app.get('/proxy-image', async (req, res) => {
+  app.get('/api/proxy-image', async (req, res) => {
     try {
       const imageUrl = req.query.url as string;
       
@@ -21,10 +21,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.redirect('/images/default-rv.svg');
       }
       
-      // Check for specific domains we know have issues
-      if (imageUrl.includes('prevost-stuff.com')) {
-        return res.redirect('/images/default-rv.svg');
-      }
+      // Special handling for prevost-stuff.com
+      // We don't redirect to default anymore since we fixed the URL structure in the scraper
       
       // Set proper headers for requesting external resources
       const headers = {
@@ -48,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send the image data
       res.send(response.data);
     } catch (error) {
-      console.log('Redirecting to default image due to error or invalid URL');
+      console.log('Redirecting to default image due to error or invalid URL:', error);
       // Redirect to default image on error
       res.redirect('/images/default-rv.svg');
     }
