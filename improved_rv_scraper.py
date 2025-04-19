@@ -286,13 +286,13 @@ def fetch_detailed_listing(listing_url):
     if full_title:
         listing_data['full_title'] = full_title
     
-    # Look for all images on the page
-    for img in soup.find_all('img'):
-        src = img.get('src')
-        # Skip tiny images, navigation elements, etc.
-        if src and not src.endswith(('.png', '.gif', 'logo', 'banner')):
+    # Fetch only coach photos from the /forsale/photos/ folder (JPG/JPEG)
+    for img in soup.find_all('img', src=True):
+        src = img['src']
+        if 'forsale/photos/' in src.lower() and src.lower().endswith(('.jpg', '.jpeg')):
             full_url = urljoin(listing_url, src)
-            images.append(full_url)
+            if full_url not in images:
+                images.append(full_url)
     
     # Look for additional details
     description = ""
@@ -329,6 +329,22 @@ def fetch_detailed_listing(listing_url):
     # Add the images
     listing_data['images'] = images
     print(f"DEBUG: Detailed listing found {len(images)} image URLs")
+    
+    # Extract Seller, Location (state), Slides and Converter
+    seller_match = re.search(r'Seller:\s*([^<\n]+)', response.text)
+    if seller_match:
+        listing_data['seller'] = seller_match.group(1).strip()
+    state_match = re.search(r'State:\s*([A-Z]{2})', response.text)
+    if state_match:
+        listing_data['location'] = state_match.group(1)
+    slides_match = re.search(r'Slides:\s*(\d+)', response.text)
+    if slides_match:
+        listing_data['slides'] = int(slides_match.group(1))
+    conv_match = re.search(r'Converter:\s*([^<\n]+)', response.text)
+    if conv_match:
+        listing_data['converter'] = conv_match.group(1).strip()
+    # Ensure price always present for admin review
+    listing_data.setdefault('price', None)
     
     return listing_data
 
