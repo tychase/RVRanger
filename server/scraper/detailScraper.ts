@@ -1,4 +1,18 @@
-// server/scraper/detailScraper.ts
+/**
+ * Detail Page Scraper for Prevost-Stuff.com
+ * 
+ * This module scrapes individual RV listing detail pages to extract comprehensive
+ * information and high-quality images. Key features:
+ * 
+ * 1. Crawls the main listing page to find links to detail pages
+ * 2. Extracts detailed specifications (price, year, mileage, etc.)
+ * 3. Processes and stores up to 5 images per listing
+ * 4. Uses sourceId for deduplication and updates
+ * 5. Implements concurrency control to avoid overwhelming the target site
+ * 
+ * The scraper creates new listings or updates existing ones based on the sourceId
+ * which is derived from the listing URL.
+ */
 import axios from "axios";
 import * as cheerio from "cheerio";
 import pLimit from "p-limit";
