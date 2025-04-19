@@ -108,7 +108,7 @@ def import_listings_to_database(listings):
     # Ensure necessary IDs exist
     manufacturer_id = ensure_manufacturer_exists("Prevost", conn)
     type_id = ensure_rv_type_exists("Class A", conn)
-    seller_id = ensure_seller_exists("Prevost-Stuff.com", conn)
+    seller_id = get_default_seller_id()
     
     # Import each listing
     success_count = 0
@@ -116,25 +116,28 @@ def import_listings_to_database(listings):
     
     for listing in listings:
         try:
-            # Set defaults
-            listing['manufacturerId'] = listing.get('manufacturerId', manufacturer_id)
-            listing['typeId'] = listing.get('typeId', type_id)
-            listing['sellerId'] = listing.get('sellerId', seller_id)
+            # Prepare the listing data for the database schema
+            db_listing = {
+                'title': listing.get('title'),
+                'description': listing.get('description', ''),
+                'is_featured': listing.get('isFeatured', True),
+                'seller_id': seller_id,
+                'year': listing.get('year', 2000),
+                'price': listing.get('price', 0.0) or 0.0,  # Default to 0 if None
+                'manufacturer_id': manufacturer_id,
+                'type_id': type_id,
+                'featured_image': listing.get('featuredImage', ''),
+                'location': listing.get('location', 'Unknown'),
+                'fuel_type': listing.get('fuelType', 'Diesel')
+            }
             
-            # Extract images
-            featured_image = listing.get('featuredImage')
+            # Extract additional images for later insertion
             additional_images = listing.get('additionalImages', [])
-            
-            # Remove them from the listing dict
-            if 'featuredImage' in listing:
-                del listing['featuredImage']
-            if 'additionalImages' in listing:
-                del listing['additionalImages']
             
             # Insert the listing
             cur = conn.cursor()
-            columns = ', '.join(listing.keys())
-            placeholders = ', '.join(['%s'] * len(listing))
+            columns = ', '.join(db_listing.keys())
+            placeholders = ', '.join(['%s'] * len(db_listing))
             
             query = f"""
             INSERT INTO rv_listings ({columns})
@@ -142,19 +145,10 @@ def import_listings_to_database(listings):
             RETURNING id
             """
             
-            cur.execute(query, list(listing.values()))
+            cur.execute(query, list(db_listing.values()))
             rv_id = cur.fetchone()[0]
             
-            # Now update the featured image
-            if featured_image:
-                cur.execute(
-                    """
-                    UPDATE rv_listings 
-                    SET "featuredImage" = %s
-                    WHERE id = %s
-                    """,
-                    (featured_image, rv_id)
-                )
+            # The featured image is already included in the db_listing dictionary
             
             # Insert additional images
             if additional_images:
