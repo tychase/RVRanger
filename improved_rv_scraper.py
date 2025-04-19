@@ -328,6 +328,7 @@ def fetch_detailed_listing(listing_url):
     
     # Add the images
     listing_data['images'] = images
+    print(f"DEBUG: Detailed listing found {len(images)} image URLs")
     
     return listing_data
 
@@ -433,19 +434,32 @@ def scrape_listings(max_listings=5):
         if 'images' in detailed_data and detailed_data['images']:
             # Now using max 5 images per listing as requested
             image_count = 0
+            
+            # Download all images first (up to 5)
+            all_paths = []
             for img_url in detailed_data['images'][:5]:  # Limit to 5 images
                 local_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_{image_count}")
                 if local_path:
-                    if image_count == 0:
-                        # First image becomes the featured image
-                        main_image_path = local_path
-                    else:
-                        # Add each distinct image path to the downloaded list
-                        downloaded.append(local_path)
+                    all_paths.append(local_path)
                     image_count += 1
+            
+            # Set first image as featured (if available)
+            if all_paths:
+                main_image_path = all_paths[0]
+                print(f"DEBUG: Setting featured image to {main_image_path}")
+                
+                # All other images become additional images
+                if len(all_paths) > 1:
+                    downloaded = all_paths[1:]
+                    print(f"DEBUG: Found {len(downloaded)} additional images")
+                    for idx, img in enumerate(downloaded):
+                        print(f"DEBUG: Additional image {idx+1}: {img}")
+                else:
+                    print("DEBUG: No additional images found")
             
             # Correctly assign each distinct file with proper structure
             additional_images = [{"imageUrl": img_path, "isPrimary": False} for img_path in downloaded]
+            print(f"DEBUG: Final additionalImages array has {len(additional_images)} items")
         
         # If no images found, try to get the preview image from the coach listing
         if not main_image_path:
