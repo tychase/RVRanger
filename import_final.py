@@ -151,6 +151,7 @@ def import_listings_to_database(listings):
                 
                 # Insert additional images
                 if additional_images:
+                    # now insert all images scraped
                     for img in additional_images:
                         cur.execute(
                             """

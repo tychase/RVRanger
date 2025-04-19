@@ -427,6 +427,7 @@ def scrape_listings(max_listings=5):
         # Download the main image and additional images
         main_image_path = None
         additional_images = []
+        downloaded = []
         
         # First, find the main image
         if 'images' in detailed_data and detailed_data['images']:
@@ -439,12 +440,12 @@ def scrape_listings(max_listings=5):
                         # First image becomes the featured image
                         main_image_path = local_path
                     else:
-                        # All other images become additional images
-                        additional_images.append({
-                            "imageUrl": local_path,
-                            "isPrimary": False
-                        })
+                        # Add each distinct image path to the downloaded list
+                        downloaded.append(local_path)
                     image_count += 1
+            
+            # Correctly assign each distinct file with proper structure
+            additional_images = [{"imageUrl": img_path, "isPrimary": False} for img_path in downloaded]
         
         # If no images found, try to get the preview image from the coach listing
         if not main_image_path:
