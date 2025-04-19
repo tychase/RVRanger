@@ -435,7 +435,7 @@ def scrape_listings(max_listings=5):
             for img_url in detailed_data['images'][:5]:  # Limit to 5 images
                 local_path = download_image(img_url, f"rv_{year}_{converter or 'prevost'}_{image_count}")
                 if local_path:
-                    if not main_image_path:
+                    if image_count == 0:
                         # First image becomes the featured image
                         main_image_path = local_path
                     else:
