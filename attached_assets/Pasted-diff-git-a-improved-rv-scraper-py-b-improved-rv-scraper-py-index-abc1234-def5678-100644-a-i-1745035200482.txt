@@ -1,0 +1,96 @@
+diff --git a/improved_rv_scraper.py b/improved_rv_scraper.py
+index abc1234..def5678 100644
+--- a/improved_rv_scraper.py
++++ b/improved_rv_scraper.py
+@@ -37,12 +37,21 @@ def fetch_detailed_listing(listing_url):
+     # First try to find in headings (which might be present on some pages)
+     headline_tag = soup.find("h2") or soup.find("h1")
+ 
+-    # Look for all images on the page
+-    for img in soup.find_all('img'):
+-        src = img.get('src')
+-        # Skip tiny images, navigation elements, etc.
+-        if src and not src.endswith(('.png', '.gif', 'logo', 'banner')):
+-            full_url = urljoin(listing_url, src)
+-            images.append(full_url)
++    # Fetch only coach photos from the /forsale/photos/ folder (JPG/JPEG)
++    for img in soup.find_all('img', src=True):
++        src = img['src']
++        if 'forsale/photos/' in src.lower() and src.lower().endswith(('.jpg', '.jpeg')):
++            full_url = urljoin(listing_url, src)
++            if full_url not in images:
++                images.append(full_url)
+ 
+     # Look for additional details
+     description = ""
+@@ -51,6 +60,16 @@ def fetch_detailed_listing(listing_url):
+     listing_data['images'] = images
+ 
+     print(f"DEBUG: Detailed listing found {len(images)} image URLs")
++    # Extract Seller, Location (state), Slides and Converter
++    seller_match = re.search(r'Seller:\s*([^<\n]+)', response.text)
++    if seller_match:
++        listing_data['seller'] = seller_match.group(1).strip()
++    state_match = re.search(r'State:\s*([A-Z]{2})', response.text)
++    if state_match:
++        listing_data['location'] = state_match.group(1)
++    slides_match = re.search(r'Slides:\s*(\d+)', response.text)
++    if slides_match:
++        listing_data['slides'] = int(slides_match.group(1))
++    conv_match = re.search(r'Converter:\s*([^<\n]+)', response.text)
++    if conv_match:
++        listing_data['converter'] = conv_match.group(1).strip()
++    # Ensure price always present for admin review
++    listing_data.setdefault('price', None)
+ 
+     return listing_data
+ 
+@@ -59,18 +78,25 @@ def scrape_listings(max_listings=5):
+             year = int(year_match.group(1))
+         converter = extract_converter(title_part)
+         model = extract_model(title_part)
++
++        # --- pull full detail page data ---
+         detailed_data = fetch_detailed_listing(link)
+ 
+         # download image files...
+ 
+-        listing = {
+-            "title": clean_title,
+-            "description": detailed_data.get('description', f"Luxury {year} Prevost coach."),
+-            "price": detailed_data.get('price'),
+-            "year": year,
+-            "manufacturerId": PREVOST_MANUFACTURER_ID,
+-            "typeId": CLASS_A_TYPE_ID,
+-            "location": "Unknown",
+-            "featuredImage": main_image_path,
+-            "fuelType": "Diesel", # All Prevost RVs are diesel
+-            "isFeatured": True, # Make all detailed listings featured
+-            "sellerId": 1, # Default seller ID, to be replaced later if needed
+-            "additionalImages": additional_images.copy() # Make a deep copy to avoid reference issues
+-        }
++        listing = {
++            "title": clean_title,
++            # core detail fields for your UI
++            "seller":   detailed_data.get('seller'),
++            "converter":detailed_data.get('converter') or converter,
++            "model":    detailed_data.get('model')     or model,
++            "slides":   detailed_data.get('slides'),
++            "year":     year,
++            "location": detailed_data.get('location', "Unknown"),
++            "price":    detailed_data.get('price'),
++            # if you still want description & metadata you can keep it here:
++            "description": detailed_data.get('description', f"Luxury {year} Prevost coach."),
++            # images
++            "featuredImage":   main_image_path,
++            "additionalImages":additional_images.copy(),
++            # any extra internal IDs you need
++            "manufacturerId": PREVOST_MANUFACTURER_ID,
++            "typeId":         CLASS_A_TYPE_ID,
++            "fuelType":       "Diesel",
++            "isFeatured":     True,
++            "sellerId":       1,
++        }
+ 
+         # Filter out None values
+         listing = {k: v for k, v in listing.items() if v is not None}
