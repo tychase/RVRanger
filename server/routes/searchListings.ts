@@ -13,7 +13,7 @@ import { Application } from 'express';
 import { and, asc, count, desc, eq, gt, gte, ilike, lt, lte, or, sql } from 'drizzle-orm';
 import { IStorage } from '../storage';
 import { rvListings } from '../../shared/schema';
-import { Aggregations, Facet, SearchResponse } from '../../shared/apiSchema';
+import { Aggregations, Facet, SearchParams, SearchResponse, ScoredRvListing } from '../../shared/apiSchema';
 
 export function setupSearchEndpoint(app: Application, storage: IStorage) {
   /**
@@ -45,112 +45,42 @@ export function setupSearchEndpoint(app: Application, storage: IStorage) {
         sortBy = 'newest', // Sort field: 'newest', 'price-asc', 'price-desc', etc.
       } = req.query;
 
-      const conditions = [];
+      // We don't need to build filter conditions anymore since we're using soft filtering
+      // with the score-based approach
+      // This will show all listings, but rank the best matches at the top
 
-      // Add manufacturer filter
-      if (manufacturer) {
-        const manufacturerObj = await storage.getManufacturerByName(manufacturer as string);
-        if (manufacturerObj) {
-          conditions.push(eq(rvListings.manufacturerId, manufacturerObj.id));
-        }
-      }
-
-      // Add converter filter
-      if (converter) {
-        const converterObj = await storage.getConverterByName(converter as string);
-        if (converterObj) {
-          conditions.push(eq(rvListings.converterId, converterObj.id));
-        }
-      }
-
-      // Add chassis type filter
-      if (chassisType) {
-        const chassisTypeObj = await storage.getChassisTypeByName(chassisType as string);
-        if (chassisTypeObj) {
-          conditions.push(eq(rvListings.chassisTypeId, chassisTypeObj.id));
-        }
-      }
-
-      // Add RV type filter
-      if (type) {
-        // Find the RV type by name
-        const rvType = await storage.getRvType(parseInt(type as string, 10));
-        if (rvType) {
-          conditions.push(eq(rvListings.typeId, rvType.id));
-        }
-      }
-
-      // Add year filter
-      if (yearFrom) {
-        conditions.push(gte(rvListings.year, parseInt(yearFrom as string, 10)));
-      }
-      if (yearTo) {
-        conditions.push(lte(rvListings.year, parseInt(yearTo as string, 10)));
-      }
-
-      // Add price filter
-      if (priceFrom) {
-        conditions.push(gte(rvListings.price, parseInt(priceFrom as string, 10)));
-      }
-      if (priceTo) {
-        conditions.push(lte(rvListings.price, parseInt(priceTo as string, 10)));
-      }
-
-      // Add mileage filter
-      if (mileageFrom) {
-        conditions.push(gte(rvListings.mileage, parseInt(mileageFrom as string, 10)));
-      }
-      if (mileageTo) {
-        conditions.push(lte(rvListings.mileage, parseInt(mileageTo as string, 10)));
-      }
-
-      // Add length filter
-      if (lengthFrom) {
-        conditions.push(gte(rvListings.length, parseInt(lengthFrom as string, 10)));
-      }
-      if (lengthTo) {
-        const lengthValue = parseInt(lengthTo as string, 10);
-        conditions.push(lte(rvListings.length, lengthValue));
-      }
-
-      // Add bed type filter
-      if (bedType) {
-        conditions.push(eq(rvListings.bedType, bedType as string));
-      }
-
-      // Add fuel type filter
-      if (fuelType) {
-        conditions.push(eq(rvListings.fuelType, fuelType as string));
-      }
-
-      // Add slides filter
-      if (slides) {
-        conditions.push(eq(rvListings.slides, parseInt(slides as string, 10)));
-      }
-
-      // Add featured filter
-      if (featured === 'true') {
-        conditions.push(eq(rvListings.isFeatured, true));
-      }
-
-      // Add full-text search if query is provided
-      if (query) {
-        // Use PostgreSQL full-text search capabilities
-        conditions.push(
-          sql`${rvListings.searchVector} @@ plainto_tsquery('english', ${query})`
-        );
-      }
-
-      // Get listings with applied filters
-      const listings = await storage.searchRvListings(conditions, {
+      // Use scoring-based search instead of hard filtering
+      // Convert query params to search params
+      const searchParams: SearchParams = {
+        query: query as string,
+        manufacturer: manufacturer as string,
+        converter: converter as string,
+        chassisType: chassisType as string,
+        yearFrom: yearFrom ? parseInt(yearFrom as string) : undefined,
+        yearTo: yearTo ? parseInt(yearTo as string) : undefined,
+        priceFrom: priceFrom ? parseInt(priceFrom as string) : undefined,
+        priceTo: priceTo ? parseInt(priceTo as string) : undefined,
+        mileageFrom: mileageFrom ? parseInt(mileageFrom as string) : undefined,
+        mileageTo: mileageTo ? parseInt(mileageTo as string) : undefined,
+        lengthFrom: lengthFrom ? parseInt(lengthFrom as string) : undefined,
+        lengthTo: lengthTo ? parseInt(lengthTo as string) : undefined,
+        bedType: bedType as string,
+        fuelType: fuelType as string,
+        slides: slides ? parseInt(slides as string) : undefined,
+        featured: featured === 'true',
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      };
+      
+      // Get scored listings using soft filtering (everything stays in results, but ranks by relevance)
+      const listings = await storage.searchRvListingsWithScoring(searchParams, {
         limit: parseInt(limit as string, 10),
         offset: parseInt(offset as string, 10)
       });
 
-      // Get total count
-      // For simplicity, we're using the same conditions, but in a real 
-      // implementation you might optimize this with a COUNT query
-      const allResults = await storage.searchRvListings(conditions);
+      // Get all listings for aggregations (but don't need to paginate them)
+      // We skip pagination for aggregations since we need all data for accurate counts
+      const allResults = await storage.searchRvListingsWithScoring(searchParams);
       const totalCount = allResults.length;
 
       // Calculate basic aggregations from the results
