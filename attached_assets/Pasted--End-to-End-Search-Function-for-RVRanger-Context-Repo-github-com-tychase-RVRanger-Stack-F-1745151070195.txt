@@ -1,0 +1,63 @@
+🔍 End‑to‑End Search Function for RVRanger
+Context
+
+* Repo:* github.com/tychase/RVRanger
+* Stack:* FastAPI + SQLModel (PostgreSQL) back‑end, React/TypeScript front‑end.
+* Current issue:* Both search bars (landing page & “Buy” page) render but aren’t wired to actual data. I need a complete, reusable search pipeline.
+
+🟢 What I need you to build
+Back‑end
+
+Create a GET /api/listings/search endpoint.
+
+Accept URL query params
+q (free‑text), make, model, year_min, year_max, price_min, price_max, chassis, length_min, length_max, slides, mileage_max, feature[] (repeatable).
+
+Use SQLModel to build a dynamic filter query; ignore params that arrive as None.
+
+If q is supplied, do a Postgres full‑text search on title, description, and dealer_name (generate a tsvector column if needed).
+
+Return JSON: total, results (array of listing objects), and aggregations (counts per make, chassis, year, etc. for future facets).
+
+Add basic index suggestions in a comment (GIN on the tsvector, b‑tree on price, year, etc.).
+
+Front‑end
+
+Landing page search bar
+‑ On submit, push to /buy? with the same query string the API expects (e.g., /buy?q=Prevost&year_min=2015&price_max=1000000).
+
+Buy page advanced search panel
+‑ Convert current form into a controlled React component that writes state → URL query params (so searches are shareable/bookmarkable).
+‑ On mount & on URL change, parse params, fire fetch('/api/listings/search?...'), and render cards from the response.
+‑ Show total count & gracefully handle “no results”.
+
+Code quality & DX
+
+Keep API contract in shared/apiSchema.ts so front‑end has a generated TypeScript type (SearchParams, SearchResponse).
+
+Add one Postman (or Thunder Client) collection example call.
+
+Unit‑test: one happy‑path test where you seed the test DB with 3 listings and assert that text + filter combo returns the right subset.
+
+🔨 Implementation steps (high‑level checklist)
+Back‑end 1.1 Add search_listings function in server/routers/listings.py.
+1.2 Add search_vector field & migration (Alembic) if missing.
+1.3 Create Pydantic ListingSearchParams & ListingSearchResponse.
+
+Front‑end 2.1 Refactor SearchBar (landing) and BuySearchPanel to use react-hook-form for cleaner validation.
+2.2 Create useSearchListings.ts hook that wraps the fetch call, handles loading/error states, and throttles rapid queries (300 ms debounce).
+2.3 Update Buy.tsx route loader to prefetch data on SSR (nice for SEO).
+
+Docs & Tests 3.1 Update README.md quick‑start with new search instructions.
+3.2 Jest test (frontend/__tests__/search.test.tsx) to ensure typing a keyword updates the URL and triggers API call.
+
+📎 Deliverables
+All new/modified files committed with clear messages.
+
+Short summary comment at the top of new modules explaining purpose.
+
+One sentence in PR description explaining how to run the integration tests.
+
+Please confirm each major subsection before moving on, or tell me if parts of the request are unclear.
+Focus on functionality first; I’ll circle back later for pixel‑perfect styling tweaks.
+
