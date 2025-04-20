@@ -1,0 +1,100 @@
+Wire Up Front‑End Search (Landing & “Buy” page)
+Context
+
+Back‑end search is live at GET /api/search‑listings
+
+Accepts: query, make, model, yearFrom, yearTo, priceFrom, priceTo, chassis, lengthFrom, lengthTo, slides, mileageTo, limit, offset
+
+Returns: { total, results:[…], aggregations:{ make: {Prevost:8,…}, chassis:{XLII:4,…}, … } }
+
+1 ️⃣ Shared Types
+Regenerate shared/apiSchema.ts so the SearchParams and SearchResponse types exactly mirror the final endpoint signature.
+
+ts
+Copy
+Edit
+export type SearchParams = {
+  query?: string
+  make?: string
+  …
+}
+export interface SearchResponse {
+  total: number
+  results: RvListing[]
+  aggregations: {
+    make: Record<string, number>
+    chassis: Record<string, number>
+    year: Record<string, number>
+  }
+}
+2 ️⃣ Landing‑page “Quick Search” (<SearchBar />)
+Convert to a controlled component using react-hook-form.
+
+On submit, push to /buy with the serialized querystring (e.g. /buy?query=Prevost&yearFrom=2018).
+
+tsx
+Copy
+Edit
+const onSubmit = (data: SearchParams) => {
+  router.push(`/buy?${qs.stringify(clean(data))}`)
+}
+3 ️⃣ Buy‑page “Advanced Search” (<BuySearchPanel />)
+State ↔ URL
+
+On mount, const params = qs.parse(location.search) → set default form values.
+
+On change, debounce 300 ms → update the URL (via router.replace) and call the hook below.
+
+Data fetching hook
+
+ts
+Copy
+Edit
+export const useSearchListings = (params: SearchParams) =>
+  useQuery(['search', params], () =>
+    fetch(`/api/search-listings?${qs.stringify(params)}`).then(r => r.json())
+  )
+Render
+
+Show a “X results” subtitle.
+
+Map data.results into existing <CoachCard />s.
+
+In sidebar, render facet counts from data.aggregations (checkbox list for Make, Chassis, Year buckets).
+
+4 ️⃣ Edge Cases & UX polish
+Empty result ⇒ friendly message + “Reset filters” button.
+
+Disable the Search button while isFetching.
+
+Persist last‑used filters in localStorage so returning users see their previous search.
+
+5 ️⃣ Testing
+Jest/React‑Testing‑Library:
+
+Render <BuySearchPanel /> with a mocked router at /buy?query=luxury.
+
+Mock fetch to return two items.
+
+Assert they appear and the form inputs pre‑fill correctly.
+
+Cypress (optional): full click‑through smoke test on a seeded local DB.
+
+6 ️⃣ Documentation & Dev DX
+Update README → “Running search locally” with one‑liner curl example.
+
+Add a Postman/Thunder Client request to the existing collection.
+
+Bump version in package.json and add a short CHANGELOG entry.
+
+Please start with the shared types (step 1) and confirm. Then proceed section‑by‑section so I can review generated diffs.
+Feel free to ask clarifying questions if anything is ambiguous.
+
+⚡ Quick sanity checks after integration
+Landing page search redirects correctly and URL reflects parameters.
+
+Hitting back/forward keeps results in sync (state comes from URL).
+
+“Buy” page reload or hard refresh reproduces identical results.
+
+Search latency < 300 ms for common queries (verify in DevTools → Network).

@@ -13,32 +13,7 @@ import { Application } from 'express';
 import { and, asc, count, desc, eq, gt, gte, ilike, lt, lte, or, sql } from 'drizzle-orm';
 import { IStorage } from '../storage';
 import { rvListings } from '../../shared/schema';
-
-// Type definitions for the search response
-interface Facet {
-  value: string;
-  count: number;
-}
-
-interface Aggregations {
-  manufacturers: Facet[];
-  converters: Facet[];
-  chassisTypes: Facet[];
-  rvTypes: Facet[];
-  years: Facet[];
-  priceRanges: Facet[];
-  mileageRanges: Facet[];
-  lengthRanges: Facet[];
-  bedTypes: Facet[];
-  fuelTypes: Facet[];
-  slides: Facet[];
-}
-
-interface SearchResponse {
-  listings: any[];
-  totalCount: number;
-  aggregations: Aggregations;
-}
+import { Aggregations, Facet, SearchResponse } from '../../shared/apiSchema';
 
 export function setupSearchEndpoint(app: Application, storage: IStorage) {
   /**
@@ -178,15 +153,61 @@ export function setupSearchEndpoint(app: Application, storage: IStorage) {
       const allResults = await storage.searchRvListings(conditions);
       const totalCount = allResults.length;
 
-      // For now, we're using simplified aggregations
-      // In a real implementation, you would calculate these dynamically
-      // from the filtered dataset (or use database aggregation functions)
+      // Calculate basic aggregations from the results
+      // First, get all entities from database
+      const manufacturers = await storage.getAllManufacturers();
+      const converters = await storage.getAllConverters();
+      const rvTypes = await storage.getAllRvTypes();
+      
+      // Calculate aggregations from results
+      const yearCounts = countByProperty(allResults, 'year');
+      const years = Object.entries(yearCounts)
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => parseInt(b.value, 10) - parseInt(a.value, 10));
+      
+      // Calculate manufacturer aggregations
+      const manufacturerCounts: Record<number, number> = {};
+      allResults.forEach(listing => {
+        if (listing.manufacturerId) {
+          manufacturerCounts[listing.manufacturerId] = (manufacturerCounts[listing.manufacturerId] || 0) + 1;
+        }
+      });
+      
+      const manufacturerFacets = manufacturers
+        .filter(m => manufacturerCounts[m.id])
+        .map(m => ({ value: m.name, count: manufacturerCounts[m.id] }));
+      
+      // Calculate converter aggregations
+      const converterCounts: Record<number, number> = {};
+      allResults.forEach(listing => {
+        if (listing.converterId) {
+          converterCounts[listing.converterId] = (converterCounts[listing.converterId] || 0) + 1;
+        }
+      });
+      
+      const converterFacets = converters
+        .filter(c => converterCounts[c.id])
+        .map(c => ({ value: c.name, count: converterCounts[c.id] }));
+      
+      // Calculate RV type aggregations
+      const rvTypeCounts: Record<number, number> = {};
+      allResults.forEach(listing => {
+        if (listing.typeId) {
+          rvTypeCounts[listing.typeId] = (rvTypeCounts[listing.typeId] || 0) + 1;
+        }
+      });
+      
+      const rvTypeFacets = rvTypes
+        .filter(t => rvTypeCounts[t.id])
+        .map(t => ({ value: t.name, count: rvTypeCounts[t.id] }));
+      
+      // Create the aggregations object  
       const aggregations: Aggregations = {
-        manufacturers: [],
-        converters: [],
+        manufacturers: manufacturerFacets,
+        converters: converterFacets,
         chassisTypes: [],
-        rvTypes: [],
-        years: [],
+        rvTypes: rvTypeFacets,
+        years,
         priceRanges: [],
         mileageRanges: [],
         lengthRanges: [],
