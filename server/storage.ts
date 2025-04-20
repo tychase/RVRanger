@@ -21,6 +21,7 @@ export interface IStorage {
   // Manufacturer operations
   getAllManufacturers(): Promise<Manufacturer[]>;
   getManufacturer(id: number): Promise<Manufacturer | undefined>;
+  getManufacturerByName(name: string): Promise<Manufacturer | undefined>;
   createManufacturer(manufacturer: InsertManufacturer): Promise<Manufacturer>;
   updateManufacturer(id: number, manufacturer: Partial<InsertManufacturer>): Promise<Manufacturer | undefined>;
   deleteManufacturer(id: number): Promise<boolean>;
@@ -28,6 +29,7 @@ export interface IStorage {
   // Converter operations
   getAllConverters(): Promise<Converter[]>;
   getConverter(id: number): Promise<Converter | undefined>;
+  getConverterByName(name: string): Promise<Converter | undefined>;
   createConverter(converter: InsertConverter): Promise<Converter>;
   updateConverter(id: number, converter: Partial<InsertConverter>): Promise<Converter | undefined>;
   deleteConverter(id: number): Promise<boolean>;
@@ -55,8 +57,17 @@ export interface IStorage {
     year?: number;
     minPrice?: number;
     maxPrice?: number;
+    minMileage?: number;
+    maxMileage?: number;
+    minLength?: number;
+    maxLength?: number;
+    bedType?: string;
+    fuelType?: string;
+    slides?: number;
     featured?: boolean;
+    searchTerm?: string;
   }): Promise<RvListing[]>;
+  searchRvListings(conditions: any[], options?: { limit?: number; offset?: number }): Promise<RvListing[]>;
   getRvListing(id: number): Promise<RvListing | undefined>;
   getRvListingsByUser(userId: number): Promise<RvListing[]>;
   createRvListing(rvListing: InsertRvListing): Promise<RvListing>;
@@ -115,6 +126,12 @@ export class DatabaseStorage implements IStorage {
     const [manufacturer] = await db.select().from(manufacturers).where(eq(manufacturers.id, id));
     return manufacturer;
   }
+  
+  async getManufacturerByName(name: string): Promise<Manufacturer | undefined> {
+    const [manufacturer] = await db.select().from(manufacturers)
+      .where(eq(sql`LOWER(${manufacturers.name})`, name.toLowerCase()));
+    return manufacturer;
+  }
 
   async createManufacturer(manufacturer: InsertManufacturer): Promise<Manufacturer> {
     const [newManufacturer] = await db.insert(manufacturers).values(manufacturer).returning();
@@ -147,6 +164,12 @@ export class DatabaseStorage implements IStorage {
     const [converter] = await db.select().from(converters).where(eq(converters.id, id));
     return converter;
   }
+  
+  async getConverterByName(name: string): Promise<Converter | undefined> {
+    const [converter] = await db.select().from(converters)
+      .where(eq(sql`LOWER(${converters.name})`, name.toLowerCase()));
+    return converter;
+  }
 
   async createConverter(converter: InsertConverter): Promise<Converter> {
     const [newConverter] = await db.insert(converters).values(converter).returning();
@@ -177,6 +200,12 @@ export class DatabaseStorage implements IStorage {
 
   async getChassisType(id: number): Promise<ChassisType | undefined> {
     const [chassisType] = await db.select().from(chassisTypes).where(eq(chassisTypes.id, id));
+    return chassisType;
+  }
+  
+  async getChassisTypeByName(name: string): Promise<ChassisType | undefined> {
+    const [chassisType] = await db.select().from(chassisTypes)
+      .where(eq(sql`LOWER(${chassisTypes.name})`, name.toLowerCase()));
     return chassisType;
   }
 
@@ -274,6 +303,8 @@ export class DatabaseStorage implements IStorage {
       featuredImage: rvListings.featuredImage,
       isFeatured: rvListings.isFeatured,
       sellerId: rvListings.sellerId,
+      sourceId: rvListings.sourceId,
+      searchVector: rvListings.searchVector,
       createdAt: rvListings.createdAt,
       updatedAt: rvListings.updatedAt
     }).from(rvListings);
@@ -383,6 +414,8 @@ export class DatabaseStorage implements IStorage {
       featuredImage: rvListings.featuredImage,
       isFeatured: rvListings.isFeatured,
       sellerId: rvListings.sellerId,
+      sourceId: rvListings.sourceId,
+      searchVector: rvListings.searchVector,
       createdAt: rvListings.createdAt,
       updatedAt: rvListings.updatedAt
     }).from(rvListings).where(eq(rvListings.id, id));
@@ -410,6 +443,8 @@ export class DatabaseStorage implements IStorage {
         featuredImage: rvListings.featuredImage,
         isFeatured: rvListings.isFeatured,
         sellerId: rvListings.sellerId,
+        sourceId: rvListings.sourceId,
+        searchVector: rvListings.searchVector,
         createdAt: rvListings.createdAt,
         updatedAt: rvListings.updatedAt
       })
@@ -440,6 +475,57 @@ export class DatabaseStorage implements IStorage {
       .where(eq(rvListings.id, id))
       .returning({ id: rvListings.id });
     return result.length > 0;
+  }
+  
+  async searchRvListings(conditions: any[], options?: { limit?: number; offset?: number }): Promise<RvListing[]> {
+    // Create the query with all the standard fields
+    let query = db.select({
+      id: rvListings.id,
+      title: rvListings.title,
+      description: rvListings.description,
+      year: rvListings.year,
+      price: rvListings.price,
+      manufacturerId: rvListings.manufacturerId,
+      converterId: rvListings.converterId,
+      chassisTypeId: rvListings.chassisTypeId,
+      typeId: rvListings.typeId,
+      length: rvListings.length,
+      mileage: rvListings.mileage,
+      location: rvListings.location,
+      fuelType: rvListings.fuelType,
+      bedType: rvListings.bedType,
+      slides: rvListings.slides,
+      featuredImage: rvListings.featuredImage,
+      isFeatured: rvListings.isFeatured,
+      sellerId: rvListings.sellerId,
+      sourceId: rvListings.sourceId,
+      searchVector: rvListings.searchVector,
+      createdAt: rvListings.createdAt,
+      updatedAt: rvListings.updatedAt
+    }).from(rvListings);
+    
+    // Apply conditions if provided
+    if (conditions && conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    // Apply ordering by newest first (most recent ID)
+    query = query.orderBy(desc(rvListings.id));
+    
+    // Apply pagination if options provided
+    if (options) {
+      if (options.limit !== undefined) {
+        query = query.limit(options.limit);
+      }
+      
+      if (options.offset !== undefined) {
+        query = query.offset(options.offset);
+      }
+    }
+    
+    // Execute the query
+    const results = await query;
+    return results;
   }
 
   // RV Images operations
@@ -498,6 +584,8 @@ export class DatabaseStorage implements IStorage {
         featuredImage: rvListings.featuredImage,
         isFeatured: rvListings.isFeatured,
         sellerId: rvListings.sellerId,
+        sourceId: rvListings.sourceId,
+        searchVector: rvListings.searchVector,
         createdAt: rvListings.createdAt,
         updatedAt: rvListings.updatedAt
       })

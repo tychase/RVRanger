@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, pr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -87,6 +88,7 @@ export const rvListings = pgTable("rv_listings", {
   isFeatured: boolean("is_featured").default(false),
   sellerId: integer("seller_id").notNull(),
   sourceId: text("source_id").unique(), // Unique ID from the source website
+  searchVector: text("search_vector"), // Full-text search vector
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
