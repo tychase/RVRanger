@@ -26,6 +26,13 @@ const HeroSection: React.FC = () => {
     if (searchParams.features?.length) {
       searchParams.features.forEach((f: string) => params.append("features", f));
     }
+    // Add price range parameters
+    if (searchParams.minPrice) {
+      params.append("minPrice", searchParams.minPrice.toString());
+    }
+    if (searchParams.maxPrice) {
+      params.append("maxPrice", searchParams.maxPrice.toString());
+    }
     setLocation(`/browse?${params.toString()}`);
   };
 

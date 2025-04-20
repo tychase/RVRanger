@@ -27,9 +27,15 @@ const Browse = () => {
     const params = new URLSearchParams(location.split("?")[1]);
     const urlParams: any = {};
     
-    for (const [key, value] of params.entries()) {
-      urlParams[key] = value;
-    }
+    // Use forEach instead of for...of to avoid TypeScript issues
+    params.forEach((value, key) => {
+      // Convert numeric values to numbers
+      if (key === 'minPrice' || key === 'maxPrice') {
+        urlParams[key] = parseFloat(value);
+      } else {
+        urlParams[key] = value;
+      }
+    });
     
     setSearchParams(urlParams);
   }, [location]);
@@ -121,7 +127,10 @@ const Browse = () => {
         mergedParams[key] !== null && 
         mergedParams[key] !== "" && 
         mergedParams[key] !== "all" && 
-        mergedParams[key] !== "any"
+        mergedParams[key] !== "any" &&
+        // Special case for price range - only include if not default values
+        !(key === "minPrice" && mergedParams[key] === 100000) &&
+        !(key === "maxPrice" && mergedParams[key] === 1000000)
       ) {
         // Handle arrays like features
         if (Array.isArray(mergedParams[key]) && mergedParams[key].length > 0) {

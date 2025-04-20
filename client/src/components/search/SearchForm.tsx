@@ -5,6 +5,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 
 const converters = [
   { id: "marathon", name: "Marathon" },
@@ -27,6 +28,11 @@ const featureOptions = [
   "Underbay storage",
 ];
 
+// Price range constants in USD
+const MIN_PRICE = 100000;
+const MAX_PRICE = 1000000;
+const STEP_SIZE = 50000;
+
 interface SearchFormProps {
   onSearch?: (params: any) => void;
   simplified?: boolean;
@@ -37,6 +43,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
   const [chassis, setChassis] = React.useState("all");
   const [slides, setSlides] = React.useState("all");
   const [features, setFeatures] = React.useState<string[]>([]);
+  const [priceRange, setPriceRange] = React.useState([MIN_PRICE, MAX_PRICE]);
 
   const toggleFeature = (feat: string) => {
     setFeatures(prev => (prev.includes(feat) ? prev.filter(f => f !== feat) : [...prev, feat]));
@@ -44,13 +51,43 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch?.({ converter, chassis, slides, features });
+    onSearch?.({ 
+      converter, 
+      chassis, 
+      slides, 
+      features,
+      minPrice: priceRange[0],
+      maxPrice: priceRange[1]
+    });
+  };
+
+  const formatPrice = (value: number) => {
+    return `$${(value).toLocaleString()}`;
   };
 
   const featureLabel = features.length > 0 ? features.join(", ") : "Select Features";
 
   return (
     <form className="space-y-6 p-4 sm:p-6 bg-neutralLight rounded-2xl border border-neutralLight/50 shadow-lg" onSubmit={handleSubmit}>
+      {/* Price Range Slider */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <Label htmlFor="price-range" className="text-sm sm:text-base">Price Range</Label>
+          <span className="text-xs sm:text-sm text-gray-500">
+            {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+          </span>
+        </div>
+        <Slider
+          id="price-range"
+          min={MIN_PRICE}
+          max={MAX_PRICE}
+          step={STEP_SIZE}
+          value={priceRange}
+          onValueChange={setPriceRange}
+          className="mt-2"
+        />
+      </div>
+
       {/* Responsive grid layout for form fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {/* Converter */}
