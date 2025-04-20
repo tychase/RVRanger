@@ -56,6 +56,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
     
     // Map our form fields to the API search parameters
     onSearch?.({ 
+      query: searchQuery.trim() || undefined,
       converter: converter !== 'all' ? converter : undefined, 
       chassisType: chassis !== 'all' ? chassis : undefined, 
       slides: slides !== 'all' ? parseInt(slides) : undefined,
@@ -74,6 +75,19 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
   return (
     <form className="space-y-6 p-4 sm:p-6 bg-neutralLight rounded-2xl border border-neutralLight/50 shadow-lg" onSubmit={handleSubmit}>
+      {/* Search Text Input */}
+      <div className="space-y-2">
+        <Label htmlFor="search-query" className="text-sm sm:text-base">Search</Label>
+        <Input
+          id="search-query"
+          type="text"
+          placeholder="Search by keywords (e.g., 'leather seats', 'diesel engine')"
+          className="w-full h-10 sm:h-11"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      
       {/* Price Range Slider */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
