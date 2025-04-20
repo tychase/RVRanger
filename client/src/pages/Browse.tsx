@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import qs from "query-string";
 import SearchForm from "@/components/search/SearchForm";
 import CoachCard from "@/components/coach/CoachCard";
 import { Button } from "@/components/ui/button";
@@ -47,36 +48,22 @@ const Browse = () => {
   queryParams.limit = itemsPerPage;
   queryParams.offset = (currentPage - 1) * itemsPerPage;
 
-  // Fetch RV listings - with relevance-based ranking when using search
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["/api/search", queryParams],
-    queryFn: async () => {
-      // If we have search params, use the ranked search endpoint
-      if (Object.keys(searchParams).some(key => 
-          searchParams[key] !== undefined && 
-          searchParams[key] !== null && 
-          searchParams[key] !== "" && 
-          searchParams[key] !== "all" && 
-          searchParams[key] !== "any")) {
-        
-        // Use POST for ranked search (scores all results)
-        return fetch('/api/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(searchParams)
-        }).then(res => res.json());
-      } else {
-        // Use regular GET endpoint for no filters
-        const params = new URLSearchParams();
-        for (const key in queryParams) {
-          params.append(key, queryParams[key]);
-        }
-        return fetch(`/api/listings?${params.toString()}`).then(res => res.json());
+  // Create a custom hook for search functionality (could be moved to a separate file)
+  const useSearchListings = (params: any) => {
+    return useQuery({
+      queryKey: ['/api/search-listings', params],
+      queryFn: async () => {
+        const queryString = qs.stringify(params);
+        return fetch(`/api/search-listings?${queryString}`).then(r => r.json());
       }
-    }
-  });
+    });
+  };
 
-  const listings = data || [];
+  // Fetch RV listings with our search API
+  const { data, isLoading, error } = useSearchListings(queryParams);
+
+  // Extract listings and aggregations from the response
+  const { listings = [], totalCount = 0, aggregations = {} } = data || {};
   
   // Set default sort option to relevance if we have search filters
   useEffect(() => {

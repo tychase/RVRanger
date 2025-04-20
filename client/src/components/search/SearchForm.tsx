@@ -1,6 +1,7 @@
 // client/src/components/search/SearchForm.tsx
 import React from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +40,7 @@ interface SearchFormProps {
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false }) => {
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [converter, setConverter] = React.useState("all");
   const [chassis, setChassis] = React.useState("all");
   const [slides, setSlides] = React.useState("all");
@@ -51,13 +53,16 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Map our form fields to the API search parameters
     onSearch?.({ 
-      converter, 
-      chassis, 
-      slides, 
-      features,
-      minPrice: priceRange[0],
-      maxPrice: priceRange[1]
+      converter: converter !== 'all' ? converter : undefined, 
+      chassisType: chassis !== 'all' ? chassis : undefined, 
+      slides: slides !== 'all' ? parseInt(slides) : undefined,
+      priceFrom: priceRange[0] !== MIN_PRICE ? priceRange[0] : undefined,
+      priceTo: priceRange[1] !== MAX_PRICE ? priceRange[1] : undefined,
+      // We could map features to a structured query, but for now we'll just use them as-is
+      features: features.length > 0 ? features : undefined
     });
   };
 

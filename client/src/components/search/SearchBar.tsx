@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import qs from "query-string";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SearchParams } from "@/shared/apiSchema";
+import { SearchParams } from "@shared/apiSchema";
 import {
   Form,
   FormControl,
