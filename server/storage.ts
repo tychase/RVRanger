@@ -37,6 +37,7 @@ export interface IStorage {
   // Chassis Type operations
   getAllChassisTypes(): Promise<ChassisType[]>;
   getChassisType(id: number): Promise<ChassisType | undefined>;
+  getChassisTypeByName(name: string): Promise<ChassisType | undefined>;
   createChassisType(chassisType: InsertChassisType): Promise<ChassisType>;
   updateChassisType(id: number, chassisType: Partial<InsertChassisType>): Promise<ChassisType | undefined>;
   deleteChassisType(id: number): Promise<boolean>;
