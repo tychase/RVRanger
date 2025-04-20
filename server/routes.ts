@@ -8,6 +8,7 @@ import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
 import scrapeDetailPages from "./scraper/detailScraper";
+import { setupSearchEndpoint } from "./routes/searchListings";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Explicitly serve static files from the public directory
