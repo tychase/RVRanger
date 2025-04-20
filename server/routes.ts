@@ -595,9 +595,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[POST /api/search] Received filters:', JSON.stringify(req.body));
       const filters = req.body;
       
-      // Get all listings - we won't filter out any results
-      console.log('[POST /api/search] Fetching all listings');
-      const listings = await storage.getAllRvListings();
+      // Create filter options for basic filtering
+      const filterOptions: any = {};
+      
+      // Apply price range filtering if provided
+      if (filters.minPrice) {
+        filterOptions.minPrice = parseFloat(filters.minPrice);
+      }
+      if (filters.maxPrice) {
+        filterOptions.maxPrice = parseFloat(filters.maxPrice);
+      }
+      
+      // Get all listings with basic filters applied
+      console.log('[POST /api/search] Fetching listings with filter options:', filterOptions);
+      const listings = await storage.getAllRvListings(filterOptions);
       
       // Get manufacturers to help with matching
       const manufacturers = await storage.getAllManufacturers();
