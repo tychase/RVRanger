@@ -18,21 +18,21 @@ const HeroSection: React.FC = () => {
     if (searchParams.converter && searchParams.converter !== "all") {
       params.append("converter", searchParams.converter);
     }
-    if (searchParams.chassis && searchParams.chassis !== "all") {
-      params.append("chassis", searchParams.chassis);
+    if (searchParams.chassisType && searchParams.chassisType !== "all") {
+      params.append("chassisType", searchParams.chassisType);
     }
     if (searchParams.slides && searchParams.slides !== "all") {
-      params.append("slides", searchParams.slides);
+      params.append("slides", searchParams.slides.toString());
     }
     if (searchParams.features?.length) {
       searchParams.features.forEach((f: string) => params.append("features", f));
     }
     // Add price range parameters
-    if (searchParams.minPrice) {
-      params.append("minPrice", searchParams.minPrice.toString());
+    if (searchParams.priceFrom) {
+      params.append("priceFrom", searchParams.priceFrom.toString());
     }
-    if (searchParams.maxPrice) {
-      params.append("maxPrice", searchParams.maxPrice.toString());
+    if (searchParams.priceTo) {
+      params.append("priceTo", searchParams.priceTo.toString());
     }
     setLocation(`/browse?${params.toString()}`);
   };
@@ -52,17 +52,16 @@ const HeroSection: React.FC = () => {
           <p className="text-lg md:text-xl mb-8 text-neutralLight">
             Browse thousands of premium coaches from top converters
           </p>
-          <div className="w-full max-w-2xl mx-auto bg-neutralLight/90 rounded-2xl shadow-md p-4">
-            <SearchBar />
-          </div>
-          <p className="mt-4 text-sm text-neutralLight">
-            <button 
-              onClick={() => setLocation("/browse")}
-              className="underline hover:text-white transition-colors"
-            >
-              Advanced Search
-            </button> for more detailed options
-          </p>
+          <Accordion type="single" collapsible className="w-full max-w-xl mx-auto">
+            <AccordionItem value="search">
+              <AccordionTrigger className="w-full bg-neutralLight rounded-2xl border border-neutralLight/50 px-4 py-2 text-left text-primary">
+                Search Coaches
+              </AccordionTrigger>
+              <AccordionContent className="p-4 bg-neutralLight rounded-2xl border border-neutralLight/50">
+                <SearchForm onSearch={handleSearch} simplified={false} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </div>
     </section>
