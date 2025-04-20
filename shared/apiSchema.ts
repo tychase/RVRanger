@@ -71,10 +71,17 @@ export interface Aggregations {
 }
 
 /**
+ * RV Listing with match score
+ */
+export interface ScoredRvListing extends RvListing {
+  score: number;
+}
+
+/**
  * Complete search response structure
  */
 export interface SearchResponse {
-  listings: RvListing[];
+  listings: ScoredRvListing[];
   totalCount: number;
   aggregations: Aggregations;
 }

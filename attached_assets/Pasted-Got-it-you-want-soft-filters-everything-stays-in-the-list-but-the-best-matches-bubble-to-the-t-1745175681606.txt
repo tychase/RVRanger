@@ -1,0 +1,86 @@
+Got it — you want “soft” filters (everything stays in the list) but the best matches bubble to the top.
+The simplest way is to turn every filter into a score contributor rather than a WHERE clause, then sort by that score.
+
+1 ️⃣ Design the “match‑point” formula
+
+Filter	Points if it matches	Notes
+Full‑text hit (query)	ts_rank_cd * 5	Postgres already gives a relevance score; multiply to weight it heavily.
+Make	 +2	Exact string compare.
+Model	 +1.5	
+Year inside range	 +1	If both yearFrom & yearTo provided.
+Price inside range	 +1	Scaled however you like.
+Chassis	 +1	
+Slides ≤ desired	 +0.5	Example numeric fuzzy rule.
+Tweak the weights until the top ten feel right.
+
+2 ️⃣ SQL prototype
+sql
+Copy
+Edit
+WITH q AS (
+  SELECT
+    plainto_tsquery('english', :query) AS tsq,
+    :make       AS p_make,
+    :model      AS p_model,
+    :year_from  AS p_ymin,
+    :year_to    AS p_ymax,
+    :price_from AS p_pmin,
+    :price_to   AS p_pmax,
+    :chassis    AS p_chassis
+)
+SELECT
+  l.*,
+  -- ---------- scoring ----------
+  (ts_rank_cd(l.search_vector, q.tsq) * 5)                                      -- text relevance
++ (CASE WHEN q.p_make   IS NOT NULL AND l.make   ILIKE q.p_make   THEN 2   ELSE 0 END)
++ (CASE WHEN q.p_model  IS NOT NULL AND l.model  ILIKE q.p_model  THEN 1.5 ELSE 0 END)
++ (CASE WHEN q.p_chassis IS NOT NULL AND l.chassis ILIKE q.p_chassis THEN 1 ELSE 0 END)
++ (CASE WHEN q.p_ymin IS NOT NULL AND l.year BETWEEN q.p_ymin AND q.p_ymax THEN 1 ELSE 0 END)
++ (CASE WHEN q.p_pmin IS NOT NULL AND l.price BETWEEN q.p_pmin AND q.p_pmax THEN 1 ELSE 0 END)
+  AS score
+FROM rv_listings l, q
+ORDER BY score DESC, l.price NULLS LAST
+LIMIT :limit OFFSET :offset;
+Every row is returned; score is 0 if nothing matches.
+
+Keep the hard WHERE only for things you truly must hide (e.g., status != 'sold').
+
+3 ️⃣ Storage layer change (searchRvListings)
+Remove the existing .where(...) blocks that drop rows.
+
+Build the computed column as above with sql<Number>\…`(Drizzle) or Knex’s.select(knex.raw('... AS score'))`.
+
+.orderBy('score', 'desc').
+
+4 ️⃣ Front‑end tweaks
+Your hook already returns results.
+
+Stop client‑side sorting; just render in the order received.
+
+If you’d like a visual cue, show the score:
+
+tsx
+Copy
+Edit
+<CoachCard ... badge={`Match ${listing.score.toFixed(1)}`} />
+5 ️⃣ Quick sanity test
+bash
+Copy
+Edit
+curl -s \
+  '/api/search-listings?query=Prevost&make=Prevost&yearFrom=2016&yearTo=2024&limit=5' \
+  | jq '.results[] | {id, make, year, score}'
+The first row’s score should be highest and include all Prevost 2016‑2024 models; older or non‑Prevost results trail behind but are still present.
+
+Pro tip: expose the weights in a .env or admin panel
+Early on you’ll tweak the feel a lot. Reading MATCH_WEIGHTS= env vars into an object lets you redeploy without code edits.
+
+Give Replit the SQL prototype plus the step list above and ask it to:
+
+replace the current WHERE‑based filtering with the scoring approach,
+
+keep pagination,
+
+expose the score field in the API response.
+
+It should only touch the searchRvListings query and the endpoint serializer—no front‑end refactor required beyond removing any manual sort you added earlier
