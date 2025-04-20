@@ -616,8 +616,34 @@ export class DatabaseStorage implements IStorage {
     // Hard filter only for critical conditions (e.g., status != 'sold')
     // For now we don't have any hard filters, all are converted to scoring
     
-    // Order by score descending, then by price for equal scores
-    scoreQuery = scoreQuery.orderBy(desc(sql`score`), desc(rvListings.price));
+    // Order by our computed score expression descending, then by price for equal scores
+    // We can't reference the aliased column directly in orderBy, so we repeat the SQL expression
+    scoreQuery = scoreQuery.orderBy(
+      desc(sql`
+        0
+        ${query ? sql`+ (ts_rank_cd(${rvListings.searchVector}, plainto_tsquery('english', ${query})) * 5)` : sql``}
+        ${manufacturer ? sql`+ CASE WHEN EXISTS (
+          SELECT 1 FROM ${manufacturers} m 
+          WHERE m.id = ${rvListings.manufacturerId} 
+          AND LOWER(m.name) = LOWER(${manufacturer})
+        ) THEN 2 ELSE 0 END` : sql``}
+        ${converter ? sql`+ CASE WHEN EXISTS (
+          SELECT 1 FROM ${converters} c 
+          WHERE c.id = ${rvListings.converterId} 
+          AND LOWER(c.name) = LOWER(${converter})
+        ) THEN 2 ELSE 0 END` : sql``}
+        ${chassisType ? sql`+ CASE WHEN EXISTS (
+          SELECT 1 FROM ${chassisTypes} ct 
+          WHERE ct.id = ${rvListings.chassisTypeId} 
+          AND LOWER(ct.name) = LOWER(${chassisType})
+        ) THEN 1 ELSE 0 END` : sql``}
+        ${(yearFrom && yearTo) ? sql`+ CASE WHEN ${rvListings.year} BETWEEN ${Number(yearFrom)} AND ${Number(yearTo)} THEN 1 ELSE 0 END` : sql``}
+        ${(priceFrom && priceTo) ? sql`+ CASE WHEN ${rvListings.price} BETWEEN ${Number(priceFrom)} AND ${Number(priceTo)} THEN 1 ELSE 0 END` : sql``}
+        ${slides ? sql`+ CASE WHEN ${rvListings.slides} = ${Number(slides)} THEN 0.5 ELSE 0 END` : sql``}
+        ${featured === 'true' ? sql`+ CASE WHEN ${rvListings.isFeatured} = true THEN 0.5 ELSE 0 END` : sql``}
+      `), 
+      desc(rvListings.price)
+    );
     
     // Apply pagination if options provided
     if (options) {

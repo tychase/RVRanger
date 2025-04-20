@@ -22,6 +22,7 @@ interface CoachCardProps {
     featuredImage?: string | null;
     isFeatured?: boolean;
     matchScore?: number;
+    score?: number;
   };
 }
 
@@ -119,13 +120,10 @@ const CoachCard = ({ coach }: CoachCardProps) => {
             Featured
           </span>
         )}
-        {coach.matchScore !== undefined && (
-          <span className={`absolute bottom-2 sm:bottom-3 left-2 sm:left-3 text-white text-xs tracking-wider font-semibold px-2 sm:px-3 py-1 rounded-xl shadow-md ${
-            coach.matchScore > 0 
-              ? 'bg-accent-gold'
-              : 'bg-neutral-dark/70'
-          }`}>
-            Match: {coach.matchScore}
+        {/* Display the match score badge when we have a score value */}
+        {(coach.score !== undefined && coach.score > 0) && (
+          <span className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 bg-accent-gold text-white text-xs tracking-wider font-semibold px-2 sm:px-3 py-1 rounded-xl shadow-md">
+            Match: {Math.min(100, Math.round(coach.score * 10))}%
           </span>
         )}
         <button 

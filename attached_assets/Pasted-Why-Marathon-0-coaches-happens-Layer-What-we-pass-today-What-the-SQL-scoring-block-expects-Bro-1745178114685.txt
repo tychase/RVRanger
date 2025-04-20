@@ -1,0 +1,102 @@
+Why “Marathon → 0 coaches” happens
+
+
+Layer	What we pass today	What the SQL scoring block expects
+Browser	…/api/search‑listings?converter=marathon (lower‑case slug)	LOWER(c.name) = LOWER($converter) (the full company name in the converters table)
+DB seed / import	converters.name = 'Marathon'	—
+When the API gets converter=marathon it tries to match
+
+sql
+Copy
+Edit
+…WHERE LOWER(c.name)=LOWER('marathon')
+but the value stored in the table is 'Marathon' (capital M). LOWER('Marathon') = 'marathon', so the test itself succeeds — but only for rows whose converter_id is not NULL.
+
+Most of the imported listings, however, were inserted before we started populating converter_id, so they hold NULL in that column.
+c.id = rv_listings.converter_id therefore fails, the sub‑query returns no rows, and every listing ends up with a score of 0. Because the same converter filter is also reused in the aggregations pass (where we still have a hard WHERE), the final result set comes back empty and the UI shows “0 coaches available”.
+
+Two quick ways to prove it
+Run a raw query
+
+bash
+Copy
+Edit
+psql -c "
+SELECT COUNT(*) 
+FROM rv_listings l 
+WHERE converter_id IS NULL;"
+You’ll see a high count.
+
+Hit the API without soft‑filtering
+
+bash
+Copy
+Edit
+curl -s '/api/search-listings?limit=1' | jq '.listings[0].converterId'
+# null
+Fix: always join on ID, fall back to name only if needed
+1 ️⃣ Accept either converter or converterId in the endpoint
+ts
+Copy
+Edit
+const {
+  converter,          // “Marathon”, “Liberty”… (optional)
+  converterId,        // 1, 2, 3… (preferred)
+  …rest
+} = req.query as Record<string,string>;
+2 ️⃣ Lookup the ID once
+ts
+Copy
+Edit
+let convId: number | undefined;
+if (converterId) {
+  convId = Number(converterId);
+} else if (converter) {
+  const conv = await storage.getConverterByName(converter);
+  convId = conv?.id;
+}
+3 ️⃣ Feed the ID into the scorer
+Inside searchRvListingsWithScoring add:
+
+ts
+Copy
+Edit
+// +2 points for converter match by ID
+${convId ? sql`
+  + CASE WHEN ${rvListings.converterId} = ${convId} THEN 2 ELSE 0 END
+` : sql``}
+(and drop the old EXISTS‑by‑name snippet to avoid double‑counting).
+
+4 ️⃣ Update the front‑end <Select>
+Pass the ID instead of the slug:
+
+tsx
+Copy
+Edit
+<SelectItem key={c.id} value={String(c.id)}>
+  {c.name}
+</SelectItem>
+and in handleSubmit:
+
+ts
+Copy
+Edit
+onSearch?.({ converterId: converter !== 'all' ? Number(converter) : undefined })
+Optional clean‑up
+Add a one‑off SQL migration to back‑fill converter_id for the older rows:
+
+sql
+Copy
+Edit
+UPDATE rv_listings l
+SET    converter_id = c.id
+FROM   converters c
+WHERE  LOWER(l.title) LIKE '%'||LOWER(c.name)||'%'
+  AND  l.converter_id IS NULL;
+Drop the duplicate converter string column from the JSON importer once the IDs are set automatically.
+
+After these four tweaks you’ll get:
+
+“Marathon” filter → all coaches still show, but Marathon listings jump to the top with a +2 score.
+
+Aggregations stay correct because the second pass is no longer blocked by NULL IDs

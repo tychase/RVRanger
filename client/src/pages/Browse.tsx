@@ -81,8 +81,8 @@ const Browse = () => {
   const sortedListings = [...listings].sort((a, b) => {
     switch (sortOption) {
       case "relevance":
-        // Sort by match score if available
-        return (b.matchScore || 0) - (a.matchScore || 0);
+        // Sort by score from the new API
+        return (b.score || 0) - (a.score || 0);
       case "price-low":
         return a.price - b.price;
       case "price-high":
