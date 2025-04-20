@@ -42,10 +42,10 @@ interface SearchResponse {
 
 export function setupSearchEndpoint(app: Application, storage: IStorage) {
   /**
-   * GET /api/listings/search
+   * GET /api/search-listings
    * Search and filter RV listings with full-text search and faceted filtering
    */
-  app.get('/api/listings/search', async (req, res) => {
+  app.get('/api/search-listings', async (req, res) => {
     try {
       const {
         query,          // Text query for full-text search

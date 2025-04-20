@@ -841,6 +841,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Setup the advanced search endpoint with full-text search and facets
+  setupSearchEndpoint(app, storage);
+
   const httpServer = createServer(app);
 
   return httpServer;
