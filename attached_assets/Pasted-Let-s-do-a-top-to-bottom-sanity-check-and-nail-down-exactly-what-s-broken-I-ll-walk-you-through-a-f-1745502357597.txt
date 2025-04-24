@@ -1,0 +1,85 @@
+Let’s do a top-to-bottom sanity check and nail down exactly what’s broken. I’ll walk you through a four-step review of both back-end and front-end, and then give you the minimal patches you need.
+
+1️⃣ Verify the API is still returning data
+In your terminal run:
+
+bash
+Copy
+Edit
+curl -s \
+  "http://localhost:5000/api/search-listings?converter=Marathon&limit=5" \
+  | jq .
+Does this return an array of listings (and each object has a non-zero score field)?
+
+Yes: the back-end is fine.
+
+No or error: jump to step 1a.
+
+1 a) Back-end route sanity
+Open server/routes/searchListings.ts and confirm:
+
+ts
+Copy
+Edit
+router.get('/api/search-listings', async (req, res) => {
+  const params = req.query as SearchParams;
+  const { results, total, aggregations } = await storage.searchRvListingsWithScoring(params);
+  res.json({ results, total, aggregations });
+});
+Common mistakes
+
+Path is actually /api/listings/search → front-end mismatch.
+
+You’re destructuring a property called listings on the JSON but returning results.
+
+If you see a mismatch, fix either the client or the server so they both use the same path and same property name (results vs listings).
+
+2️⃣ Confirm the front-end is calling the right endpoint
+In Chrome/Firefox DevTools → Network tab:
+
+Type something in the homepage search bar.
+
+Hit Enter → you should see one navigation to /buy?....
+
+On the Buy page you should see a single XHR/fetch to /api/search-listings?... (not /api/listings, not /browse).
+
+If you see:
+
+No fetch: your useSearchListings hook isn’t being invoked on mount.
+
+Wrong URL: update the hook or the call site to use /api/search-listings.
+
+3️⃣ Make sure URL → form → fetch is wired correctly
+In client/src/pages/Buy.tsx (or Browse.tsx) you want:
+
+tsx
+Copy
+Edit
+// 1. parse URL once
+const { search } = useLocation();
+const params = useMemo(
+  () => qs.parse(search, { ignoreQueryPrefix: true }) as SearchParams,
+  [search]
+);
+
+// 2. drive both the form and the fetch hook from those params
+const { control, setValue } = useForm<SearchParams>({
+  defaultValues: params,
+});
+const { data, isFetching } = useSearchListings(params);
+
+// 3. keep back/forward in sync
+useEffect(() => {
+  Object.entries(params).forEach(([k, v]) => setValue(k as any, v));
+}, [params]);
+
+// 4. render
+if (isFetching) return <Spinner />;
+const listings = data?.results ?? [];  // ← make sure you’re reading `.results`
+return listings.map(l => <CoachCard key={l.id} {...l} />);
+Common pitfalls
+
+You had a second state slice like const [filters, setFilters] = useState(...) and you never initialized it from the URL. That will overwrite your URL-derived params on first render.
+
+You’re doing const listings = (data?.results || []).filter(...) somewhere—that will remove everything if you pass the wrong field name or types.
+
