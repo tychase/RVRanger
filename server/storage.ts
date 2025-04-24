@@ -624,9 +624,10 @@ export class DatabaseStorage implements IStorage {
     // For now we don't have any hard filters, all are converted to scoring
     
     // Order by score descending, then by price for equal scores
-    // Reference the score column directly from the select list
+    // We need to repeat the entire score expression in the ORDER BY clause
+    // since PostgreSQL requires this when using complex expressions
     scoreQuery = scoreQuery.orderBy(
-      desc(sql`score`), 
+      desc(scoreExpression), 
       desc(rvListings.price)
     );
     
