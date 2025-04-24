@@ -559,12 +559,17 @@ export class DatabaseStorage implements IStorage {
         AND LOWER(m.name) = LOWER(${manufacturer})
       ) THEN 2 ELSE 0 END` : sql``}
       
-      -- Add 2 points for exact converter match
-      ${converter ? sql`+ CASE WHEN EXISTS (
-        SELECT 1 FROM ${converters} c 
-        WHERE c.id = ${rvListings.converterId} 
-        AND LOWER(c.name) = LOWER(${converter})
-      ) THEN 2 ELSE 0 END` : sql``}
+      -- Add 2 points for exact converter match (either by ID or title text match)
+      ${converter ? sql`+ CASE 
+        WHEN EXISTS (
+          SELECT 1 FROM ${converters} c 
+          WHERE c.id = ${rvListings.converterId} 
+          AND LOWER(c.name) = LOWER(${converter})
+        ) THEN 2 
+        -- Fallback if converter not properly set but name appears in title
+        WHEN ${rvListings.title} ILIKE ${`%${converter}%`} THEN 1.5
+        ELSE 0 
+      END` : sql``}
       
       -- Add 1 point for exact chassis match
       ${chassisType ? sql`+ CASE WHEN EXISTS (

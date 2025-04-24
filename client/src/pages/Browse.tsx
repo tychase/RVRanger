@@ -160,7 +160,7 @@ const Browse = () => {
               {isLoading ? (
                 <Skeleton className="h-7 w-32 sm:h-8 sm:w-40" />
               ) : (
-                `${listings.length} Coaches Available`
+                `${rvListings.length} Coaches Available`
               )}
             </h2>
             
@@ -211,7 +211,7 @@ const Browse = () => {
           </div>
           
           {/* Pagination */}
-          {!isLoading && listings.length > 0 && (
+          {!isLoading && rvListings.length > 0 && (
             <div className="flex justify-center mt-6 sm:mt-8">
               <div className="flex space-x-1 sm:space-x-2">
                 <Button
@@ -239,7 +239,7 @@ const Browse = () => {
                   variant="outline"
                   size="sm"
                   className="text-xs sm:text-sm h-8 sm:h-10"
-                  disabled={listings.length < itemsPerPage}
+                  disabled={rvListings.length < itemsPerPage}
                   onClick={() => setCurrentPage(currentPage + 1)}
                 >
                   Next
