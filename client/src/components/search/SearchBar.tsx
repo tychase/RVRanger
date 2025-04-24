@@ -46,7 +46,7 @@ const SearchBar: React.FC = () => {
 
   // Handler for form submission
   const onSubmit = (data: QuickSearchParams) => {
-    // Navigate to the /buy page with the search parameters in the query string
+    // Navigate to the /browse page with the search parameters in the query string
     navigate(`/browse?${qs.stringify(clean(data))}`);
   };
 

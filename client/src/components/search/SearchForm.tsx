@@ -1,5 +1,5 @@
 // client/src/components/search/SearchForm.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -36,14 +36,55 @@ const STEP_SIZE = 50000;
 interface SearchFormProps {
   onSearch?: (params: any) => void;
   simplified?: boolean;
+  initialParams?: Record<string, any>;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false }) => {
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, initialParams = {} }) => {
   const [converter, setConverter] = React.useState("all");
   const [chassis, setChassis] = React.useState("all");
   const [slides, setSlides] = React.useState("all");
   const [features, setFeatures] = React.useState<string[]>([]);
   const [priceRange, setPriceRange] = React.useState([MIN_PRICE, MAX_PRICE]);
+
+  // Initialize form with URL parameters when available
+  useEffect(() => {
+    if (initialParams) {
+      // Update converter
+      if (initialParams.converter) {
+        setConverter(initialParams.converter);
+      }
+      
+      // Update chassis
+      if (initialParams.chassisType) {
+        setChassis(initialParams.chassisType);
+      }
+      
+      // Update slides
+      if (initialParams.slides) {
+        setSlides(initialParams.slides.toString());
+      }
+      
+      // Update features
+      if (initialParams.features) {
+        const featureList = Array.isArray(initialParams.features) 
+          ? initialParams.features 
+          : initialParams.features.split(',');
+        setFeatures(featureList);
+      }
+      
+      // Update price range
+      const newPriceRange = [MIN_PRICE, MAX_PRICE];
+      if (initialParams.priceFrom) {
+        newPriceRange[0] = parseInt(initialParams.priceFrom);
+      }
+      if (initialParams.priceTo) {
+        newPriceRange[1] = parseInt(initialParams.priceTo);
+      }
+      if (newPriceRange[0] !== MIN_PRICE || newPriceRange[1] !== MAX_PRICE) {
+        setPriceRange(newPriceRange);
+      }
+    }
+  }, [initialParams]);
 
   const toggleFeature = (feat: string) => {
     setFeatures(prev => (prev.includes(feat) ? prev.filter(f => f !== feat) : [...prev, feat]));

@@ -144,7 +144,11 @@ const Browse = () => {
         
         {/* Search Form */}
         <div className="mb-6 sm:mb-8">
-          <SearchForm onSearch={handleSearch} simplified={false} />
+          <SearchForm 
+            onSearch={handleSearch} 
+            simplified={false} 
+            initialParams={params}
+          />
         </div>
         
         {/* Results Section */}
