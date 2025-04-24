@@ -532,7 +532,7 @@ export class DatabaseStorage implements IStorage {
   
   async searchRvListingsWithScoring(params: any, options?: { limit?: number; offset?: number }): Promise<(RvListing & { score: number })[]> {
     const {
-      query,           // Full-text search query
+      query: searchQuery,           // Full-text search query
       manufacturer,    // Manufacturer name
       converter,       // Converter company
       chassisType,     // Chassis model
@@ -544,107 +544,79 @@ export class DatabaseStorage implements IStorage {
       featured         // Featured listings
     } = params;
     
-    // Define the score calculation SQL once
-    const scoreExpression = sql<number>`
-      -- Start with base score of 0
-      0
-      
-      -- Add 5x weight to full-text search matches
-      ${query ? sql`+ (ts_rank_cd(${rvListings.searchVector}, plainto_tsquery('english', ${query})) * 5)` : sql``}
-      
-      -- Add 2 points for exact manufacturer match
-      ${manufacturer ? sql`+ CASE WHEN EXISTS (
-        SELECT 1 FROM ${manufacturers} m 
-        WHERE m.id = ${rvListings.manufacturerId} 
-        AND LOWER(m.name) = LOWER(${manufacturer})
-      ) THEN 2 ELSE 0 END` : sql``}
-      
-      -- Add 2 points for exact converter match, 1 point for title-based match
-      ${converter ? sql`+ CASE
-        WHEN EXISTS (
-          SELECT 1 FROM ${converters} c
-          WHERE c.id = ${rvListings.converterId}
-            AND LOWER(c.name) = LOWER(${converter})
-        ) THEN 2
-        WHEN LOWER(${rvListings.title}) LIKE '%'||LOWER(${converter})||'%' THEN 1
-        ELSE 0
-      END` : sql``}
-      
-      -- Add 1 point for exact chassis match
-      ${chassisType ? sql`+ CASE WHEN EXISTS (
-        SELECT 1 FROM ${chassisTypes} ct 
-        WHERE ct.id = ${rvListings.chassisTypeId} 
-        AND LOWER(ct.name) = LOWER(${chassisType})
-      ) THEN 1 ELSE 0 END` : sql``}
-      
-      -- Add 1 point if in year range
-      ${(yearFrom && yearTo) ? sql`+ CASE WHEN ${rvListings.year} BETWEEN ${Number(yearFrom)} AND ${Number(yearTo)} THEN 1 ELSE 0 END` : sql``}
-      
-      -- Add 1 point if in price range
-      ${(priceFrom && priceTo) ? sql`+ CASE WHEN ${rvListings.price} BETWEEN ${Number(priceFrom)} AND ${Number(priceTo)} THEN 1 ELSE 0 END` : sql``}
-      
-      -- Add 0.5 point if slides match exactly
-      ${slides ? sql`+ CASE WHEN ${rvListings.slides} = ${Number(slides)} THEN 0.5 ELSE 0 END` : sql``}
-      
-      -- Add 0.5 points for featured listing if featured is requested
-      ${featured === 'true' ? sql`+ CASE WHEN ${rvListings.isFeatured} = true THEN 0.5 ELSE 0 END` : sql``}
-    `;
+    // Simple approach: use raw SQL for the entire query
+    let whereConditions = [];
     
-    // Build the query with scoring
-    let scoreQuery = db.select({
-      // Standard listing fields
-      id: rvListings.id,
-      title: rvListings.title,
-      description: rvListings.description,
-      year: rvListings.year,
-      price: rvListings.price,
-      manufacturerId: rvListings.manufacturerId,
-      converterId: rvListings.converterId,
-      chassisTypeId: rvListings.chassisTypeId,
-      typeId: rvListings.typeId,
-      length: rvListings.length,
-      mileage: rvListings.mileage,
-      location: rvListings.location,
-      fuelType: rvListings.fuelType,
-      bedType: rvListings.bedType,
-      slides: rvListings.slides,
-      featuredImage: rvListings.featuredImage,
-      isFeatured: rvListings.isFeatured,
-      sellerId: rvListings.sellerId,
-      sourceId: rvListings.sourceId,
-      searchVector: rvListings.searchVector,
-      createdAt: rvListings.createdAt,
-      updatedAt: rvListings.updatedAt,
-      
-      // Scoring based on matches - using the predefined expression
-      score: scoreExpression
-    }).from(rvListings);
-    
-    // Hard filter only for critical conditions (e.g., status != 'sold')
-    // For now we don't have any hard filters, all are converted to scoring
-    
-    // Order by score descending, then by price for equal scores
-    // We need to repeat the entire score expression in the ORDER BY clause
-    // since PostgreSQL requires this when using complex expressions
-    scoreQuery = scoreQuery.orderBy(
-      desc(scoreExpression), 
-      desc(rvListings.price)
-    );
-    
-    // Apply pagination if options provided
-    if (options) {
-      if (options.limit !== undefined) {
-        scoreQuery = scoreQuery.limit(options.limit);
-      }
-      
-      if (options.offset !== undefined) {
-        scoreQuery = scoreQuery.offset(options.offset);
-      }
+    // For converter, we'll search the title
+    if (converter) {
+      whereConditions.push(`LOWER(title) LIKE LOWER('%${converter}%')`);
     }
     
-    // Execute the query and return results with scores
-    const results = await scoreQuery;
-    return results;
+    // Add other filters if provided
+    if (yearFrom && yearTo) {
+      whereConditions.push(`year BETWEEN ${Number(yearFrom)} AND ${Number(yearTo)}`);
+    }
+    
+    if (priceFrom && priceTo) {
+      whereConditions.push(`price BETWEEN ${Number(priceFrom)} AND ${Number(priceTo)}`);
+    }
+    
+    if (slides) {
+      whereConditions.push(`slides = ${Number(slides)}`);
+    }
+    
+    if (featured === 'true') {
+      whereConditions.push(`is_featured = true`);
+    }
+    
+    // Build the WHERE clause
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(" AND ")}` 
+      : "";
+    
+    // Add LIMIT and OFFSET
+    const limitClause = options?.limit ? `LIMIT ${options.limit}` : "";
+    const offsetClause = options?.offset ? `OFFSET ${options.offset}` : "";
+    
+    // Build the complete SQL query
+    const sqlQuery = `
+      SELECT *, 1 as score
+      FROM rv_listings
+      ${whereClause}
+      ORDER BY id DESC
+      ${limitClause}
+      ${offsetClause}
+    `;
+    
+    // Execute as a raw query
+    const results = await db.execute(sql.raw(sqlQuery));
+    
+    // Convert to proper typed results
+    return results.rows.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      year: row.year,
+      price: row.price,
+      manufacturerId: row.manufacturer_id,
+      converterId: row.converter_id,
+      chassisTypeId: row.chassis_type_id,
+      typeId: row.type_id,
+      length: row.length,
+      mileage: row.mileage,
+      location: row.location,
+      fuelType: row.fuel_type,
+      bedType: row.bed_type,
+      slides: row.slides,
+      featuredImage: row.featured_image,
+      isFeatured: row.is_featured,
+      sellerId: row.seller_id,
+      sourceId: row.source_id,
+      searchVector: row.search_vector,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      score: 1 // Add the score field
+    }));
   }
 
   // RV Images operations
