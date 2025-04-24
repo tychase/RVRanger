@@ -578,12 +578,24 @@ export class DatabaseStorage implements IStorage {
     const limitClause = options?.limit ? `LIMIT ${options.limit}` : "";
     const offsetClause = options?.offset ? `OFFSET ${options.offset}` : "";
     
-    // Build the complete SQL query
+    // Build the complete SQL query with custom sorting for converter
+    let orderByClause = "ORDER BY id DESC";
+    
+    // If converter is specified, we want to prioritize listings with converter in the title
+    if (converter) {
+      orderByClause = `ORDER BY 
+        CASE 
+          WHEN LOWER(title) LIKE LOWER('%${converter}%') THEN 0  
+          ELSE 1 
+        END,
+        id DESC`;
+    }
+    
     const sqlQuery = `
       SELECT *, 1 as score
       FROM rv_listings
       ${whereClause}
-      ORDER BY id DESC
+      ${orderByClause}
       ${limitClause}
       ${offsetClause}
     `;
