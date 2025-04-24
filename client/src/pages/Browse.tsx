@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import qs from "query-string";
@@ -6,6 +6,7 @@ import SearchForm from "@/components/search/SearchForm";
 import CoachCard from "@/components/coach/CoachCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SearchParams } from "@shared/apiSchema";
 import {
   Select,
   SelectContent,
@@ -14,35 +15,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Clean function to remove empty values from params
+const clean = (obj: any) => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v != null && v !== "" && v !== "all" && v !== "any")
+  );
+};
+
 const Browse = () => {
-  const [location] = useLocation();
-  const [searchParams, setSearchParams] = useState<any>({});
+  const [location, navigate] = useLocation();
   const [sortOption, setSortOption] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
+  // Parse URL query parameters once using useMemo
+  const params = useMemo(
+    () => qs.parse(location.split("?")[1] || "") as Record<string, any>,
+    [location]
+  );
+  const ready = Object.keys(params).length >= 0; // always true; keeps TS happy
+
   useEffect(() => {
     document.title = "Browse Coaches - Luxury Coach Market";
-    
-    // Parse URL query parameters
-    const params = new URLSearchParams(location.split("?")[1]);
-    const urlParams: any = {};
-    
-    // Use forEach instead of for...of to avoid TypeScript issues
-    params.forEach((value, key) => {
-      // Convert numeric values to numbers
-      if (key === 'minPrice' || key === 'maxPrice') {
-        urlParams[key] = parseFloat(value);
-      } else {
-        urlParams[key] = value;
-      }
-    });
-    
-    setSearchParams(urlParams);
-  }, [location]);
+  }, []);
 
   // Build query parameters for API call
-  const queryParams: any = { ...searchParams };
+  const queryParams: any = { ...params };
   
   // Add pagination
   queryParams.limit = itemsPerPage;
@@ -59,7 +57,7 @@ const Browse = () => {
     });
   };
 
-  // Fetch RV listings with our search API
+  // Fetch RV listings with our search API using the parsed URL params directly
   const { data, isLoading, error } = useSearchListings(queryParams);
 
   // Extract listings and aggregations from the response
@@ -67,15 +65,15 @@ const Browse = () => {
   
   // Set default sort option to relevance if we have search filters
   useEffect(() => {
-    if (Object.keys(searchParams).some(key => 
-      searchParams[key] !== undefined && 
-      searchParams[key] !== null && 
-      searchParams[key] !== "" && 
-      searchParams[key] !== "all" && 
-      searchParams[key] !== "any")) {
+    if (Object.keys(params).some(key => 
+      params[key] !== undefined && 
+      params[key] !== null && 
+      params[key] !== "" && 
+      params[key] !== "all" && 
+      params[key] !== "any")) {
       setSortOption("relevance");
     }
-  }, [searchParams]);
+  }, [params]);
 
   // Sort listings based on selected option
   const sortedListings = [...listings].sort((a, b) => {
@@ -101,38 +99,17 @@ const Browse = () => {
     }
   });
 
+  // Handle form submission by updating the URL, which will trigger a data fetch
   const handleSearch = (newParams: any) => {
     // Merge current and new parameters
-    const mergedParams = { ...searchParams, ...newParams };
+    const mergedParams = { ...params, ...newParams };
     
-    // Convert to URL query string
-    const params = new URLSearchParams();
-    for (const key in mergedParams) {
-      // Only add parameters that have values and aren't default/empty values
-      if (
-        mergedParams[key] !== undefined && 
-        mergedParams[key] !== null && 
-        mergedParams[key] !== "" && 
-        mergedParams[key] !== "all" && 
-        mergedParams[key] !== "any" &&
-        // Special case for price range - only include if not default values
-        !(key === "minPrice" && mergedParams[key] === 100000) &&
-        !(key === "maxPrice" && mergedParams[key] === 1000000)
-      ) {
-        // Handle arrays like features
-        if (Array.isArray(mergedParams[key]) && mergedParams[key].length > 0) {
-          params.append(key, mergedParams[key].join(','));
-        } else {
-          params.append(key, mergedParams[key].toString());
-        }
-      }
-    }
+    // Clean the parameters to remove empty/default values
+    const cleanedParams = clean(mergedParams);
     
-    // Update URL without refreshing the page
-    window.history.pushState({}, "", `/browse?${params.toString()}`);
+    // Update URL with the new search parameters - this will trigger the useMemo hook
+    navigate(`/browse?${qs.stringify(cleanedParams)}`);
     
-    // Update search parameters
-    setSearchParams(mergedParams);
     // Reset to first page
     setCurrentPage(1);
   };
