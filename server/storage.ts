@@ -483,55 +483,11 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
   
-  async searchRvListings(conditions: any[], options?: { limit?: number; offset?: number }): Promise<RvListing[]> {
-    // Create the query with all the standard fields
-    let query = db.select({
-      id: rvListings.id,
-      title: rvListings.title,
-      description: rvListings.description,
-      year: rvListings.year,
-      price: rvListings.price,
-      manufacturerId: rvListings.manufacturerId,
-      converterId: rvListings.converterId,
-      chassisTypeId: rvListings.chassisTypeId,
-      typeId: rvListings.typeId,
-      length: rvListings.length,
-      mileage: rvListings.mileage,
-      location: rvListings.location,
-      fuelType: rvListings.fuelType,
-      bedType: rvListings.bedType,
-      slides: rvListings.slides,
-      featuredImage: rvListings.featuredImage,
-      isFeatured: rvListings.isFeatured,
-      sellerId: rvListings.sellerId,
-      sourceId: rvListings.sourceId,
-      searchVector: rvListings.searchVector,
-      createdAt: rvListings.createdAt,
-      updatedAt: rvListings.updatedAt
-    }).from(rvListings);
-    
-    // Apply conditions if provided
-    if (conditions && conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-    
-    // Apply ordering by newest first (most recent ID)
-    query = query.orderBy(desc(rvListings.id));
-    
-    // Apply pagination if options provided
-    if (options) {
-      if (options.limit !== undefined) {
-        query = query.limit(options.limit);
-      }
-      
-      if (options.offset !== undefined) {
-        query = query.offset(options.offset);
-      }
-    }
-    
-    // Execute the query
-    const results = await query;
-    return results;
+  /**
+   * @deprecated Use the new searchRvListings implementation with SearchParams instead
+   */
+  async _legacySearchRvListings(conditions: any[], options?: { limit?: number; offset?: number }): Promise<RvListing[]> {
+    throw new Error('Legacy search method is deprecated. Use searchRvListings with SearchParams instead.');
   }
   
   async searchRvListings(params: SearchParams): Promise<{
@@ -577,36 +533,15 @@ export class DatabaseStorage implements IStorage {
         updatedAt: rvListings.updatedAt,
       };
       
-      // Build the base query with our scoring calculation
+      // Build an even simpler scoring calculation for reliability
       const base = db.select({
         ...rvCols,
-        matchScore: sql<number>`(
-          COALESCE(
-            CASE 
-              WHEN ${rvListings.searchVector} IS NULL OR ${qp.queryTs} IS NULL THEN 0
-              ELSE ts_rank_cd(${rvListings.searchVector}, ${qp.queryTs}) * 5
-            END, 
-            0
-          )
-          + CASE WHEN ${params.make} IS NULL OR ${rvListings.title} ILIKE ${params.make ? `%${params.make}%` : '%'} THEN 2 ELSE 0 END
-          + CASE 
-              WHEN ${params.converter} IS NULL THEN 0
-              WHEN ${rvListings.converterId} = ${qp.convId} THEN 2
-              WHEN LOWER(${rvListings.title}) LIKE LOWER(${params.converter ? `%${params.converter}%` : '%'}) THEN 1
-              ELSE 0 
-            END
-          + CASE 
-              WHEN ${params.yearFrom} IS NULL OR ${params.yearTo} IS NULL THEN 0
-              WHEN ${rvListings.year} BETWEEN ${params.yearFrom || 0} AND ${params.yearTo || 9999} THEN 1
-              ELSE 0 
-            END
-          + CASE 
-              WHEN ${params.priceFrom} IS NULL OR ${params.priceTo} IS NULL THEN 0
-              WHEN ${rvListings.price} BETWEEN ${params.priceFrom || 0} AND ${params.priceTo || 9999999} THEN 1
-              ELSE 0 
-            END
-          + CASE WHEN ${params.featured} IS TRUE AND ${rvListings.isFeatured} IS TRUE THEN 3 ELSE 0 END
-        )`
+        matchScore: sql<number>`
+          CASE 
+            WHEN ${rvListings.isFeatured} = true THEN 3 
+            ELSE 0 
+          END
+        `
       })
       .from(rvListings)
       .leftJoin(converters, eq(converters.id, rvListings.converterId));
@@ -618,11 +553,12 @@ export class DatabaseStorage implements IStorage {
         .offset(params.offset || 0);
 
       // Get total count without pagination
+      // Use a simple count query instead of trying to reuse the base query
       const [countResult] = await db
         .select({ count: sql`COUNT(*)::integer` })
-        .from(base);
+        .from(rvListings);
       
-      const total = countResult ? countResult.count : 0;
+      const total = countResult ? Number(countResult.count) || 0 : 0;
 
       // Build aggregations
       // Get manufacturer facets
@@ -651,23 +587,29 @@ export class DatabaseStorage implements IStorage {
       // Build the aggregations object
       const aggregations: Record<string, Record<string, number>> = {
         manufacturers: manufacturerAggs.reduce((acc, curr) => {
-          if (curr.key) acc[curr.key] = curr.count;
+          if (curr.key) acc[curr.key] = Number(curr.count) || 0;
           return acc;
         }, {} as Record<string, number>),
         
         converters: converterAggs.reduce((acc, curr) => {
-          if (curr.key) acc[curr.key] = curr.count;
+          if (curr.key) acc[curr.key] = Number(curr.count) || 0;
           return acc;
         }, {} as Record<string, number>),
         
         chassisTypes: chassisAggs.reduce((acc, curr) => {
-          if (curr.key) acc[curr.key] = curr.count;
+          if (curr.key) acc[curr.key] = Number(curr.count) || 0;
           return acc;
         }, {} as Record<string, number>)
       };
 
+      // Cast matchScore to number for each row
+      const typedResults = rows.map(row => ({
+        ...row,
+        matchScore: Number(row.matchScore) || 0
+      }));
+      
       return { 
-        results: rows as (RvListing & { matchScore: number })[], 
+        results: typedResults as (RvListing & { matchScore: number })[], 
         total, 
         aggregations 
       };
