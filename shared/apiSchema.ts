@@ -3,46 +3,44 @@ import { RvListing } from "./schema";
 /**
  * Search parameters for the RV search endpoint
  */
-export type SearchParams = {
+export interface SearchParams {
   // Text search
   query?: string;
   
   // Entity filters
+  make?: string;
   manufacturer?: string;
   converter?: string;
   chassisType?: string;
   type?: string;
   
   // Year range
-  yearFrom?: number | string;
-  yearTo?: number | string;
+  yearFrom?: number;
+  yearTo?: number;
   
   // Price range
-  priceFrom?: number | string;
-  priceTo?: number | string;
+  priceFrom?: number;
+  priceTo?: number;
   
   // Mileage range
-  mileageFrom?: number | string;
-  mileageTo?: number | string;
+  mileageFrom?: number;
+  mileageTo?: number;
   
   // Length range
-  lengthFrom?: number | string;
-  lengthTo?: number | string;
+  lengthFrom?: number;
+  lengthTo?: number;
   
   // Features filters
   bedType?: string;
   fuelType?: string;
-  slides?: number | string;
+  slides?: number;
   
   // Boolean flags
   featured?: boolean;
   
   // Pagination
-  limit?: number | string;
-  offset?: number | string;
-  
-  // Sorting
-  sortBy?: 'newest' | 'price-asc' | 'price-desc';
+  limit?: number;
+  offset?: number;
 };
 
 /**
@@ -71,17 +69,18 @@ export interface Aggregations {
 }
 
 /**
- * RV Listing with match score
+ * RV Listing with match score, aliased to ListingWithScore for clarity
  */
 export interface ScoredRvListing extends RvListing {
-  score: number;
+  matchScore: number;
 }
+export type ListingWithScore = ScoredRvListing;
 
 /**
  * Complete search response structure
  */
 export interface SearchResponse {
-  listings: ScoredRvListing[];
-  totalCount: number;
-  aggregations: Aggregations;
+  total: number;
+  results: ListingWithScore[];
+  aggregations: Record<string, Record<string, number>>;
 }

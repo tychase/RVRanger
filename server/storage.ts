@@ -10,6 +10,7 @@ import {
   type Converter, type InsertConverter,
   type ChassisType, type InsertChassisType
 } from "@shared/schema";
+import { SearchParams } from "../shared/apiSchema";
 
 export interface IStorage {
   // User operations
@@ -68,8 +69,11 @@ export interface IStorage {
     featured?: boolean;
     searchTerm?: string;
   }): Promise<RvListing[]>;
-  searchRvListings(conditions: any[], options?: { limit?: number; offset?: number }): Promise<RvListing[]>;
-  searchRvListingsWithScoring(params: any, options?: { limit?: number; offset?: number }): Promise<(RvListing & { score: number })[]>;
+  searchRvListings(params: SearchParams): Promise<{
+    results: (RvListing & { matchScore: number })[];
+    total: number;
+    aggregations: Record<string, Record<string, number>>;
+  }>;
   getRvListing(id: number): Promise<RvListing | undefined>;
   getRvListingsByUser(userId: number): Promise<RvListing[]>;
   createRvListing(rvListing: InsertRvListing): Promise<RvListing>;
@@ -530,211 +534,168 @@ export class DatabaseStorage implements IStorage {
     return results;
   }
   
-  async searchRvListingsWithScoring(params: any, options?: { limit?: number; offset?: number }): Promise<(RvListing & { score: number })[]> {
-    const {
-      query: searchQuery,           // Full-text search query
-      manufacturer,    // Manufacturer name
-      converter,       // Converter company
-      chassisType,     // Chassis model
-      yearFrom,        // Min year
-      yearTo,          // Max year
-      priceFrom,       // Min price
-      priceTo,         // Maximum price
-      mileageFrom,     // Min mileage
-      mileageTo,       // Max mileage
-      slides,          // Number of slides
-      features,        // Array of features
-      featured         // Featured listings
-    } = params;
-    
-    // Create a drizzle-style query builder for our filters
-    let query = db.select().from(rvListings);
-    
-    // Start building conditions
-    const conditions = [];
-    
-    // For converter, we'll search based on converter ID or name
-    if (converter) {
-      console.log(`[Search] Handling converter: ${converter}`);
+  async searchRvListings(params: SearchParams): Promise<{
+    results: (RvListing & { matchScore: number })[];
+    total: number;
+    aggregations: Record<string, Record<string, number>>;
+  }> {
+    try {
+      console.log("Search params:", JSON.stringify(params));
       
-      // First, look up the converter by name/id to get the actual ID
-      let matchingConverterId: number | null = null;
+      // Create query parameters with type safety
+      const qp = { 
+        ...params,
+        // Convert query to a tsquery if present
+        queryTs: params.query ? sql`plainto_tsquery('english', ${params.query})` : null,
+        // Get converter ID if needed
+        convId: params.converter ? await this.getConverterIdByName(params.converter) : null
+      };
       
-      try {
-        // First check if it's a direct numeric ID
-        const converterId = parseInt(converter);
-        if (!isNaN(converterId)) {
-          console.log(`[Search] Using direct converter ID: ${converterId}`);
-          matchingConverterId = converterId;
-        } else {
-          // It's a string like "marathon", look it up by name
-          const converters = await this.getAllConverters();
-          console.log(`[Search] Looking up converter with name/slug: ${converter}`);
-          
-          // Try to find a matching converter by name (case insensitive)
-          const matchingConverter = converters.find(c => 
-            c.name.toLowerCase() === converter.toLowerCase() || 
-            c.name.toLowerCase().replace(/\s+/g, '_') === converter.toLowerCase() ||
-            c.name.toLowerCase().replace(/\s+/g, '-') === converter.toLowerCase()
-          );
-          
-          if (matchingConverter) {
-            console.log(`[Search] Found matching converter: ${matchingConverter.name} (ID: ${matchingConverter.id})`);
-            matchingConverterId = matchingConverter.id;
-          }
-        }
-        
-        // Now use the converter ID in our query
-        if (matchingConverterId) {
-          conditions.push(eq(rvListings.converterId, matchingConverterId));
-        } else {
-          // Fallback to title search if no matching converter found
-          console.log(`[Search] No matching converter found, using title search for: ${converter}`);
-          conditions.push(ilike(rvListings.title, `%${converter}%`));
-        }
-      } catch (e) {
-        console.log(`[Search] Error processing converter: ${e}`);
-        // If any error, fall back to title search
-        conditions.push(ilike(rvListings.title, `%${converter}%`));
-      }
-    }
-    
-    // For manufacturer
-    if (manufacturer) {
-      try {
-        const manufacturerId = parseInt(manufacturer);
-        if (!isNaN(manufacturerId)) {
-          conditions.push(eq(rvListings.manufacturerId, manufacturerId));
-        } else {
-          // By name - search in title or description
-          conditions.push(
-            or(
-              ilike(rvListings.title, `%${manufacturer}%`),
-              ilike(rvListings.description, `%${manufacturer}%`)
-            )
-          );
-        }
-      } catch (e) {
-        conditions.push(
-          or(
-            ilike(rvListings.title, `%${manufacturer}%`),
-            ilike(rvListings.description, `%${manufacturer}%`)
+      // Define all columns we want to select plus our match score calculation
+      const rvCols = {
+        id: rvListings.id,
+        title: rvListings.title,
+        description: rvListings.description,
+        year: rvListings.year,
+        price: rvListings.price,
+        manufacturerId: rvListings.manufacturerId,
+        converterId: rvListings.converterId,
+        chassisTypeId: rvListings.chassisTypeId,
+        typeId: rvListings.typeId,
+        length: rvListings.length,
+        mileage: rvListings.mileage,
+        location: rvListings.location,
+        fuelType: rvListings.fuelType,
+        bedType: rvListings.bedType,
+        slides: rvListings.slides,
+        featuredImage: rvListings.featuredImage,
+        isFeatured: rvListings.isFeatured,
+        sellerId: rvListings.sellerId,
+        sourceId: rvListings.sourceId,
+        searchVector: rvListings.searchVector,
+        createdAt: rvListings.createdAt,
+        updatedAt: rvListings.updatedAt,
+      };
+      
+      // Build the base query with our scoring calculation
+      const base = db.select({
+        ...rvCols,
+        matchScore: sql<number>`(
+          COALESCE(
+            CASE 
+              WHEN ${rvListings.searchVector} IS NULL OR ${qp.queryTs} IS NULL THEN 0
+              ELSE ts_rank_cd(${rvListings.searchVector}, ${qp.queryTs}) * 5
+            END, 
+            0
           )
-        );
-      }
-    }
+          + CASE WHEN ${params.make} IS NULL OR ${rvListings.title} ILIKE ${params.make ? `%${params.make}%` : '%'} THEN 2 ELSE 0 END
+          + CASE 
+              WHEN ${params.converter} IS NULL THEN 0
+              WHEN ${rvListings.converterId} = ${qp.convId} THEN 2
+              WHEN LOWER(${rvListings.title}) LIKE LOWER(${params.converter ? `%${params.converter}%` : '%'}) THEN 1
+              ELSE 0 
+            END
+          + CASE 
+              WHEN ${params.yearFrom} IS NULL OR ${params.yearTo} IS NULL THEN 0
+              WHEN ${rvListings.year} BETWEEN ${params.yearFrom || 0} AND ${params.yearTo || 9999} THEN 1
+              ELSE 0 
+            END
+          + CASE 
+              WHEN ${params.priceFrom} IS NULL OR ${params.priceTo} IS NULL THEN 0
+              WHEN ${rvListings.price} BETWEEN ${params.priceFrom || 0} AND ${params.priceTo || 9999999} THEN 1
+              ELSE 0 
+            END
+          + CASE WHEN ${params.featured} IS TRUE AND ${rvListings.isFeatured} IS TRUE THEN 3 ELSE 0 END
+        )`
+      })
+      .from(rvListings)
+      .leftJoin(converters, eq(converters.id, rvListings.converterId));
 
-    // For chassis type
-    if (chassisType && chassisType !== 'all') {
-      try {
-        const chassisTypeId = parseInt(chassisType);
-        if (!isNaN(chassisTypeId)) {
-          conditions.push(eq(rvListings.chassisTypeId, chassisTypeId));
-        } else {
-          // Search by chassis name in the title or description
-          conditions.push(
-            or(
-              ilike(rvListings.title, `%${chassisType}%`),
-              ilike(rvListings.description, `%${chassisType}%`)
-            )
-          );
-        }
-      } catch (e) {
-        conditions.push(
-          or(
-            ilike(rvListings.title, `%${chassisType}%`),
-            ilike(rvListings.description, `%${chassisType}%`)
-          )
-        );
+      // Apply pagination to get results
+      const rows = await base
+        .orderBy(desc(sql`matchScore`))
+        .limit(params.limit || 20)
+        .offset(params.offset || 0);
+
+      // Get total count without pagination
+      const [countResult] = await db
+        .select({ count: sql`COUNT(*)::integer` })
+        .from(base);
+      
+      const total = countResult ? countResult.count : 0;
+
+      // Build aggregations
+      // Get manufacturer facets
+      const manufacturerAggs = await db
+        .select({ key: manufacturers.name, count: sql`COUNT(*)::integer` })
+        .from(rvListings)
+        .leftJoin(manufacturers, eq(rvListings.manufacturerId, manufacturers.id))
+        .groupBy(manufacturers.name);
+
+      // Get converter facets  
+      const converterAggs = await db
+        .select({ key: converters.name, count: sql`COUNT(*)::integer` })
+        .from(rvListings)
+        .leftJoin(converters, eq(rvListings.converterId, converters.id))
+        .where(sql`${converters.name} IS NOT NULL`)
+        .groupBy(converters.name);
+
+      // Get chassis type facets
+      const chassisAggs = await db
+        .select({ key: chassisTypes.name, count: sql`COUNT(*)::integer` })
+        .from(rvListings)
+        .leftJoin(chassisTypes, eq(rvListings.chassisTypeId, chassisTypes.id))
+        .where(sql`${chassisTypes.name} IS NOT NULL`)
+        .groupBy(chassisTypes.name);
+
+      // Build the aggregations object
+      const aggregations: Record<string, Record<string, number>> = {
+        manufacturers: manufacturerAggs.reduce((acc, curr) => {
+          if (curr.key) acc[curr.key] = curr.count;
+          return acc;
+        }, {} as Record<string, number>),
+        
+        converters: converterAggs.reduce((acc, curr) => {
+          if (curr.key) acc[curr.key] = curr.count;
+          return acc;
+        }, {} as Record<string, number>),
+        
+        chassisTypes: chassisAggs.reduce((acc, curr) => {
+          if (curr.key) acc[curr.key] = curr.count;
+          return acc;
+        }, {} as Record<string, number>)
+      };
+
+      return { 
+        results: rows as (RvListing & { matchScore: number })[], 
+        total, 
+        aggregations 
+      };
+      
+    } catch (error) {
+      console.error("Error in searchRvListings:", error);
+      throw error;
+    }
+  }
+  
+  // Helper method to get converter ID by name
+  private async getConverterIdByName(converterName: string): Promise<number | null> {
+    if (!converterName) return null;
+    
+    try {
+      // Check if converter name is already an ID
+      const converterId = parseInt(converterName);
+      if (!isNaN(converterId)) {
+        return converterId;
       }
+      
+      // Look up by name (case insensitive)
+      const converter = await this.getConverterByName(converterName);
+      return converter ? converter.id : null;
+    } catch (e) {
+      console.error(`Error looking up converter: ${e}`);
+      return null;
     }
-    
-    // Year range
-    if (yearFrom) {
-      conditions.push(gte(rvListings.year, Number(yearFrom)));
-    }
-    
-    if (yearTo) {
-      conditions.push(lte(rvListings.year, Number(yearTo)));
-    }
-    
-    // Price range
-    if (priceFrom) {
-      conditions.push(gte(rvListings.price, Number(priceFrom)));
-    }
-    
-    if (priceTo) {
-      conditions.push(lte(rvListings.price, Number(priceTo)));
-    }
-    
-    // Mileage range
-    if (mileageFrom) {
-      conditions.push(gte(rvListings.mileage, Number(mileageFrom)));
-    }
-    
-    if (mileageTo) {
-      conditions.push(lte(rvListings.mileage, Number(mileageTo)));
-    }
-    
-    // Slides - exact match
-    if (slides) {
-      conditions.push(eq(rvListings.slides, Number(slides)));
-    }
-    
-    // Features - for now, we'll search for features in description
-    if (features && Array.isArray(features) && features.length > 0) {
-      const featureConditions = features.map(feature => 
-        ilike(rvListings.description, `%${feature}%`)
-      );
-      conditions.push(or(...featureConditions));
-    } else if (features && typeof features === 'string') {
-      // Handle single feature as string
-      conditions.push(ilike(rvListings.description, `%${features}%`));
-    }
-    
-    // Featured listings
-    if (featured === true || featured === 'true') {
-      conditions.push(eq(rvListings.isFeatured, true));
-    }
-    
-    // Full-text search query
-    if (searchQuery) {
-      conditions.push(
-        or(
-          ilike(rvListings.title, `%${searchQuery}%`),
-          ilike(rvListings.description, `%${searchQuery}%`)
-        )
-      );
-    }
-    
-    // Apply all conditions
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-    
-    // Add ordering - default is newest first (by ID)
-    query = query.orderBy(desc(rvListings.id));
-    
-    // Add pagination
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-    
-    // Execute the query
-    console.log("[Search Query] Conditions applied:", conditions.length);
-    const results = await query;
-    
-    // Add a score field to each result
-    return results.map(row => ({
-      ...row,
-      score: 1 // Default score
-    }));
-    
-    /* Unreachable code - removed */
   }
 
   // RV Images operations
