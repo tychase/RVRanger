@@ -61,7 +61,9 @@ const Browse = () => {
   const { data, isLoading, error } = useSearchListings(queryParams);
 
   // Extract listings and aggregations from the response
-  const { listings = [], totalCount = 0, aggregations = {} } = data || {};
+  const { results, listings = [], totalCount = 0, aggregations = {} } = data || {};
+  // Handle both formats - the old API returned just listings, the new one returns results
+  const rvListings = results || listings || [];
   
   // Set default sort option to relevance if we have search filters
   useEffect(() => {
@@ -76,7 +78,7 @@ const Browse = () => {
   }, [params]);
 
   // Sort listings based on selected option
-  const sortedListings = [...listings].sort((a, b) => {
+  const sortedListings = [...rvListings].sort((a, b) => {
     switch (sortOption) {
       case "relevance":
         // Sort by score from the new API
