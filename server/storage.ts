@@ -631,28 +631,28 @@ export class DatabaseStorage implements IStorage {
       }
       
       try {
-        // Convert to a simple/safe SQL query using parameterized queries
-        let finalQuery = sql`
-          SELECT 
-            l.*,
-            0 AS score
-          FROM rv_listings l
-          ORDER BY l.created_at DESC
-          LIMIT 20
-        `;
+        // Use parameterized queries with proper SQL construction
+        // Convert scoreSQL to a prepared statement with placeholders
+        const finalQuery = sql.raw(scoreSQL);
         
-        console.log("Executing simplified SQL query to prevent errors");
+        console.log("Executing scored search query");
         
-        // Execute using drizzle
-        const result = await db.execute(finalQuery);
+        // Execute using drizzle with parameters
+        const result = await db.execute(finalQuery, scoreParams);
         
         // Handle the database query result
         if (result && Array.isArray(result)) {
-          // If result is already an array, add scores to each item
-          return result.map((item: any) => ({ ...item, score: 1 })) as (RvListing & { score: number })[];
+          // If result is already an array, use the score from the query
+          return result.map((item: any) => ({ 
+            ...item, 
+            score: item.score !== undefined ? item.score : 1 
+          })) as (RvListing & { score: number })[];
         } else if (result && result.rows && Array.isArray(result.rows)) {
           // If result has a rows property that's an array, use that
-          return result.rows.map((item: any) => ({ ...item, score: 1 })) as (RvListing & { score: number })[];
+          return result.rows.map((item: any) => ({ 
+            ...item, 
+            score: item.score !== undefined ? item.score : 1 
+          })) as (RvListing & { score: number })[];
         } else {
           // Fallback to empty array if no results
           console.log("No results found or unexpected result format:", result);
