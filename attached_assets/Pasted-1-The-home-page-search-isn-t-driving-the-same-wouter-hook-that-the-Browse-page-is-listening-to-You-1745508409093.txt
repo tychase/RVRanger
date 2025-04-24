@@ -1,0 +1,66 @@
+1️⃣ The home-page search isn’t driving the same wouter hook that the Browse page is listening to
+Your <SearchBar> on the home page was still using React-Router’s useNavigate (or a hard window.location.href), but your Browse page is using Wouter’s useLocation/navigate.
+
+Symptom: you hit “Search” on Home, you see a redirect to /browse?converter=marathon, but the Browse component’s Wouter listener never picks up that change, so it falls back to its own default params (and so shows 0).
+
+Fix: in your Home search component, switch to Wouter’s useLocation so it fires the same navigation Wouter is watching.
+
+diff
+Copy
+Edit
+// Home.tsx (or SearchBar.tsx)
+- import { useNavigate } from 'react-router-dom';
++ import { useLocation } from 'wouter';
+
+const [, setLocation] = useLocation();
+
+const onSubmit = (formData) => {
+  const qs = new URLSearchParams(clean(formData)).toString();
+- setNavigate(`/browse?${qs}`);
++ setLocation(`/browse?${qs}`);
+};
+2️⃣ Your converter fallback logic never actually got wired into the SQL, so any listing with a null converterId (i.e. the ones you scraped before you back-filled the FK) still scores 0—and because you’re sorting by relevance only, all of your real “Marathon” coaches got pushed to the bottom and off the first page, effectively looking like “zero results.”
+You need a two-tier scoring clause:
+
++2 points when the FK matches the converter
+
++1 point when the title contains the converter name (fallback)
+
+Edit your searchRvListingsWithScoring in server/storage.ts to replace the existing converter block with something like:
+
+ts
+Copy
+Edit
+// Replace the old EXISTS-by-ID snippet...
+${converter ? sql`
++ CASE
+    WHEN EXISTS (
+      SELECT 1 FROM ${converters} c
+      WHERE c.id = ${rvListings.converterId}
+        AND LOWER(c.name) = LOWER(${converter})
+    ) THEN 2
+    WHEN LOWER(${rvListings.title}) LIKE '%'||LOWER(${converter})||'%' THEN 1
+    ELSE 0
+  END
+` : sql``}
+Now:
+
+Listings with a real converterId match get +2 and float to the top.
+
+Listings whose title contains “Marathon” (even with converterId = NULL) get +1 and will still appear near the top.
+
+After you’ve applied those two fixes:
+Hit the home page, choose “Marathon” in the dropdown, and submit → Browse page should immediately show coaches (Wouter now sees the query).
+
+Marathon coaches (either via FK or title match) land at the top of the list thanks to your new scoring.
+
+Every other coach still remains in the results below (soft-filtering).
+
+That combination will give you an experience identical to the working search on the Buy page—and the home-page search will now “just work.”
+
+
+
+
+
+
+
