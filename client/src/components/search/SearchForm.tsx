@@ -92,9 +92,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, i
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Search form submitted");
     
     // Map our form fields to the API search parameters
-    onSearch?.({ 
+    const searchParams = {
       converter: converter !== 'all' ? converter : undefined, 
       chassisType: chassis !== 'all' ? chassis : undefined, 
       slides: slides !== 'all' ? parseInt(slides) : undefined,
@@ -102,7 +103,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, i
       priceTo: priceRange[1] !== MAX_PRICE ? priceRange[1] : undefined,
       // We could map features to a structured query, but for now we'll just use them as-is
       features: features.length > 0 ? features : undefined
-    });
+    };
+    
+    console.log("Search params:", searchParams);
+    onSearch?.(searchParams);
   };
 
   const formatPrice = (value: number) => {
