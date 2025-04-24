@@ -99,6 +99,13 @@ const Browse = () => {
     });
   };
 
+  // Debug log for queryParams
+  useEffect(() => {
+    if (queryParams) {
+      console.log("Search params ready:", queryParams);
+    }
+  }, [queryParams]);
+
   // Fetch RV listings with our search API
   const { data, isLoading, error } = useSearchListings(queryParams);
 
