@@ -533,22 +533,18 @@ export class DatabaseStorage implements IStorage {
         updatedAt: rvListings.updatedAt,
       };
       
-      // Build an even simpler scoring calculation for reliability
+      // Don't include a matchScore field in SQL to avoid syntax issues
+      // We'll add the score entirely in JavaScript after getting the results
       const base = db.select({
-        ...rvCols,
-        matchScore: sql<number>`
-          CASE 
-            WHEN ${rvListings.isFeatured} = true THEN 3 
-            ELSE 0 
-          END
-        `
+        ...rvCols
       })
       .from(rvListings)
       .leftJoin(converters, eq(converters.id, rvListings.converterId));
 
-      // Apply pagination to get results
+      // Apply pagination to get results - don't sort by matchScore in SQL
+      // We'll handle sorting in JavaScript instead
       const rows = await base
-        .orderBy(desc(sql`matchScore`))
+        .orderBy(desc(rvListings.id)) // Order by newest first
         .limit(params.limit || 20)
         .offset(params.offset || 0);
 
@@ -602,14 +598,61 @@ export class DatabaseStorage implements IStorage {
         }, {} as Record<string, number>)
       };
 
-      // Cast matchScore to number for each row
-      const typedResults = rows.map(row => ({
-        ...row,
-        matchScore: Number(row.matchScore) || 0
-      }));
+      // Implement scoring logic in JavaScript instead of SQL for better reliability
+      const scoredResults = rows.map(row => {
+        // Base score starts at 1
+        let score = 1;
+        
+        // Add score for featured listings
+        if (row.isFeatured) {
+          score += 5;
+        }
+        
+        // Add score for text matches if query is present
+        if (params.query && row.title) {
+          const lowerTitle = row.title.toLowerCase();
+          const lowerQuery = params.query.toLowerCase();
+          
+          if (lowerTitle.includes(lowerQuery)) {
+            score += 3;
+          }
+        }
+        
+        // Add score for matching make/manufacturer
+        if (params.manufacturer && row.title) {
+          const lowerTitle = row.title.toLowerCase();
+          const lowerManufacturer = params.manufacturer.toLowerCase();
+          
+          if (lowerTitle.includes(lowerManufacturer)) {
+            score += 2;
+          }
+        }
+        
+        // Add score for matching converter
+        if (params.converter && row.converterId && qp.convId) {
+          if (row.converterId === qp.convId) {
+            score += 2;
+          }
+        }
+        
+        // Add score for matching year range
+        if (params.yearFrom && params.yearTo && row.year) {
+          if (row.year >= params.yearFrom && row.year <= params.yearTo) {
+            score += 1;
+          }
+        }
+        
+        return {
+          ...row,
+          matchScore: score
+        };
+      });
+      
+      // Sort by score (highest first)
+      scoredResults.sort((a, b) => b.matchScore - a.matchScore);
       
       return { 
-        results: typedResults as (RvListing & { matchScore: number })[], 
+        results: scoredResults as (RvListing & { matchScore: number })[], 
         total, 
         aggregations 
       };
