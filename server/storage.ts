@@ -646,10 +646,18 @@ export class DatabaseStorage implements IStorage {
         // Execute using drizzle
         const result = await db.execute(finalQuery);
         
-        // Add a score property to each result
-        return result.rows ? 
-          result.rows.map((item: any) => ({ ...item, score: 1 })) as (RvListing & { score: number })[] : 
-          [] as (RvListing & { score: number })[];
+        // Handle the database query result
+        if (result && Array.isArray(result)) {
+          // If result is already an array, add scores to each item
+          return result.map((item: any) => ({ ...item, score: 1 })) as (RvListing & { score: number })[];
+        } else if (result && result.rows && Array.isArray(result.rows)) {
+          // If result has a rows property that's an array, use that
+          return result.rows.map((item: any) => ({ ...item, score: 1 })) as (RvListing & { score: number })[];
+        } else {
+          // Fallback to empty array if no results
+          console.log("No results found or unexpected result format:", result);
+          return [] as (RvListing & { score: number })[];
+        }
       } catch (innerError) {
         console.error("Inner error:", innerError);
         return []
