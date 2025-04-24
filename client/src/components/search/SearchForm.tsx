@@ -1,13 +1,11 @@
 // client/src/components/search/SearchForm.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useLocation } from "wouter";
-import qs from "query-string";
 
 const converters = [
   { id: "marathon", name: "Marathon" },
@@ -31,58 +29,21 @@ const featureOptions = [
 ];
 
 // Price range constants in USD
-const MIN_PRICE = 50000;
-const MAX_PRICE = 10000000;
-const STEP_SIZE = 100000;
+const MIN_PRICE = 100000;
+const MAX_PRICE = 1000000;
+const STEP_SIZE = 50000;
 
 interface SearchFormProps {
   onSearch?: (params: any) => void;
   simplified?: boolean;
-  initialValues?: Record<string, any>;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, initialValues = {} }) => {
-  const [location] = useLocation();
-  const [converter, setConverter] = React.useState(initialValues.converter || "all");
-  const [chassis, setChassis] = React.useState(initialValues.chassisType || "all");
-  const [slides, setSlides] = React.useState(initialValues.slides ? String(initialValues.slides) : "all");
-  const [features, setFeatures] = React.useState<string[]>(initialValues.features ? 
-    Array.isArray(initialValues.features) ? initialValues.features : [initialValues.features] 
-    : []);
-  const [priceRange, setPriceRange] = React.useState([
-    initialValues.priceFrom || MIN_PRICE, 
-    initialValues.priceTo || MAX_PRICE
-  ]);
-  
-  // Initialize form with URL parameters
-  useEffect(() => {
-    // Get URL parameters
-    const urlSearch = location.includes('?') ? location.split('?')[1] : '';
-    const params = qs.parse(urlSearch);
-    
-    // Update form state based on URL parameters
-    if (params.converter) setConverter(params.converter as string);
-    if (params.chassisType) setChassis(params.chassisType as string);
-    if (params.slides) setSlides(String(params.slides));
-    
-    if (params.priceFrom || params.priceTo) {
-      setPriceRange([
-        params.priceFrom ? parseInt(params.priceFrom as string, 10) : MIN_PRICE,
-        params.priceTo ? parseInt(params.priceTo as string, 10) : MAX_PRICE
-      ]);
-    }
-    
-    if (params.features) {
-      if (Array.isArray(params.features)) {
-        const validFeatures = params.features
-          .filter((f): f is string => typeof f === 'string')
-          .filter(f => f.length > 0);
-        setFeatures(validFeatures);
-      } else if (typeof params.features === 'string') {
-        setFeatures([params.features]);
-      }
-    }
-  }, [location]);
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false }) => {
+  const [converter, setConverter] = React.useState("all");
+  const [chassis, setChassis] = React.useState("all");
+  const [slides, setSlides] = React.useState("all");
+  const [features, setFeatures] = React.useState<string[]>([]);
+  const [priceRange, setPriceRange] = React.useState([MIN_PRICE, MAX_PRICE]);
 
   const toggleFeature = (feat: string) => {
     setFeatures(prev => (prev.includes(feat) ? prev.filter(f => f !== feat) : [...prev, feat]));
