@@ -696,7 +696,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Execute the query
-    console.log("[Search Query]", JSON.stringify(conditions, null, 2));
+    console.log("[Search Query] Conditions applied:", conditions.length);
     const results = await query;
     
     // Add a score field to each result

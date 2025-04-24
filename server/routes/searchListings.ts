@@ -155,8 +155,13 @@ export function setupSearchEndpoint(app: Application, storage: IStorage) {
 
       res.json(response);
     } catch (error) {
-      console.error("[Search Error]", error);
-      res.status(500).json({ error: "Failed to search listings" });
+      console.error("[Search Error] Details:", error);
+      console.error("[Search Params]", req.query);
+      res.status(500).json({ 
+        error: "Failed to search listings", 
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   });
 }
