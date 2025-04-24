@@ -540,33 +540,156 @@ export class DatabaseStorage implements IStorage {
       yearTo,          // Max year
       priceFrom,       // Min price
       priceTo,         // Maximum price
+      mileageFrom,     // Min mileage
+      mileageTo,       // Max mileage
       slides,          // Number of slides
+      features,        // Array of features
       featured         // Featured listings
     } = params;
     
     // Simple approach: use raw SQL for the entire query
     let whereConditions = [];
+    let paramValues: any[] = [];
+    let paramCount = 1;
     
-    // For converter, we'll search the title
+    // For converter, we'll search based on converter ID or title
     if (converter) {
-      whereConditions.push(`LOWER(title) LIKE LOWER('%${converter}%')`);
+      try {
+        const converterId = parseInt(converter);
+        if (!isNaN(converterId)) {
+          // If it's a numeric ID, use exact match on converter_id
+          whereConditions.push(`converter_id = $${paramCount}`);
+          paramValues.push(converterId);
+          paramCount++;
+        } else {
+          // Otherwise, search by name in the title
+          whereConditions.push(`LOWER(title) LIKE LOWER($${paramCount})`);
+          paramValues.push(`%${converter}%`);
+          paramCount++;
+        }
+      } catch (e) {
+        // If not a number, search by name in the title
+        whereConditions.push(`LOWER(title) LIKE LOWER($${paramCount})`);
+        paramValues.push(`%${converter}%`);
+        paramCount++;
+      }
     }
     
-    // Add other filters if provided
-    if (yearFrom && yearTo) {
-      whereConditions.push(`year BETWEEN ${Number(yearFrom)} AND ${Number(yearTo)}`);
+    // For manufacturer
+    if (manufacturer) {
+      try {
+        const manufacturerId = parseInt(manufacturer);
+        if (!isNaN(manufacturerId)) {
+          whereConditions.push(`manufacturer_id = $${paramCount}`);
+          paramValues.push(manufacturerId);
+          paramCount++;
+        } else {
+          // By name - we would need a join to manufacturers table
+          // For now, we can search in title or description
+          whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
+          paramValues.push(`%${manufacturer}%`);
+          paramCount++;
+        }
+      } catch (e) {
+        whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
+        paramValues.push(`%${manufacturer}%`);
+        paramCount++;
+      }
+    }
+
+    // For chassis type
+    if (chassisType && chassisType !== 'all') {
+      try {
+        const chassisTypeId = parseInt(chassisType);
+        if (!isNaN(chassisTypeId)) {
+          whereConditions.push(`chassis_type_id = $${paramCount}`);
+          paramValues.push(chassisTypeId);
+          paramCount++;
+        } else {
+          // Search by chassis name in the title or description
+          whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
+          paramValues.push(`%${chassisType}%`);
+          paramCount++;
+        }
+      } catch (e) {
+        whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
+        paramValues.push(`%${chassisType}%`);
+        paramCount++;
+      }
     }
     
-    if (priceFrom && priceTo) {
-      whereConditions.push(`price BETWEEN ${Number(priceFrom)} AND ${Number(priceTo)}`);
+    // Year range
+    if (yearFrom) {
+      whereConditions.push(`year >= $${paramCount}`);
+      paramValues.push(Number(yearFrom));
+      paramCount++;
     }
     
+    if (yearTo) {
+      whereConditions.push(`year <= $${paramCount}`);
+      paramValues.push(Number(yearTo));
+      paramCount++;
+    }
+    
+    // Price range
+    if (priceFrom) {
+      whereConditions.push(`price >= $${paramCount}`);
+      paramValues.push(Number(priceFrom));
+      paramCount++;
+    }
+    
+    if (priceTo) {
+      whereConditions.push(`price <= $${paramCount}`);
+      paramValues.push(Number(priceTo));
+      paramCount++;
+    }
+    
+    // Mileage range
+    if (mileageFrom) {
+      whereConditions.push(`mileage >= $${paramCount}`);
+      paramValues.push(Number(mileageFrom));
+      paramCount++;
+    }
+    
+    if (mileageTo) {
+      whereConditions.push(`mileage <= $${paramCount}`);
+      paramValues.push(Number(mileageTo));
+      paramCount++;
+    }
+    
+    // Slides - exact match
     if (slides) {
-      whereConditions.push(`slides = ${Number(slides)}`);
+      whereConditions.push(`slides = $${paramCount}`);
+      paramValues.push(Number(slides));
+      paramCount++;
     }
     
-    if (featured === 'true') {
+    // Features - for now, we'll search for features in description
+    if (features && Array.isArray(features) && features.length > 0) {
+      const featureConditions = features.map(feature => {
+        const pos = paramCount++;
+        paramValues.push(`%${feature}%`);
+        return `LOWER(description) LIKE LOWER($${pos})`;
+      });
+      
+      whereConditions.push(`(${featureConditions.join(" OR ")})`);
+    } else if (features && typeof features === 'string') {
+      // Handle single feature as string
+      whereConditions.push(`LOWER(description) LIKE LOWER($${paramCount})`);
+      paramValues.push(`%${features}%`);
+      paramCount++;
+    }
+    
+    // Featured listings
+    if (featured === true || featured === 'true') {
       whereConditions.push(`is_featured = true`);
+    }
+    
+    // Full-text search query - this would use search vector in a real implementation
+    if (searchQuery) {
+      whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
+      paramValues.push(`%${searchQuery}%`);
+      paramCount++;
     }
     
     // Build the WHERE clause
@@ -575,22 +698,44 @@ export class DatabaseStorage implements IStorage {
       : "";
     
     // Add LIMIT and OFFSET
-    const limitClause = options?.limit ? `LIMIT ${options.limit}` : "";
-    const offsetClause = options?.offset ? `OFFSET ${options.offset}` : "";
+    const limitClause = options?.limit ? `LIMIT $${paramCount}` : "";
+    if (options?.limit) {
+      paramValues.push(options.limit);
+      paramCount++;
+    }
     
-    // Build the complete SQL query with custom sorting for converter
+    const offsetClause = options?.offset ? `OFFSET $${paramCount}` : "";
+    if (options?.offset) {
+      paramValues.push(options.offset);
+      paramCount++;
+    }
+    
+    // Build the complete SQL query with custom sorting
     let orderByClause = "ORDER BY id DESC";
     
-    // If converter is specified, we want to prioritize listings with converter in the title
+    // If converter is specified, prioritize listings with converter in the title
     if (converter) {
       orderByClause = `ORDER BY 
         CASE 
-          WHEN LOWER(title) LIKE LOWER('%${converter}%') THEN 0  
+          WHEN LOWER(title) LIKE LOWER($${paramCount}) THEN 0
           ELSE 1 
         END,
         id DESC`;
+      paramValues.push(`%${converter}%`);
+      paramCount++;
     }
     
+    // Log the SQL and parameters for debugging
+    console.log("[Search Query]", `
+      SELECT *, 1 as score
+      FROM rv_listings
+      ${whereClause}
+      ${orderByClause}
+      ${limitClause}
+      ${offsetClause}
+    `, paramValues);
+    
+    // Execute as a parameterized query for security
     const sqlQuery = `
       SELECT *, 1 as score
       FROM rv_listings
@@ -600,8 +745,8 @@ export class DatabaseStorage implements IStorage {
       ${offsetClause}
     `;
     
-    // Execute as a raw query
-    const results = await db.execute(sql.raw(sqlQuery));
+    // Execute as a raw query with parameters
+    const results = await db.execute(sql.raw(sqlQuery, ...paramValues));
     
     // Convert to proper typed results
     return results.rows.map((row: any) => ({
