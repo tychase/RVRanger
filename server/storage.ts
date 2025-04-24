@@ -624,9 +624,9 @@ export class DatabaseStorage implements IStorage {
     // For now we don't have any hard filters, all are converted to scoring
     
     // Order by score descending, then by price for equal scores
-    // Use the same score expression in ORDER BY
+    // Reference the score column directly from the select list
     scoreQuery = scoreQuery.orderBy(
-      desc(scoreExpression), 
+      desc(sql`score`), 
       desc(rvListings.price)
     );
     
