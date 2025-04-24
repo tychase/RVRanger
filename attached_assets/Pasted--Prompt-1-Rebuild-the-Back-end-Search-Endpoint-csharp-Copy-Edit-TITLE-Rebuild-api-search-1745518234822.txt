@@ -1,0 +1,206 @@
+🔧 Prompt #1 — Rebuild the Back-end Search Endpoint
+csharp
+Copy
+Edit
+### TITLE  
+Rebuild /api/search-listings endpoint from scratch
+
+### CONTEXT  
+Repo: `github.com/tychase/RVRanger`  
+Stack: FastAPI + SQLModel (Postgres)  
+
+### GOAL  
+Replace the existing search/score implementation with a clean, single-SELECT version that returns **all** listings, computes a “matchScore,” and sorts by it.
+
+### TASKS  
+
+1. **Remove** old search code  
+   - Delete or rename `searchRvListingsWithScoring` in `server/storage.ts`.  
+   - Remove its import/usages in `server/routes/searchListings.ts`.
+
+2. **Define clean query params**  
+   - In `shared/apiSchema.ts`, declare:
+     ```ts
+     export interface SearchParams {
+       query?: string
+       make?: string
+       converter?: string
+       yearFrom?: number
+       yearTo?: number
+       priceFrom?: number
+       priceTo?: number
+       // … other filters …
+       limit?: number
+       offset?: number
+     }
+     export interface SearchResponse {
+       total: number
+       results: ListingWithScore[]
+       aggregations: Record<string, Record<string, number>>
+     }
+     ```
+   - Generate matching Pydantic models in `server/routes/searchListings.ts`.
+
+3. **Single-SELECT scoring**  
+   In `server/storage.ts`, implement `async searchRvListings(params: SearchParams)`:
+   ```ts
+   const qp = { ...params, queryTs: params.query ? plainto_tsquery('english', params.query) : null };
+   const base = db
+     .select({
+       ...rvCols,
+       matchScore: sql<number>`(
+         COALESCE(ts_rank_cd(rv.searchVector, ${sql`qp.queryTs`}),0) * 5
+         + CASE WHEN ${rv.make} ILIKE ${qp.make} THEN 2 ELSE 0 END
+         + CASE WHEN ${rv.converterId} = ${convId} THEN 2
+                 WHEN LOWER(${rv.title}) LIKE '%'||LOWER(${qp.converter})||'%' THEN 1
+                 ELSE 0 END
+         + CASE WHEN rv.year BETWEEN ${qp.yearFrom} AND ${qp.yearTo} THEN 1 ELSE 0 END
+         + CASE WHEN rv.price BETWEEN ${qp.priceFrom} AND ${qp.priceTo} THEN 1 ELSE 0 END
+       )`
+     })
+     .from(rv)
+     .leftJoin(converters, eq(converters.id, rv.converterId));
+
+   const rows = await base
+     .orderBy(sql`matchScore DESC`)
+     .limit(params.limit ?? 20)
+     .offset(params.offset ?? 0);
+
+   const total = await db.select({ count: sql`COUNT(*) OVER()` }).from(base).then(r => r[0].count);
+
+   // build aggregations via grouped COUNTs on base without pagination
+   const aggs = await Promise.all([
+     db.select({ key: rv.make, count: sql`COUNT(*)` })
+       .from(base).groupBy(rv.make),
+     // … other facets …
+   ]);
+
+   return { results: rows, total, aggregations: toObject(aggs) };
+Route wiring
+In server/routes/searchListings.ts:
+
+ts
+Copy
+Edit
+@router.get('/api/search-listings', response_model=SearchResponse)
+async def search_listings(params: SearchParams = Depends()):
+    return await storage.searchRvListings(params)
+Smoke tests
+
+Add one pytest that seeds 3 rows and asserts ordering by matchScore.
+
+curl http://localhost:5000/api/search-listings?query=Prevost&limit=2 returns JSON with matchScore.
+
+COMMIT
+feat(search-backend): rebuild search-listings with unified scoring
+
+Please confirm each section before committing diffs.
+
+yaml
+Copy
+Edit
+
+---
+
+## 🔍 Prompt #2 — Rebuild the Front-end Search UI
+
+TITLE
+Rewire home & Buy search UIs to drive off the new endpoint
+
+CONTEXT
+Client side in client/src uses Wouter + React-Hook-Form + TanStack-Query.
+
+GOAL
+Both the Home search bar and the Buy page panel should hydrate from the URL on mount, call the new /api/search-listings, and render results in order. No extra client filters or sorts.
+
+TASKS
+Shared types
+
+Import SearchParams, SearchResponse, and the ListingWithScore type generated from shared/apiSchema.ts into the front-end.
+
+Home search bar
+
+In client/src/components/SearchBar.tsx:
+
+diff
+Copy
+Edit
+- import { useNavigate } from 'react-router-dom';
++ import { useLocation } from 'wouter';
+
+- const navigate = useNavigate();
++ const [, setLocation] = useLocation();
+
+const onSubmit = (data: SearchParams) => {
+  const qs = new URLSearchParams(clean(data)).toString();
+- navigate(`/buy?${qs}`);
++ setLocation(`/buy?${qs}`);
+};
+Buy page / Browse
+
+In client/src/pages/Buy.tsx (or Browse.tsx):
+
+tsx
+Copy
+Edit
+import { useLocation } from 'wouter';
+import qs from 'qs';
+
+const [location] = useLocation();
+const params = useMemo(
+  () => (qs.parse(location.split('?')[1] || '') as SearchParams),
+  [location]
+);
+
+// Drive both form and query from URL
+const { control, setValue } = useForm<SearchParams>({ defaultValues: params });
+const { data, isFetching } = useQuery(
+  ['search', params],
+  () => fetch(`/api/search-listings?${qs.stringify(params)}`).then(r => r.json())
+);
+
+useEffect(() => {
+  Object.entries(params).forEach(([k, v]) => setValue(k as any, v));
+}, [params]);
+
+if (isFetching) return <Spinner />;
+return (
+  <div>
+    <SearchForm control={control} onSubmit={() => setLocation(`/buy?${qs.stringify(getValues())}`)} />
+    {data.results.map(l => <CoachCard key={l.id} {...l} badge={`Score: ${l.matchScore.toFixed(1)}`} />)}
+  </div>
+);
+Remove any .filter() or .sort() calls on the results array.
+
+Search form component
+
+Ensure SearchForm.tsx renders all fields (query input, make, converter, year slider, price slider) with names matching SearchParams.
+
+On submit it calls the parent’s onSubmit (which now simply updates the URL).
+
+Smoke tests
+
+In Cypress or Jest+RTL, mount the Buy page at /buy?converter=Marathon&priceFrom=50000 and assert that CoachCards render >0 items and the first few have badge containing “Score:”.
+
+COMMIT
+feat(search-ui): rebuild home & buy search with URL-driven workflow
+
+Please confirm each section before committing diffs.
+
+yaml
+Copy
+Edit
+
+---
+
+**Workflow tip:**  
+1. Run Prompt #1; review and merge backend changes.  
+2. Run Prompt #2; review front-end wiring.  
+3. Test end-to-end: Home → Buy with various filters; verify listings update immediately.  
+4. Adjust any minor typos or naming mismatches.
+
+
+
+
+
+
