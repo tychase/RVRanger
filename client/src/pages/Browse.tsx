@@ -78,10 +78,26 @@ const Browse = () => {
   }, [params]);
 
   // Sort listings based on selected option
+  // Special case: For converter searches (like Marathon), check if we should highlight matches in titles
+  const isSearchingForConverter = params.converter && typeof params.converter === 'string';
+  const searchConverterText = isSearchingForConverter ? String(params.converter).toLowerCase() : '';
+  
   const sortedListings = [...rvListings].sort((a, b) => {
     switch (sortOption) {
       case "relevance":
-        // Sort by score from the new API
+        // Check for converter name in title if we're doing a converter search
+        if (isSearchingForConverter) {
+          const aHasMatch = a.title.toLowerCase().includes(searchConverterText);
+          const bHasMatch = b.title.toLowerCase().includes(searchConverterText);
+          
+          if (aHasMatch && !bHasMatch) return -1; // A has match, B doesn't -> A comes first
+          if (!aHasMatch && bHasMatch) return 1;  // B has match, A doesn't -> B comes first
+          
+          // If both match or both don't match, use the database-provided score or fallback to id
+          return (b.score || 0) - (a.score || 0) || b.id - a.id;
+        }
+        
+        // Normal relevance sorting for non-converter searches
         return (b.score || 0) - (a.score || 0);
       case "price-low":
         return a.price - b.price;
