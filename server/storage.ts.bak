@@ -547,37 +547,177 @@ export class DatabaseStorage implements IStorage {
       
       console.log("Search params:", params);
       
-      // Use a simple query approach initially to get results
-      const simpleQuery = sql`
+      // Build a SQL query that calculates a score based on matching criteria
+      let scoreSQL = `
         SELECT 
-          l.*, 
-          0 AS score
-        FROM rv_listings l
-        ORDER BY l.created_at DESC
-        LIMIT 20
-      `;
+          l.*,
+          (0`;
       
-      console.log("Executing simple search query");
+      const scoreParams: any[] = [];
+      let paramIndex = 1;
+      
+      // Add the score components conditionally
+      if (query) {
+        scoreSQL += ` + (ts_rank_cd(l."search_vector", plainto_tsquery('english', $${paramIndex})) * 5)`;
+        scoreParams.push(query);
+        paramIndex++;
+      }
+      
+      if (manufacturer) {
+        scoreSQL += ` + CASE WHEN EXISTS (
+          SELECT 1 FROM "manufacturers" m 
+          WHERE m.id = l."manufacturer_id" 
+          AND LOWER(m.name) = LOWER($${paramIndex})
+        ) THEN 2 ELSE 0 END`;
+        scoreParams.push(manufacturer);
+        paramIndex++;
+      }
+      
+      if (converter) {
+        scoreSQL += ` + CASE WHEN EXISTS (
+          SELECT 1 FROM "converters" c 
+          WHERE c.id = l."converter_id" 
+          AND LOWER(c.name) = LOWER($${paramIndex})
+        ) THEN 2 ELSE 0 END`;
+        scoreParams.push(converter);
+        paramIndex++;
+      }
+      
+      if (chassisType) {
+        scoreSQL += ` + CASE WHEN EXISTS (
+          SELECT 1 FROM "chassis_types" ct 
+          WHERE ct.id = l."chassis_type_id" 
+          AND LOWER(ct.name) = LOWER($${paramIndex})
+        ) THEN 1 ELSE 0 END`;
+        scoreParams.push(chassisType);
+        paramIndex++;
+      }
+      
+      if (yearFrom && yearTo) {
+        scoreSQL += ` + CASE WHEN l."year" BETWEEN $${paramIndex} AND $${paramIndex + 1} THEN 1 ELSE 0 END`;
+        scoreParams.push(Number(yearFrom), Number(yearTo));
+        paramIndex += 2;
+      }
+      
+      if (priceFrom && priceTo) {
+        scoreSQL += ` + CASE WHEN l."price" BETWEEN $${paramIndex} AND $${paramIndex + 1} THEN 1 ELSE 0 END`;
+        scoreParams.push(Number(priceFrom), Number(priceTo));
+        paramIndex += 2;
+      }
+      
+      if (slides) {
+        scoreSQL += ` + CASE WHEN l."slides" = $${paramIndex} THEN 0.5 ELSE 0 END`;
+        scoreParams.push(Number(slides));
+        paramIndex++;
+      }
+      
+      if (featured === 'true' || featured === true) {
+        scoreSQL += ` + CASE WHEN l."is_featured" = true THEN 0.5 ELSE 0 END`;
+      }
+      
+      // Close the score calculation and add the FROM clause
+      scoreSQL += `) AS score
+        FROM "rv_listings" l`;
+      
+      // Add WHERE clauses for filtering
+      const whereConditions: string[] = [];
+      
+      if (converter) {
+        whereConditions.push(`EXISTS (
+          SELECT 1 FROM "converters" c 
+          WHERE c.id = l."converter_id" 
+          AND LOWER(c.name) = LOWER($${paramIndex})
+        )`);
+        scoreParams.push(converter);
+        paramIndex++;
+      }
+      
+      if (manufacturer) {
+        whereConditions.push(`EXISTS (
+          SELECT 1 FROM "manufacturers" m 
+          WHERE m.id = l."manufacturer_id" 
+          AND LOWER(m.name) = LOWER($${paramIndex})
+        )`);
+        scoreParams.push(manufacturer);
+        paramIndex++;
+      }
+      
+      // Add WHERE clause if we have conditions
+      if (whereConditions.length > 0) {
+        scoreSQL += ` WHERE ${whereConditions.join(' AND ')}`;
+      }
+      
+      // Add ORDER BY
+      scoreSQL += ` ORDER BY score DESC, price DESC`;
+      
+      // Add pagination if needed
+      if (options?.limit) {
+        scoreSQL += ` LIMIT $${paramIndex}`;
+        scoreParams.push(Number(options.limit));
+        paramIndex++;
+      }
+      
+      if (options?.offset) {
+        scoreSQL += ` OFFSET $${paramIndex}`;
+        scoreParams.push(Number(options.offset));
+      }
+      
+      // Debug log the SQL and params
+      console.log("Search SQL:", scoreSQL);
+      console.log("Search params:", scoreParams);
       
       try {
-        const result = await db.execute(simpleQuery);
+        // Use parameterized queries with proper SQL construction
+        const finalQuery = sql.raw(scoreSQL);
+        
+        console.log("Executing scored search query");
+        
+        // Execute using drizzle with parameters
+        const result = await db.execute(finalQuery);
+        
+        console.log("Search query executed successfully");
         
         // Handle the database query result
         if (result && Array.isArray(result)) {
+          // If result is already an array, use the score from the query
           return result.map((item: any) => ({ 
             ...item, 
-            score: 1
+            score: item.score !== undefined ? Number(item.score) : 1 
           })) as (RvListing & { score: number })[];
         } else if (result && result.rows && Array.isArray(result.rows)) {
+          // If result has a rows property that's an array, use that
           return result.rows.map((item: any) => ({ 
             ...item, 
-            score: 1
+            score: item.score !== undefined ? Number(item.score) : 1 
           })) as (RvListing & { score: number })[];
         } else {
+          // Fallback to empty array if no results
+          console.log("No results found or unexpected result format");
           return [] as (RvListing & { score: number })[];
         }
-      } catch (innerError) {
-        console.error("Inner error:", innerError);
+      } catch (error) {
+        console.error("Error executing search query:", error);
+        
+        // Fallback to a simple query
+        console.log("Falling back to simple query");
+        
+        const simpleQuery = sql`
+          SELECT 
+            l.*,
+            0 AS score
+          FROM rv_listings l
+          ORDER BY l.created_at DESC
+          LIMIT 20
+        `;
+        
+        const fallbackResult = await db.execute(simpleQuery);
+        
+        if (fallbackResult && Array.isArray(fallbackResult)) {
+          return fallbackResult.map((item: any) => ({ ...item, score: 0 })) as (RvListing & { score: number })[];
+        } else if (fallbackResult && fallbackResult.rows && Array.isArray(fallbackResult.rows)) {
+          return fallbackResult.rows.map((item: any) => ({ ...item, score: 0 })) as (RvListing & { score: number })[];
+        }
+        
         return [] as (RvListing & { score: number })[];
       }
     } catch (error) {
