@@ -498,148 +498,243 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log("Search params:", JSON.stringify(params));
       
-      // Create query parameters with type safety
-      const qp = { 
-        ...params,
-        // Convert query to a tsquery if present
-        queryTs: params.query ? sql`plainto_tsquery('english', ${params.query})` : null,
-        // Get converter ID if needed
-        convId: params.converter ? await this.getConverterIdByName(params.converter) : null
-      };
+      // Build a simplified query without trying to compute matching scores in SQL
+      // We'll calculate all scores in JavaScript after getting the results
       
-      // Define all columns we want to select plus our match score calculation
-      const rvCols = {
-        id: rvListings.id,
-        title: rvListings.title,
-        description: rvListings.description,
-        year: rvListings.year,
-        price: rvListings.price,
-        manufacturerId: rvListings.manufacturerId,
-        converterId: rvListings.converterId,
-        chassisTypeId: rvListings.chassisTypeId,
-        typeId: rvListings.typeId,
-        length: rvListings.length,
-        mileage: rvListings.mileage,
-        location: rvListings.location,
-        fuelType: rvListings.fuelType,
-        bedType: rvListings.bedType,
-        slides: rvListings.slides,
-        featuredImage: rvListings.featuredImage,
-        isFeatured: rvListings.isFeatured,
-        sellerId: rvListings.sellerId,
-        sourceId: rvListings.sourceId,
-        searchVector: rvListings.searchVector,
-        createdAt: rvListings.createdAt,
-        updatedAt: rvListings.updatedAt,
-      };
+      // Start with a simple selection of all listings columns
+      let query = db.select().from(rvListings);
       
-      // Don't include a matchScore field in SQL to avoid syntax issues
-      // We'll add the score entirely in JavaScript after getting the results
-      const base = db.select({
-        ...rvCols
-      })
-      .from(rvListings)
-      .leftJoin(converters, eq(converters.id, rvListings.converterId));
-
-      // Apply pagination to get results - don't sort by matchScore in SQL
-      // We'll handle sorting in JavaScript instead
-      const rows = await base
-        .orderBy(desc(rvListings.id)) // Order by newest first
-        .limit(params.limit || 20)
-        .offset(params.offset || 0);
-
-      // Get total count without pagination
-      // Use a simple count query instead of trying to reuse the base query
+      // Build conditions array for WHERE clause
+      const conditions = [];
+      
+      // Apply basic filters if they exist
+      if (params.yearFrom) {
+        conditions.push(gte(rvListings.year, params.yearFrom));
+      }
+      
+      if (params.yearTo) {
+        conditions.push(lte(rvListings.year, params.yearTo));
+      }
+      
+      if (params.priceFrom) {
+        conditions.push(gte(rvListings.price, params.priceFrom));
+      }
+      
+      if (params.priceTo) {
+        conditions.push(lte(rvListings.price, params.priceTo));
+      }
+      
+      if (params.mileageFrom) {
+        conditions.push(gte(rvListings.mileage, params.mileageFrom));
+      }
+      
+      if (params.mileageTo) {
+        conditions.push(lte(rvListings.mileage, params.mileageTo));
+      }
+      
+      if (params.lengthFrom) {
+        conditions.push(gte(rvListings.length, params.lengthFrom));
+      }
+      
+      if (params.lengthTo) {
+        conditions.push(lte(rvListings.length, params.lengthTo));
+      }
+      
+      if (params.bedType) {
+        conditions.push(eq(rvListings.bedType, params.bedType));
+      }
+      
+      if (params.fuelType) {
+        conditions.push(eq(rvListings.fuelType, params.fuelType));
+      }
+      
+      if (params.slides) {
+        conditions.push(eq(rvListings.slides, params.slides));
+      }
+      
+      if (params.featured) {
+        conditions.push(eq(rvListings.isFeatured, true));
+      }
+      
+      // Apply text search if query is present
+      if (params.query) {
+        conditions.push(
+          or(
+            ilike(rvListings.title, `%${params.query}%`),
+            ilike(rvListings.description, `%${params.query}%`)
+          )
+        );
+      }
+      
+      // Apply all conditions if any exist
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply order by ID (newest first)
+      query = query.orderBy(desc(rvListings.id));
+      
+      // Apply pagination
+      query = query.limit(params.limit || 20).offset(params.offset || 0);
+      
+      // Execute query to get results
+      const rows = await query;
+      
+      // Get total count for pagination
       const [countResult] = await db
         .select({ count: sql`COUNT(*)::integer` })
-        .from(rvListings);
+        .from(rvListings)
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
       
       const total = countResult ? Number(countResult.count) || 0 : 0;
-
-      // Build aggregations
-      // Get manufacturer facets
+      
+      // Build aggregations - get manufacturer facets
       const manufacturerAggs = await db
-        .select({ key: manufacturers.name, count: sql`COUNT(*)::integer` })
+        .select({ 
+          key: manufacturers.name, 
+          count: sql`COUNT(*)::integer` 
+        })
         .from(rvListings)
         .leftJoin(manufacturers, eq(rvListings.manufacturerId, manufacturers.id))
         .groupBy(manufacturers.name);
-
+        
       // Get converter facets  
       const converterAggs = await db
-        .select({ key: converters.name, count: sql`COUNT(*)::integer` })
+        .select({ 
+          key: converters.name, 
+          count: sql`COUNT(*)::integer` 
+        })
         .from(rvListings)
         .leftJoin(converters, eq(rvListings.converterId, converters.id))
         .where(sql`${converters.name} IS NOT NULL`)
         .groupBy(converters.name);
-
+      
       // Get chassis type facets
       const chassisAggs = await db
-        .select({ key: chassisTypes.name, count: sql`COUNT(*)::integer` })
+        .select({ 
+          key: chassisTypes.name, 
+          count: sql`COUNT(*)::integer` 
+        })
         .from(rvListings)
         .leftJoin(chassisTypes, eq(rvListings.chassisTypeId, chassisTypes.id))
         .where(sql`${chassisTypes.name} IS NOT NULL`)
         .groupBy(chassisTypes.name);
-
+      
       // Build the aggregations object
       const aggregations: Record<string, Record<string, number>> = {
+        // Convert manufacturer aggregations to the expected format
         manufacturers: manufacturerAggs.reduce((acc, curr) => {
           if (curr.key) acc[curr.key] = Number(curr.count) || 0;
           return acc;
         }, {} as Record<string, number>),
         
+        // Add converter aggregations
         converters: converterAggs.reduce((acc, curr) => {
           if (curr.key) acc[curr.key] = Number(curr.count) || 0;
           return acc;
         }, {} as Record<string, number>),
         
+        // Add chassis type aggregations
         chassisTypes: chassisAggs.reduce((acc, curr) => {
           if (curr.key) acc[curr.key] = Number(curr.count) || 0;
           return acc;
         }, {} as Record<string, number>)
       };
-
-      // Implement scoring logic in JavaScript instead of SQL for better reliability
+      
+      // Get all manufacturer and converter data to improve scoring
+      const allManufacturers = await this.getAllManufacturers();
+      const allConverters = await this.getAllConverters();
+      
+      // Create lookup maps for faster access during scoring
+      const manufacturersById = new Map(
+        allManufacturers.map(m => [m.id, m.name])
+      );
+      
+      const convertersById = new Map(
+        allConverters.map(c => [c.id, c.name])
+      );
+      
+      // Implement scoring logic in JavaScript with debugging
+      console.log(`Found ${rows.length} raw results before scoring`);
+      
       const scoredResults = rows.map(row => {
         // Base score starts at 1
         let score = 1;
+        let scoreDetails = [];
         
         // Add score for featured listings
         if (row.isFeatured) {
           score += 5;
+          scoreDetails.push("Featured: +5");
         }
         
-        // Add score for text matches if query is present
-        if (params.query && row.title) {
-          const lowerTitle = row.title.toLowerCase();
-          const lowerQuery = params.query.toLowerCase();
+        // Get manufacturer name for this listing
+        let manufacturerName = null;
+        if (row.manufacturerId && manufacturersById.has(row.manufacturerId)) {
+          manufacturerName = manufacturersById.get(row.manufacturerId);
+        }
+        
+        // Add score for text matches in query
+        if (params.query && params.query.trim()) {
+          const lowerQuery = params.query.toLowerCase().trim();
           
-          if (lowerTitle.includes(lowerQuery)) {
+          // Check title for match
+          if (row.title && row.title.toLowerCase().includes(lowerQuery)) {
             score += 3;
+            scoreDetails.push(`Query matches title: +3`);
+          } 
+          // Check description for match
+          else if (row.description && row.description.toLowerCase().includes(lowerQuery)) {
+            score += 2;
+            scoreDetails.push(`Query matches description: +2`);
+          }
+          
+          // Check for manufacturer name match in query
+          if (manufacturerName && lowerQuery.includes(manufacturerName.toLowerCase())) {
+            score += 3;
+            scoreDetails.push(`Query matches manufacturer: +3`);
           }
         }
         
-        // Add score for matching make/manufacturer
-        if (params.manufacturer && row.title) {
-          const lowerTitle = row.title.toLowerCase();
-          const lowerManufacturer = params.manufacturer.toLowerCase();
+        // Add score for matching make/manufacturer parameter
+        if (params.manufacturer) {
+          const searchManufacturer = params.manufacturer.toLowerCase().trim();
           
-          if (lowerTitle.includes(lowerManufacturer)) {
+          // Direct match on manufacturer ID
+          if (manufacturerName && manufacturerName.toLowerCase().includes(searchManufacturer)) {
+            score += 3;
+            scoreDetails.push(`Direct manufacturer match: +3`);
+          }
+          
+          // Title match (backup)
+          if (row.title && row.title.toLowerCase().includes(searchManufacturer)) {
             score += 2;
+            scoreDetails.push(`Manufacturer in title: +2`);
           }
         }
         
         // Add score for matching converter
-        if (params.converter && row.converterId && qp.convId) {
-          if (row.converterId === qp.convId) {
-            score += 2;
+        if (params.converter && row.converterId && convertersById.has(row.converterId)) {
+          const converterName = convertersById.get(row.converterId);
+          const searchConverter = params.converter.toLowerCase().trim();
+          
+          if (converterName && converterName.toLowerCase().includes(searchConverter)) {
+            score += 3;
+            scoreDetails.push(`Converter match: +3`);
           }
         }
         
-        // Add score for matching year range
+        // Add score for year range match
         if (params.yearFrom && params.yearTo && row.year) {
           if (row.year >= params.yearFrom && row.year <= params.yearTo) {
             score += 1;
+            scoreDetails.push(`Year range match: +1`);
           }
+        }
+        
+        // Log detailed scoring for high-scoring results (for debugging)
+        if (score > 5 || params.query === 'debug') {
+          console.log(`Listing #${row.id} (${row.title}) - Score: ${score} - ${scoreDetails.join(', ')}`);
         }
         
         return {
