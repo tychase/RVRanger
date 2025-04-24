@@ -547,10 +547,11 @@ export class DatabaseStorage implements IStorage {
       featured         // Featured listings
     } = params;
     
-    // Simple approach: use raw SQL for the entire query
-    let whereConditions = [];
-    let paramValues: any[] = [];
-    let paramCount = 1;
+    // Create a drizzle-style query builder for our filters
+    let query = db.select().from(rvListings);
+    
+    // Start building conditions
+    const conditions = [];
     
     // For converter, we'll search based on converter ID or title
     if (converter) {
@@ -558,20 +559,14 @@ export class DatabaseStorage implements IStorage {
         const converterId = parseInt(converter);
         if (!isNaN(converterId)) {
           // If it's a numeric ID, use exact match on converter_id
-          whereConditions.push(`converter_id = $${paramCount}`);
-          paramValues.push(converterId);
-          paramCount++;
+          conditions.push(eq(rvListings.converterId, converterId));
         } else {
           // Otherwise, search by name in the title
-          whereConditions.push(`LOWER(title) LIKE LOWER($${paramCount})`);
-          paramValues.push(`%${converter}%`);
-          paramCount++;
+          conditions.push(ilike(rvListings.title, `%${converter}%`));
         }
       } catch (e) {
         // If not a number, search by name in the title
-        whereConditions.push(`LOWER(title) LIKE LOWER($${paramCount})`);
-        paramValues.push(`%${converter}%`);
-        paramCount++;
+        conditions.push(ilike(rvListings.title, `%${converter}%`));
       }
     }
     
@@ -580,20 +575,23 @@ export class DatabaseStorage implements IStorage {
       try {
         const manufacturerId = parseInt(manufacturer);
         if (!isNaN(manufacturerId)) {
-          whereConditions.push(`manufacturer_id = $${paramCount}`);
-          paramValues.push(manufacturerId);
-          paramCount++;
+          conditions.push(eq(rvListings.manufacturerId, manufacturerId));
         } else {
-          // By name - we would need a join to manufacturers table
-          // For now, we can search in title or description
-          whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
-          paramValues.push(`%${manufacturer}%`);
-          paramCount++;
+          // By name - search in title or description
+          conditions.push(
+            or(
+              ilike(rvListings.title, `%${manufacturer}%`),
+              ilike(rvListings.description, `%${manufacturer}%`)
+            )
+          );
         }
       } catch (e) {
-        whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
-        paramValues.push(`%${manufacturer}%`);
-        paramCount++;
+        conditions.push(
+          or(
+            ilike(rvListings.title, `%${manufacturer}%`),
+            ilike(rvListings.description, `%${manufacturer}%`)
+          )
+        );
       }
     }
 
@@ -602,178 +600,112 @@ export class DatabaseStorage implements IStorage {
       try {
         const chassisTypeId = parseInt(chassisType);
         if (!isNaN(chassisTypeId)) {
-          whereConditions.push(`chassis_type_id = $${paramCount}`);
-          paramValues.push(chassisTypeId);
-          paramCount++;
+          conditions.push(eq(rvListings.chassisTypeId, chassisTypeId));
         } else {
           // Search by chassis name in the title or description
-          whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
-          paramValues.push(`%${chassisType}%`);
-          paramCount++;
+          conditions.push(
+            or(
+              ilike(rvListings.title, `%${chassisType}%`),
+              ilike(rvListings.description, `%${chassisType}%`)
+            )
+          );
         }
       } catch (e) {
-        whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
-        paramValues.push(`%${chassisType}%`);
-        paramCount++;
+        conditions.push(
+          or(
+            ilike(rvListings.title, `%${chassisType}%`),
+            ilike(rvListings.description, `%${chassisType}%`)
+          )
+        );
       }
     }
     
     // Year range
     if (yearFrom) {
-      whereConditions.push(`year >= $${paramCount}`);
-      paramValues.push(Number(yearFrom));
-      paramCount++;
+      conditions.push(gte(rvListings.year, Number(yearFrom)));
     }
     
     if (yearTo) {
-      whereConditions.push(`year <= $${paramCount}`);
-      paramValues.push(Number(yearTo));
-      paramCount++;
+      conditions.push(lte(rvListings.year, Number(yearTo)));
     }
     
     // Price range
     if (priceFrom) {
-      whereConditions.push(`price >= $${paramCount}`);
-      paramValues.push(Number(priceFrom));
-      paramCount++;
+      conditions.push(gte(rvListings.price, Number(priceFrom)));
     }
     
     if (priceTo) {
-      whereConditions.push(`price <= $${paramCount}`);
-      paramValues.push(Number(priceTo));
-      paramCount++;
+      conditions.push(lte(rvListings.price, Number(priceTo)));
     }
     
     // Mileage range
     if (mileageFrom) {
-      whereConditions.push(`mileage >= $${paramCount}`);
-      paramValues.push(Number(mileageFrom));
-      paramCount++;
+      conditions.push(gte(rvListings.mileage, Number(mileageFrom)));
     }
     
     if (mileageTo) {
-      whereConditions.push(`mileage <= $${paramCount}`);
-      paramValues.push(Number(mileageTo));
-      paramCount++;
+      conditions.push(lte(rvListings.mileage, Number(mileageTo)));
     }
     
     // Slides - exact match
     if (slides) {
-      whereConditions.push(`slides = $${paramCount}`);
-      paramValues.push(Number(slides));
-      paramCount++;
+      conditions.push(eq(rvListings.slides, Number(slides)));
     }
     
     // Features - for now, we'll search for features in description
     if (features && Array.isArray(features) && features.length > 0) {
-      const featureConditions = features.map(feature => {
-        const pos = paramCount++;
-        paramValues.push(`%${feature}%`);
-        return `LOWER(description) LIKE LOWER($${pos})`;
-      });
-      
-      whereConditions.push(`(${featureConditions.join(" OR ")})`);
+      const featureConditions = features.map(feature => 
+        ilike(rvListings.description, `%${feature}%`)
+      );
+      conditions.push(or(...featureConditions));
     } else if (features && typeof features === 'string') {
       // Handle single feature as string
-      whereConditions.push(`LOWER(description) LIKE LOWER($${paramCount})`);
-      paramValues.push(`%${features}%`);
-      paramCount++;
+      conditions.push(ilike(rvListings.description, `%${features}%`));
     }
     
     // Featured listings
     if (featured === true || featured === 'true') {
-      whereConditions.push(`is_featured = true`);
+      conditions.push(eq(rvListings.isFeatured, true));
     }
     
-    // Full-text search query - this would use search vector in a real implementation
+    // Full-text search query
     if (searchQuery) {
-      whereConditions.push(`(LOWER(title) LIKE LOWER($${paramCount}) OR LOWER(description) LIKE LOWER($${paramCount}))`);
-      paramValues.push(`%${searchQuery}%`);
-      paramCount++;
+      conditions.push(
+        or(
+          ilike(rvListings.title, `%${searchQuery}%`),
+          ilike(rvListings.description, `%${searchQuery}%`)
+        )
+      );
     }
     
-    // Build the WHERE clause
-    const whereClause = whereConditions.length > 0 
-      ? `WHERE ${whereConditions.join(" AND ")}` 
-      : "";
+    // Apply all conditions
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
     
-    // Add LIMIT and OFFSET
-    const limitClause = options?.limit ? `LIMIT $${paramCount}` : "";
+    // Add ordering - default is newest first (by ID)
+    query = query.orderBy(desc(rvListings.id));
+    
+    // Add pagination
     if (options?.limit) {
-      paramValues.push(options.limit);
-      paramCount++;
+      query = query.limit(options.limit);
     }
     
-    const offsetClause = options?.offset ? `OFFSET $${paramCount}` : "";
     if (options?.offset) {
-      paramValues.push(options.offset);
-      paramCount++;
+      query = query.offset(options.offset);
     }
     
-    // Build the complete SQL query with custom sorting
-    let orderByClause = "ORDER BY id DESC";
+    // Execute the query
+    console.log("[Search Query]", JSON.stringify(conditions, null, 2));
+    const results = await query;
     
-    // If converter is specified, prioritize listings with converter in the title
-    if (converter) {
-      orderByClause = `ORDER BY 
-        CASE 
-          WHEN LOWER(title) LIKE LOWER($${paramCount}) THEN 0
-          ELSE 1 
-        END,
-        id DESC`;
-      paramValues.push(`%${converter}%`);
-      paramCount++;
-    }
-    
-    // Log the SQL and parameters for debugging
-    console.log("[Search Query]", `
-      SELECT *, 1 as score
-      FROM rv_listings
-      ${whereClause}
-      ${orderByClause}
-      ${limitClause}
-      ${offsetClause}
-    `, paramValues);
-    
-    // Execute as a parameterized query for security
-    const sqlQuery = `
-      SELECT *, 1 as score
-      FROM rv_listings
-      ${whereClause}
-      ${orderByClause}
-      ${limitClause}
-      ${offsetClause}
-    `;
-    
-    // Execute as a raw query with parameters
-    const results = await db.execute(sql.raw(sqlQuery, ...paramValues));
-    
-    // Convert to proper typed results
-    return results.rows.map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      year: row.year,
-      price: row.price,
-      manufacturerId: row.manufacturer_id,
-      converterId: row.converter_id,
-      chassisTypeId: row.chassis_type_id,
-      typeId: row.type_id,
-      length: row.length,
-      mileage: row.mileage,
-      location: row.location,
-      fuelType: row.fuel_type,
-      bedType: row.bed_type,
-      slides: row.slides,
-      featuredImage: row.featured_image,
-      isFeatured: row.is_featured,
-      sellerId: row.seller_id,
-      sourceId: row.source_id,
-      searchVector: row.search_vector,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      score: 1 // Add the score field
+    // Add a score field to each result
+    return results.map(row => ({
+      ...row,
+      score: 1 // Default score
     }));
+    
+    /* Unreachable code - removed */
   }
 
   // RV Images operations
