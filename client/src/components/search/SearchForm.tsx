@@ -29,8 +29,8 @@ const featureOptions = [
 ];
 
 // Price range constants in USD
-const MIN_PRICE = 100000;
-const MAX_PRICE = 1000000;
+const MIN_PRICE = 50000;
+const MAX_PRICE = 10000000;
 const STEP_SIZE = 50000;
 
 interface SearchFormProps {
