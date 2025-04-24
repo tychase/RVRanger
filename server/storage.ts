@@ -553,19 +553,48 @@ export class DatabaseStorage implements IStorage {
     // Start building conditions
     const conditions = [];
     
-    // For converter, we'll search based on converter ID or title
+    // For converter, we'll search based on converter ID or name
     if (converter) {
+      console.log(`[Search] Handling converter: ${converter}`);
+      
+      // First, look up the converter by name/id to get the actual ID
+      let matchingConverterId: number | null = null;
+      
       try {
+        // First check if it's a direct numeric ID
         const converterId = parseInt(converter);
         if (!isNaN(converterId)) {
-          // If it's a numeric ID, use exact match on converter_id
-          conditions.push(eq(rvListings.converterId, converterId));
+          console.log(`[Search] Using direct converter ID: ${converterId}`);
+          matchingConverterId = converterId;
         } else {
-          // Otherwise, search by name in the title
+          // It's a string like "marathon", look it up by name
+          const converters = await this.getAllConverters();
+          console.log(`[Search] Looking up converter with name/slug: ${converter}`);
+          
+          // Try to find a matching converter by name (case insensitive)
+          const matchingConverter = converters.find(c => 
+            c.name.toLowerCase() === converter.toLowerCase() || 
+            c.name.toLowerCase().replace(/\s+/g, '_') === converter.toLowerCase() ||
+            c.name.toLowerCase().replace(/\s+/g, '-') === converter.toLowerCase()
+          );
+          
+          if (matchingConverter) {
+            console.log(`[Search] Found matching converter: ${matchingConverter.name} (ID: ${matchingConverter.id})`);
+            matchingConverterId = matchingConverter.id;
+          }
+        }
+        
+        // Now use the converter ID in our query
+        if (matchingConverterId) {
+          conditions.push(eq(rvListings.converterId, matchingConverterId));
+        } else {
+          // Fallback to title search if no matching converter found
+          console.log(`[Search] No matching converter found, using title search for: ${converter}`);
           conditions.push(ilike(rvListings.title, `%${converter}%`));
         }
       } catch (e) {
-        // If not a number, search by name in the title
+        console.log(`[Search] Error processing converter: ${e}`);
+        // If any error, fall back to title search
         conditions.push(ilike(rvListings.title, `%${converter}%`));
       }
     }
