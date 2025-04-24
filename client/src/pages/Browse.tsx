@@ -163,8 +163,8 @@ const Browse = () => {
         mergedParams[key] !== "all" && 
         mergedParams[key] !== "any" &&
         // Special case for price range - only include if not default values
-        !(key === "minPrice" && mergedParams[key] === 100000) &&
-        !(key === "maxPrice" && mergedParams[key] === 1000000)
+        !(key === "minPrice" && mergedParams[key] === 50000) &&
+        !(key === "maxPrice" && mergedParams[key] === 10000000)
       ) {
         // Handle arrays like features
         if (Array.isArray(mergedParams[key]) && mergedParams[key].length > 0) {
