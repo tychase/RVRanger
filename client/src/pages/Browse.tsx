@@ -17,9 +17,20 @@ import {
 
 // Clean function to remove empty values from params
 const clean = (obj: any) => {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([_, v]) => v != null && v !== "" && v !== "all" && v !== "any")
+  console.log("Browse: Cleaning object:", obj);
+  const result = Object.fromEntries(
+    Object.entries(obj).filter(([key, value]) => {
+      // Skip keys that are null, undefined, empty strings, or specific default values
+      if (value == null || value === "" || value === "all" || value === "any") {
+        console.log(`Browse: Removing key ${key} with value:`, value);
+        return false;
+      }
+      console.log(`Browse: Keeping key ${key} with value:`, value);
+      return true;
+    })
   );
+  console.log("Browse: Cleaned result:", result);
+  return result;
 };
 
 const Browse = () => {
@@ -29,10 +40,17 @@ const Browse = () => {
   const itemsPerPage = 12;
 
   // Parse URL query parameters once using useMemo
+  console.log("Browse: Current location:", location);
   const params = useMemo(
-    () => qs.parse(location.split("?")[1] || "") as Record<string, any>,
+    () => {
+      console.log("Browse: Parsing location in useMemo:", location);
+      const parsed = qs.parse(location.split("?")[1] || "") as Record<string, any>;
+      console.log("Browse: Parsed params:", parsed);
+      return parsed;
+    },
     [location]
   );
+  console.log("Browse: Current params state:", params);
   const ready = Object.keys(params).length >= 0; // always true; keeps TS happy
 
   useEffect(() => {
@@ -48,11 +66,31 @@ const Browse = () => {
 
   // Create a custom hook for search functionality (could be moved to a separate file)
   const useSearchListings = (params: any) => {
+    console.log("useSearchListings hook called with params:", params);
+    
+    // The problem might be how we're structuring our queryKey
+    // Let's make sure we're deeply comparing all params for proper cache invalidation
+    const stableKey = JSON.stringify(params);
+    console.log("useSearchListings: Using stableKey for cache:", stableKey);
+    
     return useQuery({
-      queryKey: ['/api/search-listings', params],
+      queryKey: ['/api/search-listings', stableKey],
       queryFn: async () => {
         const queryString = qs.stringify(params);
-        return fetch(`/api/search-listings?${queryString}`).then(r => r.json());
+        console.log("useSearchListings: Making API call with query string:", queryString);
+        return fetch(`/api/search-listings?${queryString}`)
+          .then(r => {
+            console.log("useSearchListings: API response status:", r.status);
+            return r.json();
+          })
+          .then(data => {
+            console.log("useSearchListings: API response data:", data);
+            return data;
+          })
+          .catch(err => {
+            console.error("useSearchListings: API call failed:", err);
+            throw err;
+          });
       }
     });
   };

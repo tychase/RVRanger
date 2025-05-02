@@ -48,20 +48,34 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, i
 
   // Initialize form with URL parameters when available
   useEffect(() => {
+    console.log("SearchForm: initialParams changed:", initialParams);
+    
     if (initialParams) {
       // Update converter
       if (initialParams.converter) {
+        console.log("SearchForm: Setting converter to", initialParams.converter);
         setConverter(initialParams.converter);
+      } else {
+        console.log("SearchForm: Setting converter to default 'all'");
+        setConverter('all');
       }
       
       // Update chassis
       if (initialParams.chassisType) {
+        console.log("SearchForm: Setting chassis to", initialParams.chassisType);
         setChassis(initialParams.chassisType);
+      } else {
+        console.log("SearchForm: Setting chassis to default 'all'");
+        setChassis('all');
       }
       
       // Update slides
       if (initialParams.slides) {
+        console.log("SearchForm: Setting slides to", initialParams.slides);
         setSlides(initialParams.slides.toString());
+      } else {
+        console.log("SearchForm: Setting slides to default 'all'");
+        setSlides('all');
       }
       
       // Update features
@@ -69,7 +83,11 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, i
         const featureList = Array.isArray(initialParams.features) 
           ? initialParams.features 
           : initialParams.features.split(',');
+        console.log("SearchForm: Setting features to", featureList);
         setFeatures(featureList);
+      } else {
+        console.log("SearchForm: Clearing features");
+        setFeatures([]);
       }
       
       // Update price range
@@ -81,7 +99,11 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, i
         newPriceRange[1] = parseInt(initialParams.priceTo);
       }
       if (newPriceRange[0] !== MIN_PRICE || newPriceRange[1] !== MAX_PRICE) {
+        console.log("SearchForm: Setting price range to", newPriceRange);
         setPriceRange(newPriceRange);
+      } else {
+        console.log("SearchForm: Setting price range to defaults");
+        setPriceRange([MIN_PRICE, MAX_PRICE]);
       }
     }
   }, [initialParams]);
@@ -92,7 +114,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, i
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Search form submitted");
+    console.log("SearchForm: form submitted");
     
     // Map our form fields to the API search parameters
     const searchParams = {
@@ -105,8 +127,15 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, simplified = false, i
       features: features.length > 0 ? features : undefined
     };
     
-    console.log("Search params:", searchParams);
-    onSearch?.(searchParams);
+    console.log("SearchForm: search params prepared:", searchParams);
+    console.log("SearchForm: onSearch function exists?", !!onSearch);
+    
+    if (onSearch) {
+      console.log("SearchForm: Calling onSearch function");
+      onSearch(searchParams);
+    } else {
+      console.warn("SearchForm: No onSearch prop provided!");
+    }
   };
 
   const formatPrice = (value: number) => {
