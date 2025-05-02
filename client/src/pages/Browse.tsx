@@ -119,14 +119,20 @@ const Browse = () => {
 
   // Handle form submission by updating the URL, which will trigger a data fetch
   const handleSearch = (newParams: any) => {
+    console.log("Browse: handleSearch called with params:", newParams);
+    
     // Merge current and new parameters
     const mergedParams = { ...params, ...newParams };
+    console.log("Browse: merged params:", mergedParams);
     
     // Clean the parameters to remove empty/default values
     const cleanedParams = clean(mergedParams);
+    console.log("Browse: cleaned params:", cleanedParams);
     
     // Update URL with the new search parameters - this will trigger the useMemo hook
-    navigate(`/browse?${qs.stringify(cleanedParams)}`);
+    const newUrl = `/browse?${qs.stringify(cleanedParams)}`;
+    console.log("Browse: navigating to:", newUrl);
+    navigate(newUrl);
     
     // Reset to first page
     setCurrentPage(1);
