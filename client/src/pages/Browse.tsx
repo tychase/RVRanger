@@ -53,11 +53,14 @@ const Browse = () => {
   console.log("Browse: Current params state:", params);
   const ready = Object.keys(params).length >= 0; // always true; keeps TS happy
 
-  // Effect to invalidate query cache when URL changes
+  // Force the query to refetch when URL changes by invalidating the query cache
   useEffect(() => {
     console.log("Browse: Location changed, should refetch data");
     // Reset to first page when URL/location changes
     setCurrentPage(1);
+    
+    // The URL parameters have changed, which means we need to invalidate the query cache
+    // This will be handled by our stableKey in the useSearchListings hook
   }, [location]);
   
   // Effect to ensure queryParams update when currentPage changes
@@ -96,7 +99,15 @@ const Browse = () => {
       refetchOnWindowFocus: false, // Don't fetch on window focus
       refetchOnMount: true, // Always refetch when component mounts
       queryFn: async () => {
-        const queryString = qs.stringify(params);
+        // Make sure we remove undefined, null, and empty strings from params
+        const cleanParams = Object.entries(params).reduce((acc: Record<string, any>, [key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            acc[key] = value;
+          }
+          return acc;
+        }, {});
+        
+        const queryString = qs.stringify(cleanParams);
         console.log("useSearchListings: Making API call with query string:", queryString);
         return fetch(`/api/search-listings?${queryString}`)
           .then(r => {
