@@ -44,18 +44,30 @@ const Browse = () => {
   const params = useMemo(
     () => {
       console.log("Browse: Parsing location in useMemo:", location);
-      const parsed = qs.parse(location.split("?")[1] || "") as Record<string, any>;
+      // Ensure we extract the query string correctly
+      let queryString = "";
+      if (location.includes("?")) {
+        queryString = location.split("?")[1] || "";
+        console.log("Browse: Found query string:", queryString);
+      }
+      
+      // Parse the query string into an object
+      const parsed = qs.parse(queryString) as Record<string, any>;
       console.log("Browse: Parsed params:", parsed);
       return parsed;
     },
     [location]
   );
   console.log("Browse: Current params state:", params);
-  const ready = Object.keys(params).length >= 0; // always true; keeps TS happy
+  const ready = true; // Always enable queries
 
   // Force the query to refetch when URL changes by invalidating the query cache
   useEffect(() => {
-    console.log("Browse: Location changed, should refetch data");
+    console.log("Browse: Location changed to", location);
+    // Parse out the parameters from the URL to see what's there
+    const urlParams = location.includes('?') ? qs.parse(location.split('?')[1]) : {};
+    console.log("Browse: URL params detected:", urlParams);
+    
     // Reset to first page when URL/location changes
     setCurrentPage(1);
     
@@ -103,12 +115,16 @@ const Browse = () => {
         const cleanParams = Object.entries(params).reduce((acc: Record<string, any>, [key, value]) => {
           if (value !== undefined && value !== null && value !== '') {
             acc[key] = value;
+            console.log(`useSearchListings: Including parameter ${key}=${value}`);
+          } else {
+            console.log(`useSearchListings: Skipping parameter ${key}=${value}`);
           }
           return acc;
         }, {});
         
         const queryString = qs.stringify(cleanParams);
         console.log("useSearchListings: Making API call with query string:", queryString);
+        console.log("useSearchListings: Full URL:", `/api/search-listings?${queryString}`);
         return fetch(`/api/search-listings?${queryString}`)
           .then(r => {
             console.log("useSearchListings: API response status:", r.status);
@@ -127,6 +143,8 @@ const Browse = () => {
   };
 
   // Fetch RV listings with our search API using the parsed URL params directly
+  // Track if we're doing a specific search to help with debugging
+  console.log('Browse: About to call useSearchListings with params:', JSON.stringify(queryParams));
   const { data, isLoading, error } = useSearchListings(queryParams);
 
   // Extract listings and aggregations from the response
