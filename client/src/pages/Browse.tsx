@@ -53,16 +53,33 @@ const Browse = () => {
   console.log("Browse: Current params state:", params);
   const ready = Object.keys(params).length >= 0; // always true; keeps TS happy
 
+  // Effect to invalidate query cache when URL changes
+  useEffect(() => {
+    console.log("Browse: Location changed, should refetch data");
+    // Reset to first page when URL/location changes
+    setCurrentPage(1);
+  }, [location]);
+  
+  // Effect to ensure queryParams update when currentPage changes
+  useEffect(() => {
+    console.log("Browse: Current page changed to", currentPage);
+    // We don't need to manually force a query refetch here because
+    // queryParams will change, which will trigger a new fetch
+  }, [currentPage]);
+
   useEffect(() => {
     document.title = "Browse Coaches - Luxury Coach Market";
   }, []);
 
   // Build query parameters for API call
-  const queryParams: any = { ...params };
+  // We need to make sure we're passing all URL parameters to the API
+  const queryParams: any = {
+    ...params,
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage
+  };
   
-  // Add pagination
-  queryParams.limit = itemsPerPage;
-  queryParams.offset = (currentPage - 1) * itemsPerPage;
+  console.log("Browse: Final queryParams for API call:", queryParams);
 
   // Create a custom hook for search functionality (could be moved to a separate file)
   const useSearchListings = (params: any) => {
@@ -75,6 +92,9 @@ const Browse = () => {
     
     return useQuery({
       queryKey: ['/api/search-listings', stableKey],
+      enabled: ready, // Only run the query when we have parameters
+      refetchOnWindowFocus: false, // Don't fetch on window focus
+      refetchOnMount: true, // Always refetch when component mounts
       queryFn: async () => {
         const queryString = qs.stringify(params);
         console.log("useSearchListings: Making API call with query string:", queryString);
@@ -279,7 +299,10 @@ const Browse = () => {
                   size="sm"
                   className="text-xs sm:text-sm h-8 sm:h-10"
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
+                  onClick={() => {
+                    console.log("Browse: Changing to previous page");
+                    setCurrentPage(currentPage - 1);
+                  }}
                 >
                   Previous
                 </Button>
@@ -300,7 +323,10 @@ const Browse = () => {
                   size="sm"
                   className="text-xs sm:text-sm h-8 sm:h-10"
                   disabled={rvListings.length < itemsPerPage}
-                  onClick={() => setCurrentPage(currentPage + 1)}
+                  onClick={() => {
+                    console.log("Browse: Changing to next page");
+                    setCurrentPage(currentPage + 1);
+                  }}
                 >
                   Next
                 </Button>
