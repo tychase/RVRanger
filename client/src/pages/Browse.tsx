@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import qs from "query-string";
@@ -74,19 +74,7 @@ const Browse = () => {
   console.log("Browse: Current params state:", params);
   const ready = true; // Always enable queries
 
-  // Force the query to refetch when URL changes by invalidating the query cache
-  useEffect(() => {
-    console.log("Browse: Location changed to", location);
-    // Parse out the parameters from the URL to see what's there
-    const urlParams = location.includes('?') ? qs.parse(location.split('?')[1]) : {};
-    console.log("Browse: URL params detected:", urlParams);
-    
-    // Reset to first page when URL/location changes
-    setCurrentPage(1);
-    
-    // The URL parameters have changed, which means we need to invalidate the query cache
-    // This will be handled by our stableKey in the useSearchListings hook
-  }, [location]);
+  // Removed old useEffect for location changes - now using the processUrlParams useCallback with its own useEffect
   
   // Effect to ensure queryParams update when currentPage changes
   useEffect(() => {
@@ -157,7 +145,9 @@ const Browse = () => {
 
   // Fetch RV listings with our search API using the parsed URL params directly
   // Track if we're doing a specific search to help with debugging
+  // Add more detailed debugging logs to help diagnose the search functionality
   console.log('Browse: About to call useSearchListings with params:', JSON.stringify(queryParams));
+  console.log('Browse: Checking for specific search parameters - converter:', queryParams.converter);
   const { data, isLoading, error } = useSearchListings(queryParams);
 
   // Extract listings and aggregations from the response
@@ -218,7 +208,7 @@ const Browse = () => {
   });
 
   // Handle form submission by updating the URL, which will trigger a data fetch
-  const handleSearch = (newParams: any) => {
+  const handleSearch = useCallback((newParams: any) => {
     console.log("Browse: handleSearch called with params:", newParams);
     
     // Merge current and new parameters
@@ -236,7 +226,34 @@ const Browse = () => {
     
     // Reset to first page
     setCurrentPage(1);
-  };
+  }, [params, navigate]);
+  
+  // Function to extract search params from URL and directly pass to API
+  const processUrlParams = useCallback(() => {
+    console.log("Browse: Processing URL params from location:", location);
+    if (location.includes('?')) {
+      const searchParams = qs.parse(location.split('?')[1]);
+      console.log("Browse: Extracted search params from URL:", searchParams);
+      
+      // We don't call handleSearch here to avoid an infinite loop
+      // Instead, we'll reset the currentPage to ensure the API call is made with the right params
+      // This combined with the useMemo for 'params' should ensure search works correctly
+      
+      // Reset to first page when URL parameters change
+      setCurrentPage(1);
+      
+      // Log the converter parameter specifically for debugging
+      if (searchParams.converter) {
+        console.log("Browse: Found converter in URL params:", searchParams.converter);
+      }
+    }
+  }, [location]);
+
+  // Watch for changes to the URL query parameters
+  useEffect(() => {
+    console.log("Browse: URL location changed, processing params");
+    processUrlParams();
+  }, [location, processUrlParams]);
 
   const renderSkeletons = () => {
     return Array(itemsPerPage)
