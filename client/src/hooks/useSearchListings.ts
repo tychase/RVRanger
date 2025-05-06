@@ -1,7 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
 import qs from 'query-string';
-import { SearchParams } from '../../../shared/types/SearchParams';
-import { Listing } from '../../../shared/types/Listing';
+
+// Import types from the type definitions
+interface SearchParams {
+  converter?: string;
+  priceLow?: number;
+  priceHigh?: number;
+  yearMin?: number;
+  yearMax?: number;
+  mileageMax?: number;
+  sortBy?: 'price' | 'year' | 'relevance';
+  limit?: number;
+  offset?: number;
+}
+
+interface Listing {
+  id: string;
+  title: string;
+  converter: string;
+  price: number;
+  year: number;
+  mileage: number;
+  score?: number;
+  featuredImage: string;
+}
 
 interface SearchResponse {
   results: Listing[];

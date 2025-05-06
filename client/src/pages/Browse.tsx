@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import qs from "query-string";
 import SearchForm from "@/components/search/SearchForm";
 import CoachCard from "@/components/coach/CoachCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSearchListings } from "@/hooks/useSearchListings";
-import { SearchParams } from "../../shared/types/SearchParams";
+import { useSearchListings } from "../hooks/useSearchListings";
 import {
   Select,
   SelectContent,
@@ -105,10 +105,10 @@ const Browse = () => {
   console.log('Browse: URL check - current location is', location, 'and includes converter?', location.includes('converter='));
   const { data, isLoading, error } = useSearchListings(queryParams);
 
-  // Extract listings and aggregations from the response
-  const { results, listings = [], totalCount = 0, aggregations = {} } = data || {};
-  // Handle both formats - the old API returned just listings, the new one returns results
-  const rvListings = results || listings || [];
+  // Extract listings from the response
+  const { results = [], total = 0 } = data || {};
+  // Use the results from the new API format
+  const rvListings = results;
   
   // Set default sort option to relevance if we have search filters
   useEffect(() => {
@@ -139,7 +139,7 @@ const Browse = () => {
           if (!aHasMatch && bHasMatch) return 1;  // B has match, A doesn't -> B comes first
           
           // If both match or both don't match, use the database-provided score or fallback to id
-          return (b.score || 0) - (a.score || 0) || b.id - a.id;
+          return (b.score || 0) - (a.score || 0) || parseInt(b.id) - parseInt(a.id);
         }
         
         // Normal relevance sorting for non-converter searches
@@ -158,7 +158,7 @@ const Browse = () => {
         return a.year - b.year;
       default:
         // newest listings first (by id as a proxy for created date)
-        return b.id - a.id;
+        return parseInt(b.id) - parseInt(a.id);
     }
   });
 
@@ -288,7 +288,13 @@ const Browse = () => {
               </div>
             ) : sortedListings.length > 0 ? (
               sortedListings.map((rv) => (
-                <CoachCard key={rv.id} coach={rv} />
+                <CoachCard 
+                  key={rv.id} 
+                  coach={{
+                    ...rv,
+                    id: parseInt(rv.id) // Convert id to number for component compatibility
+                  }} 
+                />
               ))
             ) : (
               <div className="col-span-full text-center p-4 sm:p-6">
@@ -336,7 +342,7 @@ const Browse = () => {
                   variant="outline"
                   size="sm"
                   className="text-xs sm:text-sm h-8 sm:h-10"
-                  disabled={rvListings.length < itemsPerPage}
+                  disabled={(currentPage * itemsPerPage) >= total}
                   onClick={() => {
                     console.log("Browse: Changing to next page");
                     setCurrentPage(currentPage + 1);
