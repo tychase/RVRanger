@@ -1,7 +1,5 @@
 import { Request, Response } from 'express';
 import { IStorage } from '../storage';
-import { and, desc, asc, eq, gte, lte, sql } from 'drizzle-orm';
-import { rvListings, converters } from '../../shared/schema';
 import { SearchParams } from '../../shared/types/SearchParams';
 import { Listing } from '../../shared/types/Listing';
 
@@ -34,19 +32,22 @@ export async function searchListings(req: Request, res: Response, storage: IStor
     console.log("Search params:", searchParams);
     console.log("Converter param:", searchParams.converter);
     
-    // Build the query conditions based on search parameters
-    const conditions = [];
+    // Build search options for existing storage API
+    const searchOptions: any = {
+      limit: searchParams.limit || 12,
+      offset: searchParams.offset || 0
+    };
     
-    // Filter by converter if specified
+    // Apply converter filter if specified
     if (searchParams.converter) {
-      const converterQuery = await storage.db
-        .select({ id: converters.id })
-        .from(converters)
-        .where(sql`LOWER(${converters.name}) = LOWER(${searchParams.converter})`)
-        .limit(1);
+      // Find the converter by name first
+      const converters = await storage.getAllConverters();
+      const converter = converters.find(c => 
+        c.name.toLowerCase() === searchParams.converter?.toLowerCase()
+      );
       
-      if (converterQuery.length > 0) {
-        conditions.push(eq(rvListings.converterId, converterQuery[0].id));
+      if (converter) {
+        searchOptions.converterId = converter.id;
       } else {
         // If no converter found, return empty results
         return res.json({ 
@@ -56,115 +57,69 @@ export async function searchListings(req: Request, res: Response, storage: IStor
       }
     }
     
-    // Filter by price range
+    // Apply price range filters
     if (searchParams.priceLow !== undefined) {
-      conditions.push(gte(rvListings.price, searchParams.priceLow));
+      searchOptions.minPrice = searchParams.priceLow;
     }
     
     if (searchParams.priceHigh !== undefined) {
-      conditions.push(lte(rvListings.price, searchParams.priceHigh));
+      searchOptions.maxPrice = searchParams.priceHigh;
     }
     
-    // Filter by year range
+    // Apply year range filters
     if (searchParams.yearMin !== undefined) {
-      conditions.push(gte(rvListings.year, searchParams.yearMin));
+      searchOptions.yearFrom = searchParams.yearMin;
     }
     
     if (searchParams.yearMax !== undefined) {
-      conditions.push(lte(rvListings.year, searchParams.yearMax));
+      searchOptions.yearTo = searchParams.yearMax;
     }
     
-    // Filter by maximum mileage
+    // Apply mileage filter
     if (searchParams.mileageMax !== undefined) {
-      conditions.push(lte(rvListings.mileage, searchParams.mileageMax));
-    }
-    
-    // Execute the query
-    let query = storage.db
-      .select({
-        id: rvListings.id,
-        title: rvListings.title,
-        price: rvListings.price,
-        year: rvListings.year,
-        mileage: rvListings.mileage,
-        converterId: rvListings.converterId,
-        featuredImage: rvListings.featuredImage
-      })
-      .from(rvListings);
-      
-    // Apply conditions if we have any
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      searchOptions.mileageTo = searchParams.mileageMax;
     }
     
     // Apply sorting
-    if (searchParams.sortBy === 'price') {
-      query = query.orderBy(asc(rvListings.price));
-    } else if (searchParams.sortBy === 'year') {
-      query = query.orderBy(desc(rvListings.year));
-    } else {
-      // Default sort by ID (newest first)
-      query = query.orderBy(desc(rvListings.id));
+    if (searchParams.sortBy) {
+      searchOptions.sortBy = searchParams.sortBy;
     }
     
-    // Apply pagination
-    query = query
-      .limit(searchParams.limit || 12)
-      .offset(searchParams.offset || 0);
+    // Get listings using the existing storage API
+    const listings = await storage.getAllRvListings(searchOptions);
     
-    // Execute the query
-    const results = await query;
-    
-    // Get total count for pagination
-    let countQuery = storage.db
-      .select({ count: sql`COUNT(*)` })
-      .from(rvListings);
-      
-    if (conditions.length > 0) {
-      countQuery = countQuery.where(and(...conditions));
-    }
-    
-    const [{ count }] = await countQuery;
-    const total = Number(count);
-    
-    // Fetch converter names for each listing
-    const converterIds = results
-      .map(listing => listing.converterId)
-      .filter((id): id is number => id !== null);
-      
+    // Get the converter info for each listing
     const converterMap: Record<number, string> = {};
+    const converters = await storage.getAllConverters();
     
-    if (converterIds.length > 0) {
-      const converterRows = await storage.db
-        .select({
-          id: converters.id,
-          name: converters.name
-        })
-        .from(converters)
-        .where(sql`${converters.id} IN (${converterIds.join(',')})`)
-        .execute();
-        
-      converterRows.forEach(row => {
-        converterMap[row.id] = row.name;
-      });
-    }
+    converters.forEach(converter => {
+      converterMap[converter.id] = converter.name;
+    });
     
-    // Map the results to the Listing interface
-    const listingsWithConverters: Listing[] = results.map(listing => ({
+    // Transform listings to match the Listing interface
+    const formattedListings: Listing[] = listings.map(listing => ({
       id: String(listing.id),
       title: listing.title,
       price: Number(listing.price),
       year: listing.year,
       mileage: listing.mileage || 0,
       converter: listing.converterId ? converterMap[listing.converterId] || 'Unknown' : 'Unknown',
-      // Include any other necessary fields from the listing
       featuredImage: listing.featuredImage
     }));
     
-    console.log(`Found ${results.length} raw results before scoring`);
+    // For total count, we need to get the total without pagination
+    // We'll reuse the same options but without limit and offset
+    const countOptions = { ...searchOptions };
+    delete countOptions.limit;
+    delete countOptions.offset;
+    
+    const allMatchingListings = await storage.getAllRvListings(countOptions);
+    const total = allMatchingListings.length;
+    
+    console.log(`Found ${formattedListings.length} results out of ${total} total matches`);
     
     res.json({
-      results: listingsWithConverters,
+      results: formattedListings,
       total
     });
   } catch (error) {

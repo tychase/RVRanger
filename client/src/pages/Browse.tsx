@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import qs from "query-string";
 import SearchForm from "@/components/search/SearchForm";
 import CoachCard from "@/components/coach/CoachCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SearchParams } from "@shared/apiSchema";
+import { useSearchListings } from "@/hooks/useSearchListings";
+import { SearchParams } from "../../shared/types/SearchParams";
 import {
   Select,
   SelectContent,
@@ -96,52 +96,6 @@ const Browse = () => {
   };
   
   console.log("Browse: Final queryParams for API call:", queryParams);
-
-  // Create a custom hook for search functionality (could be moved to a separate file)
-  const useSearchListings = (params: any) => {
-    console.log("useSearchListings hook called with params:", params);
-    
-    // The problem might be how we're structuring our queryKey
-    // Let's make sure we're deeply comparing all params for proper cache invalidation
-    const stableKey = JSON.stringify(params);
-    console.log("useSearchListings: Using stableKey for cache:", stableKey);
-    
-    return useQuery({
-      queryKey: ['/api/search-listings', stableKey],
-      enabled: ready, // Only run the query when we have parameters
-      refetchOnWindowFocus: false, // Don't fetch on window focus
-      refetchOnMount: true, // Always refetch when component mounts
-      queryFn: async () => {
-        // Make sure we remove undefined, null, and empty strings from params
-        const cleanParams = Object.entries(params).reduce((acc: Record<string, any>, [key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            acc[key] = value;
-            console.log(`useSearchListings: Including parameter ${key}=${value}`);
-          } else {
-            console.log(`useSearchListings: Skipping parameter ${key}=${value}`);
-          }
-          return acc;
-        }, {});
-        
-        const queryString = qs.stringify(cleanParams);
-        console.log("useSearchListings: Making API call with query string:", queryString);
-        console.log("useSearchListings: Full URL:", `/api/search-listings?${queryString}`);
-        return fetch(`/api/search-listings?${queryString}`)
-          .then(r => {
-            console.log("useSearchListings: API response status:", r.status);
-            return r.json();
-          })
-          .then(data => {
-            console.log("useSearchListings: API response data:", data);
-            return data;
-          })
-          .catch(err => {
-            console.error("useSearchListings: API call failed:", err);
-            throw err;
-          });
-      }
-    });
-  };
 
   // Fetch RV listings with our search API using the parsed URL params directly
   // Track if we're doing a specific search to help with debugging
