@@ -53,8 +53,21 @@ const Browse = () => {
       
       // Parse the query string into an object
       const parsed = qs.parse(queryString) as Record<string, any>;
-      console.log("Browse: Parsed params:", parsed);
-      return parsed;
+      console.log("Browse: Parsed params - raw from URL:", parsed);
+      
+      // Make sure all fields are explicitly handled
+      const cleanedParams: Record<string, any> = {};
+      
+      // Only keep non-empty, non-null values
+      Object.entries(parsed).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "" && value !== "all" && value !== "any") {
+          console.log(`Browse: useMemo keeping key ${key} with value:`, value);
+          cleanedParams[key] = value;
+        }
+      });
+      
+      console.log("Browse: Parsed params - cleaned for API use:", cleanedParams);
+      return cleanedParams;
     },
     [location]
   );
