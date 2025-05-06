@@ -147,7 +147,8 @@ const Browse = () => {
   // Track if we're doing a specific search to help with debugging
   // Add more detailed debugging logs to help diagnose the search functionality
   console.log('Browse: About to call useSearchListings with params:', JSON.stringify(queryParams));
-  console.log('Browse: Checking for specific search parameters - converter:', queryParams.converter);
+  console.log('Browse: Checking for specific search parameters - converter:', queryParams.converter, 'typeof:', typeof queryParams.converter);
+  console.log('Browse: URL check - current location is', location, 'and includes converter?', location.includes('converter='));
   const { data, isLoading, error } = useSearchListings(queryParams);
 
   // Extract listings and aggregations from the response

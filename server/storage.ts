@@ -497,6 +497,7 @@ export class DatabaseStorage implements IStorage {
   }> {
     try {
       console.log("Search params:", JSON.stringify(params));
+      console.log("Converter param:", params.converter);
       
       // Build a simplified query without trying to compute matching scores in SQL
       // We'll calculate all scores in JavaScript after getting the results

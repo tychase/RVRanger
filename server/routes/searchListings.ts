@@ -22,6 +22,9 @@ export function setupSearchEndpoint(app: Application, storage: IStorage) {
    */
   app.get('/api/search-listings', async (req, res) => {
     try {
+      console.log("RAW Search URL:", req.url);
+      console.log("RAW Search params:", req.query);
+
       const {
         query,          // Text query for full-text search
         manufacturer,   // Manufacturer name
@@ -46,6 +49,7 @@ export function setupSearchEndpoint(app: Application, storage: IStorage) {
       } = req.query;
 
       console.log("Search request with params:", JSON.stringify(req.query));
+      console.log("Converter param value:", converter);
 
       // Convert query params to search params
       const searchParams: SearchParams = {
