@@ -556,6 +556,24 @@ export class DatabaseStorage implements IStorage {
         conditions.push(eq(rvListings.isFeatured, true));
       }
       
+      // Add filtering by converter
+      if (params.converter) {
+        // First, try to get a converter ID if string was passed
+        try {
+          const converterId = await this.getConverterIdByName(params.converter);
+          if (converterId) {
+            conditions.push(eq(rvListings.converterId, converterId));
+            console.log(`Added filter for converter ID: ${converterId} from name: ${params.converter}`);
+          } else {
+            // If we couldn't find a converter by name, try to match text in the title
+            console.log(`Couldn't find converter ID for ${params.converter}, will use scoring instead`);
+            // No direct title filter here - we'll use scoring for this
+          }
+        } catch (e) {
+          console.error(`Error looking up converter: ${e}`);
+        }
+      }
+      
       // Apply text search if query is present
       if (params.query) {
         conditions.push(
