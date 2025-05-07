@@ -1,0 +1,119 @@
+1) server/src/routes/search-listings.ts
+
+text
+Copy
+Edit
+// Prompt to Replit:
+“Please replace the contents of `server/src/routes/search-listings.ts` with the following:
+
+```ts
+import express from 'express';
+import { z } from 'zod';
+import { SearchParams } from '../../shared/types/SearchParams';
+import { Listing } from '../../shared/types/Listing';
+import { searchListings } from '../services/searchService';
+
+const router = express.Router();
+
+// validate & coerce query params
+const querySchema = z.object({
+  converter: z.string().optional(),
+  priceLow: z.coerce.number().optional(),
+  priceHigh: z.coerce.number().optional(),
+  yearMin: z.coerce.number().optional(),
+  yearMax: z.coerce.number().optional(),
+  mileageMax: z.coerce.number().optional(),
+  sortBy: z.enum(['price', 'year', 'relevance']).optional(),
+  limit: z.coerce.number().optional().default(20),
+  offset: z.coerce.number().optional().default(0),
+});
+
+router.get('/search-listings', async (req, res) => {
+  const parsed = querySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.format() });
+  }
+  const params: SearchParams = parsed.data;
+  try {
+    const results: Listing[] = await searchListings(params);
+    res.json(results);
+  } catch (err) {
+    console.error('search-listings error', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;
+```”
+2) server/src/services/searchService.ts
+
+text
+Copy
+Edit
+// Prompt to Replit:
+“Please create (or overwrite) `server/src/services/searchService.ts` with:
+
+```ts
+import { SearchParams } from '../../shared/types/SearchParams';
+import { Listing } from '../../shared/types/Listing';
+import { db } from '../db/client';
+import { listings, converters } from '../db/schema';
+import { and, eq, gte, lte } from 'drizzle-orm';
+
+export async function searchListings(params: SearchParams): Promise<Listing[]> {
+  const conditions = [];
+
+  // converter filter
+  if (params.converter) {
+    const [conv] = await db
+      .select({ id: converters.id })
+      .from(converters)
+      .where(eq(converters.name, params.converter));
+    if (conv) conditions.push(eq(listings.converterId, conv.id));
+  }
+
+  // numeric filters
+  if (params.priceLow !== undefined)  conditions.push(gte(listings.price, params.priceLow));
+  if (params.priceHigh !== undefined) conditions.push(lte(listings.price, params.priceHigh));
+  if (params.yearMin !== undefined)    conditions.push(gte(listings.year, params.yearMin));
+  if (params.yearMax !== undefined)    conditions.push(lte(listings.year, params.yearMax));
+  if (params.mileageMax !== undefined) conditions.push(lte(listings.mileage, params.mileageMax));
+
+  // build base query
+  let query = db.select({
+      id: listings.id,
+      title: listings.title,
+      converterName: converters.name,
+      price: listings.price,
+      year: listings.year,
+      mileage: listings.mileage,
+    })
+    .from(listings)
+    .leftJoin(converters, eq(listings.converterId, converters.id))
+    .where(and(...conditions));
+
+  // sorting
+  if (params.sortBy === 'price') {
+    query = query.orderBy(listings.price);
+  } else if (params.sortBy === 'year') {
+    query = query.orderBy(listings.year);
+  } else if (params.sortBy === 'relevance') {
+    // TODO: insert your scoring SQL here
+  }
+
+  // pagination
+  query = query.limit(params.limit!).offset(params.offset!);
+
+  // execute & map
+  const rows = await query;
+  return rows.map(r => ({
+    id: r.id,
+    title: r.title,
+    converter: r.converterName,
+    price: r.price,
+    year: r.year,
+    mileage: r.mileage,
+    score: (r as any).score, 
+  }));
+}
+```”
