@@ -2,7 +2,7 @@ import { SearchParams } from '../../shared/types/SearchParams';
 import { Listing } from '../../shared/types/Listing';
 import { db } from '../db';
 import { rvListings, converters } from '../../shared/schema';
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { and, eq, gte, lte, sql, SQL } from 'drizzle-orm';
 
 /**
  * Searches for RV listings based on provided search parameters
@@ -64,12 +64,12 @@ export async function searchListings(params: SearchParams): Promise<{ results: L
     query = query.orderBy(rvListings.year);
   } else {
     // Default sort by newest (id DESC)
-    query = query.orderBy({ column: rvListings.id, direction: 'desc' });
+    query = query.orderBy(sql`${rvListings.id} desc`);
   }
 
-  // Create a similar query for total count
+  // Create count query with SQL function
   let countQuery = db.select({
-      count: db.fn.count(rvListings.id)
+      count: sql`count(${rvListings.id})`
     })
     .from(rvListings)
     .leftJoin(converters, eq(rvListings.converterId, converters.id));
