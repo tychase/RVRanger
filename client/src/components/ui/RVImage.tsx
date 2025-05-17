@@ -70,8 +70,8 @@ export function CoachImage({
     } 
     // Handle external URLs
     else if (src.startsWith('http')) {
-      // Use the proxy-image route for external images
-      setImgSrc(`/proxy-image?url=${encodeURIComponent(src)}`);
+      // Use the api/proxy-image route for external images
+      setImgSrc(`/api/proxy-image?url=${encodeURIComponent(src)}`);
     } 
     // Handle relative paths that don't start with /
     else {
