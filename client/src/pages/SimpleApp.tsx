@@ -21,13 +21,17 @@ export default function SimpleApp() {
 
   useEffect(() => {
     setLoading(true);
-    axios.get<Listing[]>(`http://127.0.0.1:8000/listings?sort=${sort}&dir=${dir}`)
+    // Use the current domain but port 8000 for the API
+    const apiUrl = `${window.location.protocol}//${window.location.hostname}:8000/listings?sort=${sort}&dir=${dir}`;
+    axios.get<Listing[]>(apiUrl)
          .then(r => {
            setAll(r.data);
            setLoading(false);
          })
          .catch(err => {
            console.error("Failed to fetch listings:", err);
+           // Fallback to empty array on error
+           setAll([]);
            setLoading(false);
          });
   }, [sort, dir]);

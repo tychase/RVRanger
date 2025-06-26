@@ -122,6 +122,10 @@ This is a full-stack RV marketplace application specifically focused on luxury P
 ## Changelog
 
 - June 26, 2025. Initial setup
+- June 26, 2025. Added three core restart components:
+  - `prevost_scraper.py`: Standalone scraper for prevost-stuff.com
+  - `api.py`: FastAPI backend serving scraped data
+  - `SimpleApp.tsx`: Clean React frontend (/simple route)
 
 ## User Preferences
 
