@@ -13,6 +13,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import FixImagePage from "@/pages/admin/FixImagePage";
+import SimpleApp from "@/pages/SimpleApp";
 import Header from "@/components/layout/Header";
 import { AuthContext } from "./main";
 
@@ -76,6 +77,7 @@ function App() {
           <main className="flex-grow">
             <Switch>
               <Route path="/" component={Home} />
+              <Route path="/simple" component={SimpleApp} />
               <Route path="/browse" component={Browse} />
               <Route path="/coach/:id" component={CoachDetail} />
               {/* Redirect old RV URLs to coach URLs */}
